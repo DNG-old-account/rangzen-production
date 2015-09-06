@@ -32,14 +32,17 @@
 package org.denovogroup.rangzen.ui;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 import org.denovogroup.rangzen.ui.FragmentOrganizer.FragmentType;
 import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.StorageBase;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
@@ -133,13 +136,36 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                 inputMethodManager.hideSoftInputFromWindow(getWindow()
                         .getCurrentFocus().getWindowToken(), 0);
             }
-
         };
 
         mDrawerLayout.setDrawerListener(mDrawerListener);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.LEFT);
+
+        //prompt user about location tracking
+        if(savedInstanceState == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("During the beta Rangzen will need to monitor your location at all time, please keep the tracking service running until the end of the beta")
+                    .setTitle("Disclaimer");
+            builder.setCancelable(false);
+            builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    //start tracking service
+                    Intent trackingServiceIntent = new Intent(Opener.this, TrackingService.class);
+                    Opener.this.startService(trackingServiceIntent);
+                }
+            });
+            builder.setNegativeButton("Dont track", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    //turn off tracking service if running
+                    Intent trackingServiceIntent = new Intent(Opener.this, TrackingService.class);
+                    Opener.this.stopService(trackingServiceIntent);
+                }
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
     }
 
     /**
