@@ -32,15 +32,21 @@ package org.denovogroup.rangzen.backend;
 
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection.ServerReplyTuple;
+import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.objects.ClientMessage;
+import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.objects.ServerMessage;
+import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.UUID;
 
+import android.bluetooth.BluetoothAdapter;
 import android.util.Log;
 
 import okio.ByteString;
@@ -103,7 +109,7 @@ public class CryptographicExchange extends Exchange {
       computeSharedFriends();
       
       setExchangeStatus(Status.SUCCESS);
-      callback.success(this);
+      callback.success(this, getReportId());
     } catch (Exception e) {  // Treat ALL exceptions as fatal.
       // This status setting should be redundant (whoever threw the exception
       // should have set the status to ERROR before throwing the exception) but
@@ -112,7 +118,7 @@ public class CryptographicExchange extends Exchange {
       Log.e(TAG, "Exception while run()ing CryptographicExchange: " + e);
       setExchangeStatus(Status.ERROR);
 
-      callback.failure(this, getErrorMessage());
+      callback.failure(this, getErrorMessage(), getReportId());
     }
   }
   
@@ -145,6 +151,17 @@ public class CryptographicExchange extends Exchange {
                                         .blindedFriends(blindedFriends)
                                         .build();
     boolean success = lengthValueWrite(out, cm);
+    //BETA
+    if(success){
+        if(NetworkHandler.getInstance() != null){
+          String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+          for(RangzenMessage message : cm.messages){
+              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), "unknown_messageId", message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
+              NetworkHandler.getInstance().sendEventReport(report);
+          }
+        }
+    }
+    //BETA END
     if (!success) {
       setExchangeStatus(Status.ERROR);
       setErrorMessage("Length/value write of client message failed.");
@@ -173,6 +190,14 @@ public class CryptographicExchange extends Exchange {
     }
 
     mMessagesReceived = mRemoteClientMessage.messages;
+    //BETA
+    String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+    for(RangzenMessage message : mMessagesReceived){
+      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(),mThisDeviceUUID, "unknown_messageId", message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
+      NetworkHandler.getInstance().sendEventReport(report);
+    }
+    //BETA END
+
   }
 
   /**
@@ -269,7 +294,7 @@ public class CryptographicExchange extends Exchange {
    */
   public CryptographicExchange(InputStream in, OutputStream out, boolean asInitiator, 
                                FriendStore friendStore, MessageStore messageStore, 
-                               ExchangeCallback callback) throws IllegalArgumentException {
-    super(in, out, asInitiator, friendStore, messageStore, callback);
+                               ExchangeCallback callback, String reportId, String partnerId) throws IllegalArgumentException {
+    super(in, out, asInitiator, friendStore, messageStore, callback, reportId, partnerId);
   }
 }

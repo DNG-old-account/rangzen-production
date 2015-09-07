@@ -45,12 +45,12 @@ public interface PeerConnectionCallback {
    *
    * @param socket A BluetoothSocket that can be used to communicate with the peer.
    */
-  public void success(BluetoothSocket socket);
+  public void success(BluetoothSocket socket, String reportId);
   
   /**
    * Called if a connection to the peer failed.
    *
    * @param reason A string describing why the connection failed.
    */
-  public void failure(String reason);
+  public void failure(String reason, String reportId);
 }

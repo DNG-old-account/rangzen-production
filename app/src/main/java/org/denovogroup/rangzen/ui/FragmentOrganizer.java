@@ -60,6 +60,9 @@ import android.widget.Toast;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.StorageBase;
+import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
+import org.json.JSONObject;
 
 /**
  * This class manages the behavior for all of the introductory fragments as well
@@ -147,7 +150,7 @@ public class FragmentOrganizer extends Fragment {
 	 */
 	private View makeQRWrite(LayoutInflater inflater, ViewGroup container) {
         View view3 = inflater.inflate(R.layout.qr, container,
-                false);
+				false);
         TextView qrInput = (TextView) view3.findViewById(R.id.textView1);
         String qrInputText = qrInput.getText().toString();
         // Log.v(LOG_TAG, qrInputText);
@@ -328,6 +331,14 @@ public class FragmentOrganizer extends Fragment {
                 messageStore.addMessage(message, priority);
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
+
+				//BETA
+				JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(),"unknown_messageid",priority,message);
+				if(NetworkHandler.getInstance() != null){
+					NetworkHandler.getInstance().sendEventReport(report);
+				}
+				//BETA END
+
                 getActivity().setResult(1);
                 getActivity().finish();
             }

@@ -33,11 +33,15 @@ package org.denovogroup.rangzen.backend;
 import com.squareup.wire.Wire;
 import com.squareup.wire.Message;
 
+import android.bluetooth.BluetoothAdapter;
 import android.util.Log;
 
+import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.objects.CleartextFriends;
 import org.denovogroup.rangzen.objects.CleartextMessages;
 import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -48,6 +52,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Performs a single exchange with a Rangzen peer.
@@ -79,6 +84,10 @@ public class Exchange implements Runnable {
 
   /** Friends received from remote party. */
   private CleartextFriends mFriendsReceived;
+
+  //BETA
+  private String reportId;
+  private String partnerId;
 
   /** Send up to this many messages (top priority) from the message store. */
   private static final int NUM_MESSAGES_TO_SEND = 100;
@@ -147,13 +156,15 @@ public class Exchange implements Runnable {
    */
   public Exchange(InputStream in, OutputStream out, boolean asInitiator, 
                   FriendStore friendStore, MessageStore messageStore, 
-                  ExchangeCallback callback) throws IllegalArgumentException {
+                  ExchangeCallback callback, String reportId, String partnerId) throws IllegalArgumentException {
     this.in = in;
     this.out = out;
     this.friendStore = friendStore;
     this.messageStore = messageStore;
     this.asInitiator = asInitiator;
     this.callback = callback;
+    this.reportId = reportId;
+    this.partnerId = partnerId;
 
     // TODO(lerner): Probalby best to throw exceptions here, since these are fatal.
     // There's no point in trying to have an exchange without someone to talk to
@@ -222,6 +233,8 @@ public class Exchange implements Runnable {
    * object, and write that Message out to the output stream.
    */
   private void sendMessages() {
+    //BETA
+    List<String> reports = new ArrayList<>();
     List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
     for (int k=0; k<NUM_MESSAGES_TO_SEND; k++) {
       MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
@@ -232,11 +245,26 @@ public class Exchange implements Runnable {
                                      .text(messageFromStore.getMessage())
                                      .priority(messageFromStore.getPriority())
                                      .build());
+      //BETA
+      String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+      reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, "unknown_messageId", messageFromStore.getPriority(), Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()))));
     }
     CleartextMessages messagesMessage = new CleartextMessages.Builder()
                                                              .messages(messages)
                                                              .build();
-    lengthValueWrite(out, messagesMessage); 
+    if(lengthValueWrite(out, messagesMessage)){
+      //BETA
+      for(String id : reports){
+        if(NetworkHandler.getInstance() != null){
+          NetworkHandler.getInstance().sendEventReport(ReportsMaker.getBacklogedReport(id));
+          ReportsMaker.removeReport(id);
+        }
+      }
+    } else {
+      for(String id : reports){
+        ReportsMaker.removeReport(id);
+      }
+    }
   }
 
   /**
@@ -271,6 +299,12 @@ public class Exchange implements Runnable {
   private void receiveMessages() {
     CleartextMessages mMessagesReceived = lengthValueRead(in, CleartextMessages.class);
     this.mMessagesReceived = mMessagesReceived.messages;
+
+    //BETA
+    String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+    for(RangzenMessage message : this.mMessagesReceived){
+      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, "unknown_messageId", message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
+    }
   }
 
   /**
@@ -306,11 +340,11 @@ public class Exchange implements Runnable {
       return;
     }
     if (getExchangeStatus() == Status.SUCCESS) {
-      callback.success(this);
+      callback.success(this, reportId);
       return;
 
     } else {
-      callback.failure(this, mErrorMessage);
+      callback.failure(this, mErrorMessage, reportId);
       return;
     }
   }
@@ -487,7 +521,7 @@ public class Exchange implements Runnable {
     
     // TODO(lerner): Add noise.
     return Math.max(fractionOfFriendsPriority(remote, commonFriends, myFriends),
-                    stored);
+            stored);
   }
 
   /** Compute the priority score for a person normalized by his number of friends.
@@ -508,5 +542,13 @@ public class Exchange implements Runnable {
       trustMultiplier = sharedFriends / (double) myFriends;
     }
     return priority * trustMultiplier;
-  } 
+  }
+
+  public String getReportId(){
+    return reportId;
+  }
+
+  public String getPartnerId(){
+    return partnerId;
+  }
 }
