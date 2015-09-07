@@ -132,6 +132,10 @@ public class BluetoothSpeaker {
     Log.d(TAG, "Finished creating BluetoothSpeaker.");
   }
 
+  public UUID getMyId(){
+    return mThisDeviceUUID;
+  }
+
   /**
    * Retrieve a BluetoothDevice corresponding to the given address.
    *
@@ -279,7 +283,7 @@ public class BluetoothSpeaker {
                              false,
                              new FriendStore(mContext, StorageBase.ENCRYPTION_DEFAULT),
                              new MessageStore(mContext, StorageBase.ENCRYPTION_DEFAULT),
-                             mContext.mExchangeCallback);
+                             mContext.mExchangeCallback, "", ""+UUID.nameUUIDFromBytes(mSocket.getRemoteDevice().getAddress().getBytes()));
     //mExchange.execute((Boolean) null);
     // Start the exchange.
     (new Thread(mExchange)).start();
@@ -317,10 +321,10 @@ public class BluetoothSpeaker {
     return new String(charArray, 0, 10);
   }
 
-  public void connect(Peer peer, PeerConnectionCallback callback) {
+  public void connect(Peer peer, PeerConnectionCallback callback, String reportId) {
     // Start connecting in a new thread, passing the callback and peer.
     // Return.
-    (new Thread(new ConnectionRunnable(peer, callback))).start();
+    (new Thread(new ConnectionRunnable(peer, callback, reportId))).start();
     return;
   }
 
@@ -349,6 +353,9 @@ public class BluetoothSpeaker {
     /** A callback to report success (and the open socket) or failure. */
     private PeerConnectionCallback mCallback;
 
+    //BETA
+    private String reportId;
+
     /**
      * Create a new ConnectionRunnable which will connect to the given peer
      * and report success or failure on the given callback.
@@ -356,9 +363,10 @@ public class BluetoothSpeaker {
      * @param peer A remote peer to connect to.
      * @param callback A PeerConnectionCallback to report success or failure.
      */
-    public ConnectionRunnable(Peer peer, PeerConnectionCallback callback) {
+    public ConnectionRunnable(Peer peer, PeerConnectionCallback callback, String reportId) {
       this.mPeer = peer;
       this.mCallback = callback;
+      this.reportId = reportId;
     }
     
     /**
@@ -367,7 +375,7 @@ public class BluetoothSpeaker {
     public void run() {
       BluetoothDevice device = mPeer.getNetwork().getBluetoothDevice();
       if (device == null) {
-        mCallback.failure("No bluetooth device for peer " + mPeer.toString());
+        mCallback.failure("No bluetooth device for peer " + mPeer.toString(), reportId);
         return;
       }
       UUID remoteUUID = getUUIDFromMACAddress(device.getAddress()); 
@@ -377,7 +385,7 @@ public class BluetoothSpeaker {
       } catch (IOException e) {
         mCallback.failure(
             String.format("Failed to create insecure RFCOMM socket to %s on peer %s. IOException: %s", 
-                           remoteUUID, mPeer, e)
+                           remoteUUID, mPeer, e),reportId
         );
         return;
       }
@@ -387,15 +395,15 @@ public class BluetoothSpeaker {
       } catch (IOException e) {
         mCallback.failure(
             String.format("Exception connceting to %s on peer %s. IOException: %s", 
-                           remoteUUID, mPeer, e)
+                           remoteUUID, mPeer, e),reportId
         );
         return;
       }
       if (socket.isConnected()) {
-        mCallback.success(socket);
+        mCallback.success(socket, reportId);
       } else {
         mCallback.failure(String.format("Socket to %s on %s wasn't connected after connection attempt.",
-                                        remoteUUID, mPeer));
+                                        remoteUUID, mPeer),reportId);
       }
     }
   }

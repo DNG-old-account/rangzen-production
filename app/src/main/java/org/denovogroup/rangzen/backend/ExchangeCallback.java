@@ -40,7 +40,7 @@ public interface ExchangeCallback {
    *
    * @param exchange The Exchange object which executed the completed exchange.
    */
-  public void success(Exchange exchange);
+  public void success(Exchange exchange, String reportId);
   
   /**
    * Called if the exchange failed (network failure, protocol violation, etc.)
@@ -48,5 +48,5 @@ public interface ExchangeCallback {
    * @param exchange The Exchange object which executed the failed exchange.
    * @param reason A string describing why the exchange failed.
    */
-  public void failure(Exchange exchange, String reason);
+  public void failure(Exchange exchange, String reason, String reportId);
 }

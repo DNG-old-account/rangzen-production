@@ -3,12 +3,18 @@ package org.denovogroup.rangzen.beta.locationtracking;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -16,6 +22,8 @@ import android.util.Log;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
+import org.json.JSONObject;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -48,6 +56,9 @@ public class TrackingService extends Service implements LocationListener {
     private static TrackedLocation lastLocationUpdate;
     private static boolean isFlushing = false;
     private static NotificationManager notificationManager;
+
+    private BroadcastReceiver networkStateReceiver;
+    private IntentFilter filter = new IntentFilter();
 
     @Nullable
     @Override
@@ -88,6 +99,22 @@ public class TrackingService extends Service implements LocationListener {
                 flushCache();
             }
         }, 0, UPDATE_TIME_INTERVAL);
+
+        //As a side job also listen to connectivity changes
+        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        networkStateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                ConnectivityManager cm = (ConnectivityManager) getSystemService(Service.CONNECTIVITY_SERVICE);
+                int networkType = intent.getIntExtra(ConnectivityManager.EXTRA_NETWORK_TYPE, -1);
+                NetworkInfo info = cm.getNetworkInfo(networkType);
+                if((networkType == ConnectivityManager.TYPE_BLUETOOTH || networkType == ConnectivityManager.TYPE_WIFI) && info != null) {
+                    JSONObject report = ReportsMaker.getNetworkStateChangedReport(System.currentTimeMillis(),info.getTypeName(),info.isAvailable());
+                    NetworkHandler.getInstance(context).sendEventReport(report);
+                }
+            }
+        };
+        registerReceiver(networkStateReceiver,filter);
     }
 
     private void showNotification() {
@@ -107,6 +134,8 @@ public class TrackingService extends Service implements LocationListener {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        unregisterReceiver(networkStateReceiver);
+
         locationManager.removeUpdates(this);
         stopForeground(true);
         Log.d(LOG_TAG, "Tracking service stopped");

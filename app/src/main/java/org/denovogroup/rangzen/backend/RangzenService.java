@@ -41,12 +41,19 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
 
+import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.System;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -306,7 +313,9 @@ public class RangzenService extends Service {
       Log.i(TAG, "Starting to connect to " + peer.toString());
       // The peer connection callback (defined elsewhere in the class) takes
       // the connect bluetooth socket and uses it to create a new Exchange.
-      mBluetoothSpeaker.connect(peer, mPeerConnectionCallback);
+        //BETA
+        String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(),System.currentTimeMillis(),0,0,0,null));
+      mBluetoothSpeaker.connect(peer, mPeerConnectionCallback, reportid);
     }
 
     /**
@@ -315,7 +324,7 @@ public class RangzenService extends Service {
      */
     /*package*/ PeerConnectionCallback mPeerConnectionCallback = new PeerConnectionCallback() {
       @Override
-      public void success(BluetoothSocket socket) {
+      public void success(BluetoothSocket socket, String reportId) {
         Log.i(TAG, "Callback says we're connected to " + socket.getRemoteDevice().toString());
         if (socket.isConnected()) {
           mSocket = socket;
@@ -327,22 +336,40 @@ public class RangzenService extends Service {
                 true,
                 new FriendStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT),
                 new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT),
-                RangzenService.this.mExchangeCallback);
+                RangzenService.this.mExchangeCallback, reportId, ""+UUID.nameUUIDFromBytes(socket.getRemoteDevice().getAddress().getBytes()));
             (new Thread(mExchange)).start();
           } catch (IOException e) {
+              //BETA
+              Map<String,Object> reportValues = new HashMap<String,Object>();
+              reportValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
+              reportValues.put(ReportsMaker.EVENT_ERRORS_KEY, "input/output stream from socket failed");
+              ReportsMaker.editReport(reportId, reportValues);
+              //BETA END
             Log.e(TAG, "Getting input/output stream from socket failed: " + e);
             Log.e(TAG, "Exchange not happening.");
-            RangzenService.this.cleanupAfterExchange();
+            RangzenService.this.cleanupAfterExchange(reportId);
           }
         } else {
+            //BETA
+            Map<String,Object> reportValues = new HashMap<String,Object>();
+            reportValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
+            reportValues.put(ReportsMaker.EVENT_ERRORS_KEY, "Socket connected, attempting exchange but socket claims not to be connected!");
+            ReportsMaker.editReport(reportId, reportValues);
+            //BETA END
           Log.w(TAG, "But the socket claims not to be connected!");
-          RangzenService.this.cleanupAfterExchange();
+          RangzenService.this.cleanupAfterExchange(reportId);
         }
       }
       @Override
-      public void failure(String reason) {
+      public void failure(String reason, String reportId) {
+          //BETA
+          Map<String,Object> reportValues = new HashMap<String,Object>();
+          reportValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
+          reportValues.put(ReportsMaker.EVENT_ERRORS_KEY, reason);
+          ReportsMaker.editReport(reportId, reportValues);
+          //BETA END
         Log.i(TAG, "Callback says we failed to connect: " + reason);
-        RangzenService.this.cleanupAfterExchange();
+        RangzenService.this.cleanupAfterExchange(reportId);
       }
     };
 
@@ -353,7 +380,13 @@ public class RangzenService extends Service {
      *
      * Is also used after a Bluetooth connection failure to cleanup.
      */
-    /* package */ void cleanupAfterExchange() {
+    /* package */ void cleanupAfterExchange(String reportId) {
+        //BETA
+        if(NetworkHandler.isNetworkConnected()) {
+            NetworkHandler.getInstance(getApplicationContext()).sendEventReport(ReportsMaker.getBacklogedReport(reportId));
+        }
+        ReportsMaker.removeReport(reportId);
+        //BETA END
       setConnecting(false);
       setLastExchangeTime();
       try {
@@ -382,11 +415,18 @@ public class RangzenService extends Service {
      */
     /* package */ ExchangeCallback mExchangeCallback = new ExchangeCallback() {
       @Override
-      public void success(Exchange exchange) {
+      public void success(Exchange exchange, String reportId) {
         List<RangzenMessage> newMessages = exchange.getReceivedMessages();
         int friendOverlap = exchange.getCommonFriends();
         Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
         Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
+          //BETA
+          Map<String,Object> reportValues = new HashMap<String,Object>();
+          reportValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, newMessages.size());
+          reportValues.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, newMessages.size());
+          reportValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
+          ReportsMaker.editReport(reportId, reportValues);
+          //BETA END
         for (RangzenMessage message : newMessages) {
           Set<String> myFriends = mFriendStore.getAllFriends();
           double stored = mMessageStore.getPriority(message.text);
@@ -399,19 +439,38 @@ public class RangzenService extends Service {
               mMessageStore.addMessage(message.text, newPriority);
             }
           } catch (IllegalArgumentException e) {
+              //BETA
+              Map<String,Object> reportsValues = new HashMap<String,Object>();
+              reportsValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, newMessages.size());
+              reportsValues.put(ReportsMaker.EVENT_FAILED_KEY, newMessages.size());
+              reportsValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
+              reportsValues.put(ReportsMaker.EVENT_ERRORS_KEY, String.format("Attempted to add/update message %s with priority (%f/%f)" +
+                              ", %d friends, %d friends in common",
+                      message.text, newPriority, message.priority,
+                      myFriends.size(), friendOverlap));
+              ReportsMaker.editReport(reportId, reportsValues);
+              //BETA END
             Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
                                     ", %d friends, %d friends in common",
                                     message.text, newPriority, message.priority, 
                                     myFriends.size(), friendOverlap));
           }
         }
-        RangzenService.this.cleanupAfterExchange();
+        RangzenService.this.cleanupAfterExchange(reportId);
       }
 
       @Override
-      public void failure(Exchange exchange, String reason) {
+      public void failure(Exchange exchange, String reason, String reportId) {
+          //BETA
+          Map<String,Object> reportValues = new HashMap<String,Object>();
+          reportValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, exchange.getReceivedMessages().size());
+          reportValues.put(ReportsMaker.EVENT_FAILED_KEY, exchange.getReceivedMessages().size());
+          reportValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
+          reportValues.put(ReportsMaker.EVENT_ERRORS_KEY, reason);
+          ReportsMaker.editReport(reportId, reportValues);
+          //BETA END
         Log.e(TAG, "Exchange failed, reason: " + reason);
-        RangzenService.this.cleanupAfterExchange();
+        RangzenService.this.cleanupAfterExchange(reportId);
       }
     };
 

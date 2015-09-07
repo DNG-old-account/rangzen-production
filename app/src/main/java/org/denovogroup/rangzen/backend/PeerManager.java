@@ -30,10 +30,16 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+
+import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
+import org.json.JSONObject;
+
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -43,6 +49,7 @@ import java.util.List;
 import java.util.Date;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * This module exposes an API for the application to find out the current 
@@ -56,6 +63,8 @@ public class PeerManager {
    * app components can call methods in its API.
    */
   private static PeerManager sPeerManager;
+
+  private static Context context;
 
   // TODO(lerner): I suspect we want to convert this to a Set eventually, since
   // that best represents the set of peers we can see (unordered, each is
@@ -103,11 +112,12 @@ public class PeerManager {
    * Private constructor. Use PeerManager.getInstance() to obtain the app's
    * instance of the class.
    *
-   * @param context A context object from the app.
+   * @param ctx A context object from the app.
    */
-  private PeerManager(Context context) {
+  private PeerManager(Context ctx) {
+    context = ctx;
     mCurrentPeers = new ArrayList<Peer>();
-    mBroadcastManager = LocalBroadcastManager.getInstance(context); 
+    mBroadcastManager = LocalBroadcastManager.getInstance(ctx);
 
     Log.d(TAG, "Finished PeerManager constructor.");
   }
@@ -278,6 +288,18 @@ public class PeerManager {
       touchPeer(p);
       return false;
     } else {
+      //BETA
+      if(context != null && NetworkHandler.getInstance(context).isNetworkConnected()){
+        try {
+          String mPeerDeviceUUID = ""+ UUID.nameUUIDFromBytes(p.getNetwork().getBluetoothDevice().getAddress().getBytes());
+          String[] ids = {mPeerDeviceUUID};
+          JSONObject report = ReportsMaker.getDiscoveredDeviceReport(System.currentTimeMillis(),ids);
+          NetworkHandler.getInstance(context).sendEventReport(report);
+        } catch (NullPointerException e){
+          e.printStackTrace();
+        }
+      }
+      //BETA END
       mCurrentPeers.add(p);
       return true;
     }

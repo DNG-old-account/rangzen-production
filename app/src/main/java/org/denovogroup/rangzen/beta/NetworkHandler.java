@@ -1,9 +1,11 @@
 package org.denovogroup.rangzen.beta;
 
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.util.Log;
 
 import com.parse.ParseException;
 import com.parse.ParseInstallation;
@@ -14,7 +16,10 @@ import org.denovogroup.rangzen.beta.locationtracking.TrackedLocation;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.UUID;
 
 /**
  * Created by Liran on 8/31/2015.
@@ -36,6 +41,13 @@ public class NetworkHandler {
     //Location tracking keys
     private static final String LONGITUDE_KEY = "Longitude";
     private static final String LATITUDE_KEY = "Latitude";
+
+    public static NetworkHandler getInstance(){
+        if(instance == null || context == null){
+            return null;
+        }
+        return instance;
+    }
 
     public static NetworkHandler getInstance(Context ctx){
         if(instance == null){
@@ -64,9 +76,11 @@ public class NetworkHandler {
      * @return true if object was sent and received, false otherwise
      */
     public boolean sendLocation(TrackedLocation trackedLocation){
+        String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+
         if(trackedLocation != null){
             ParseObject testObject = new ParseObject("LocationTracking");
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(LONGITUDE_KEY, trackedLocation.longitude);
             testObject.put(LATITUDE_KEY, trackedLocation.latitude);
             testObject.put(TIMESTAMP_KEY, trackedLocation.timestamp);
@@ -96,7 +110,16 @@ public class NetworkHandler {
                 Iterator<?> keys = report.keys();
                 while(keys.hasNext()) {
                     String key = (String)keys.next();
-                    testObject.put(key, report.get(key));
+                    if(report.get(key) != null){
+                        if(report.get(key) instanceof Object[]){
+                            try {
+                                String[] strarr = (String[]) report.get(key);
+                                testObject.put(key, Arrays.asList(strarr));
+                            } catch (ClassCastException e){}
+                        } else {
+                            testObject.put(key, report.get(key));
+                        }
+                    }
                 }
                 testObject.save();
                 return true;

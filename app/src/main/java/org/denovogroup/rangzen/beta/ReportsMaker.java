@@ -1,5 +1,6 @@
 package org.denovogroup.rangzen.beta;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -8,6 +9,10 @@ import com.parse.ParseInstallation;
 import org.denovogroup.rangzen.backend.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Created by Liran on 9/1/2015.
@@ -20,20 +25,20 @@ import org.json.JSONObject;
  */
 public class ReportsMaker {
 
-    private static final String USERID_KEY = "Userid";
-    private static final String TIMESTAMP_KEY = "Timestamp";
-    private static final String TIME_KEY = "Time";
-    private static final String EVENT_TAG_KEY = "Tag";
-    private static final String EVENT_ACTION_KEY = "Action";
-    private static final String EVENT_MESSAGE_KEY = "Message";
-    private static final String EVENT_DEVICES_COUNT = "Devices_count";
-    private static final String EVENT_DEVICES_IDS = "Devices_Ids";
-    private static final String EVENT_CONNECTION_START_KEY = "Connection_start";
-    private static final String EVENT_CONNECTION_FINISH_KEY = "Connection_finish";
-    private static final String EVENT_EXCHANGED_KEY = "Exchanged_count";
-    private static final String EVENT_SUCCESSFUL_KEY = "Successful_count";
-    private static final String EVENT_FAILED_KEY = "Failed_count";
-    private static final String EVENT_ERRORS_KEY = "Errors";
+    public static final String USERID_KEY = "Userid";
+    public static final String TIMESTAMP_KEY = "Timestamp";
+    public static final String TIME_KEY = "Time";
+    public static final String EVENT_TAG_KEY = "Tag";
+    public static final String EVENT_ACTION_KEY = "Action";
+    public static final String EVENT_MESSAGE_KEY = "Message";
+    public static final String EVENT_DEVICES_COUNT = "Devices_count";
+    public static final String EVENT_DEVICES_IDS = "Devices_Ids";
+    public static final String EVENT_CONNECTION_START_KEY = "Connection_start";
+    public static final String EVENT_CONNECTION_FINISH_KEY = "Connection_finish";
+    public static final String EVENT_EXCHANGED_KEY = "Exchanged_count";
+    public static final String EVENT_SUCCESSFUL_KEY = "Successful_count";
+    public static final String EVENT_FAILED_KEY = "Failed_count";
+    public static final String EVENT_ERRORS_KEY = "Errors";
 
     public static class LogEvent{
         public static class event_tag{
@@ -62,29 +67,75 @@ public class ReportsMaker {
         }
     }
 
-    private static final String EVENT_PRIORITY_KEY = "Priority";
-    private static final String EVENT_OLD_PRIORITY_KEY = "OldPriority";
-    private static final String EVENT_SENDER_KEY = "Sender";
-    private static final String EVENT_RECEIVER_KEY = "Receiver";
-    private static final String EVENT_MESSAGE_ID_KEY = "Message_id";
-    private static final String EVENT_MUTUAL_FRIENDS_KEY = "Mutual_friends";
-    private static final String EVENT_NETWORK_TYPE_KEY = "Network_type";
-    private static final String EVENT_NETWORK_STATE_KEY = "Network_state";
+    public static final String EVENT_PRIORITY_KEY = "Priority";
+    public static final String EVENT_OLD_PRIORITY_KEY = "OldPriority";
+    public static final String EVENT_SENDER_KEY = "Sender";
+    public static final String EVENT_RECEIVER_KEY = "Receiver";
+    public static final String EVENT_MESSAGE_ID_KEY = "Message_id";
+    public static final String EVENT_MUTUAL_FRIENDS_KEY = "Mutual_friends";
+    public static final String EVENT_NETWORK_TYPE_KEY = "Network_type";
+    public static final String EVENT_NETWORK_STATE_KEY = "Network_state";
 
-    private static final String AGGREGATE_FILE_NAME = "Saved_statistics";
-    private static final String AGGREGATE_SEARCHES_KEY = "Searchs";
-    private static final String AGGREGATE_HASHTAGS_KEY = "Hashtags";
-    private static final String AGGREGATE_FRIENDS_VIA_QR_KEY = "Friends_via_QR";
-    private static final String AGGREGATE_FRIENDS_VIA_BOOK_KEY = "Friends_via_Book";
-    private static final String AGGREGATE_NOTIFICATIONS_KEY = "Notifications";
-    private static final String AGGREGATE_TEXTS_KEY= "Texts";
-    private static final String AGGREGATE_LOCATIONS_KEY = "Locations";
-    private static final String AGGREGATE_PICTURES_KEY = "Pictures";
+    public static final String AGGREGATE_FILE_NAME = "Saved_statistics";
+    public static final String AGGREGATE_SEARCHES_KEY = "Searchs";
+    public static final String AGGREGATE_HASHTAGS_KEY = "Hashtags";
+    public static final String AGGREGATE_FRIENDS_VIA_QR_KEY = "Friends_via_QR";
+    public static final String AGGREGATE_FRIENDS_VIA_BOOK_KEY = "Friends_via_Book";
+    public static final String AGGREGATE_NOTIFICATIONS_KEY = "Notifications";
+    public static final String AGGREGATE_TEXTS_KEY= "Texts";
+    public static final String AGGREGATE_LOCATIONS_KEY = "Locations";
+    public static final String AGGREGATE_PICTURES_KEY = "Pictures";
+
+    private static Map<String,JSONObject> pendingReports = new HashMap<String, JSONObject>();
+
+
+    /** add a report to backlog for later use, does not send the report
+     *
+     * @param report the report to add
+     * @return the report id required to retrieve the report from the backlog
+     */
+    public static String prepReport(JSONObject report){
+        String reportId = ""+System.currentTimeMillis();
+        pendingReports.put(reportId, report);
+        return reportId;
+    }
+
+    /**retrieve a report from the backlog if exists
+     * @param reportId the id of the report to return
+     * @return
+     */
+    public static JSONObject getBacklogedReport(String reportId){
+        return pendingReports.get(reportId);
+    }
+
+    /** change a property for a backloged report
+     *
+     * @param reportId the backlog id to edit
+     * @param values a map of values to edit
+     */
+    public static void editReport(String reportId, Map<String,Object> values){
+        JSONObject report = pendingReports.get(reportId);
+        if(report != null) {
+            for (Map.Entry entry : values.entrySet()) {
+                try {
+                    report.put((String) entry.getKey(), entry.getValue());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /** remove a report from the backlog */
+    public static void removeReport(String reportId){
+        pendingReports.remove(reportId);
+    }
 
     public static JSONObject getReceivedFriendsReport(long timestamp){
         try {
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.SOCIAL_GRAPH);
@@ -95,10 +146,11 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getMessageExchangeReport(long timestamp, String sender, String receiver, String messageId, float priority, float mutualFriends){
+    public static JSONObject getMessageExchangeReport(long timestamp, String sender, String receiver, String messageId, double priority, float mutualFriends){
         try{
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
@@ -117,8 +169,9 @@ public class ReportsMaker {
 
     public static JSONObject getMessageReweetedReport(long timestamp, String messageId, float priority, String message){
         try{
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
@@ -135,8 +188,9 @@ public class ReportsMaker {
 
     public static JSONObject getMessagePostedReport(long timestamp, String messageId, float priority, String message){
         try {
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
@@ -153,8 +207,9 @@ public class ReportsMaker {
 
     public static JSONObject getMessagePriorityChangedByUserReport(long timestamp, String messageId, float oldPriority, float newPriority, String message){
         try {
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
@@ -172,8 +227,9 @@ public class ReportsMaker {
 
     public static JSONObject getMessageDeletedReport(long timestamp, String messageId, float priority, String message){
         try {
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
@@ -190,8 +246,9 @@ public class ReportsMaker {
 
     public static JSONObject getMessagePriorityChangedBySystemReport(long timestamp, String messageId, float oldPriority, float newPriority, String message){
         try {
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
@@ -209,8 +266,9 @@ public class ReportsMaker {
 
     public static JSONObject getNetworkStateChangedReport(long timestamp, String networkType, boolean isOn){
         try {
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.NETWORK);
@@ -226,8 +284,9 @@ public class ReportsMaker {
 
     public static JSONObject getNetworkErrorReport(long timestamp, String networkType, String message){
         try {
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.NETWORK);
@@ -243,8 +302,9 @@ public class ReportsMaker {
 
     public static JSONObject getDiscoveredDeviceReport(long timestamp, String[] devicesIds){
         try {
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.NETWORK);
@@ -258,10 +318,11 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getConnectedDeviceReport(long start, long finish, int exchangedCount, int successful, int failed, String[] errors){
+    public static JSONObject getConnectedDeviceReport(long start, long finish, int exchangedCount, int successful, int failed, String errors){
         try {
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.NETWORK);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Network.CONNECTED_DEVICE);
             testObject.put(EVENT_CONNECTION_START_KEY, start);
@@ -269,7 +330,7 @@ public class ReportsMaker {
             testObject.put(EVENT_EXCHANGED_KEY, exchangedCount);
             testObject.put(EVENT_SUCCESSFUL_KEY, successful);
             testObject.put(EVENT_FAILED_KEY, failed);
-            testObject.put(EVENT_ERRORS_KEY, (errors!= null) ? errors : new String[]{});
+            testObject.put(EVENT_ERRORS_KEY, (errors!= null) ? errors : "");
             return testObject;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -282,8 +343,9 @@ public class ReportsMaker {
      */
     private static JSONObject getUiEventReport(long timestamp, int searches, int hashtags, int addedFriendsViaQR, int addedFriendsViaBook, int texts, int locations, int pictures){
         try {
+            String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
-            testObject.put(USERID_KEY, ParseInstallation.getCurrentInstallation());
+            testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.UI);
