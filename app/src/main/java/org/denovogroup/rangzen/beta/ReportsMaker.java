@@ -12,6 +12,7 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -43,7 +44,7 @@ public class ReportsMaker {
     public static class LogEvent{
         public static class event_tag{
             static final String SOCIAL_GRAPH = "SOCIAL_GRAPH";
-            static final String MESSAGE = "SOCIAL_GRAPH";
+            static final String MESSAGE = "MESSAGE";
             static final String NETWORK = "NETWORK";
             static final String UI = "UI";
         }
@@ -95,7 +96,8 @@ public class ReportsMaker {
      * @return the report id required to retrieve the report from the backlog
      */
     public static String prepReport(JSONObject report){
-        String reportId = ""+System.currentTimeMillis();
+        Random r = new Random();
+        String reportId = System.currentTimeMillis()+""+ r.nextInt(1000);
         pendingReports.put(reportId, report);
         return reportId;
     }
@@ -167,7 +169,7 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getMessageReweetedReport(long timestamp, String messageId, float priority, String message){
+    public static JSONObject getMessageReweetedReport(long timestamp, String messageId, double priority, String message){
         try{
             String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
@@ -186,7 +188,7 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getMessagePostedReport(long timestamp, String messageId, float priority, String message){
+    public static JSONObject getMessagePostedReport(long timestamp, String messageId, double priority, String message){
         try {
             String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
@@ -205,7 +207,7 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getMessagePriorityChangedByUserReport(long timestamp, String messageId, float oldPriority, float newPriority, String message){
+    public static JSONObject getMessagePriorityChangedByUserReport(long timestamp, String messageId, double oldPriority, double newPriority, String message){
         try {
             String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
@@ -225,7 +227,7 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getMessageDeletedReport(long timestamp, String messageId, float priority, String message){
+    public static JSONObject getMessageDeletedReport(long timestamp, String messageId, double priority, String message){
         try {
             String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
@@ -244,7 +246,7 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getMessagePriorityChangedBySystemReport(long timestamp, String messageId, float oldPriority, float newPriority, String message){
+    public static JSONObject getMessagePriorityChangedBySystemReport(long timestamp, String messageId, double oldPriority, double newPriority, String message){
         try {
             String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();

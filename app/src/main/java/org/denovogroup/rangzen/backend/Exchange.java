@@ -221,9 +221,10 @@ public class Exchange implements Runnable {
         break;
       }
       messages.add(new RangzenMessage.Builder()
-                                     .text(messageFromStore.getMessage())
-                                     .priority(messageFromStore.getPriority())
-                                     .build());
+              .text(messageFromStore.getMessage())
+              .priority(messageFromStore.getPriority())
+              .mId(messageFromStore.getMId())
+              .build());
     }
     return messages;
   }
@@ -242,12 +243,14 @@ public class Exchange implements Runnable {
         break;
       }
       messages.add(new RangzenMessage.Builder()
-                                     .text(messageFromStore.getMessage())
-                                     .priority(messageFromStore.getPriority())
-                                     .build());
+              .text(messageFromStore.getMessage())
+              .priority(messageFromStore.getPriority())
+              .mId(messageFromStore.getMId())
+              .build());
       //BETA
       String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-      reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, "unknown_messageId", messageFromStore.getPriority(), Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()))));
+      reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, messageFromStore.getMId(), messageFromStore.getPriority(), Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()))));
+      if(!messageFromStore.isMine()) reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), messageFromStore.getMId(), messageFromStore.getPriority(),messageFromStore.getMessage())));
     }
     CleartextMessages messagesMessage = new CleartextMessages.Builder()
                                                              .messages(messages)
@@ -303,7 +306,7 @@ public class Exchange implements Runnable {
     //BETA
     String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
     for(RangzenMessage message : this.mMessagesReceived){
-      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, "unknown_messageId", message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
+      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, message.mId, message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
     }
   }
 

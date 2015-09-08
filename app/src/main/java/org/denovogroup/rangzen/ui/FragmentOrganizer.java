@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.ui;
 
 import com.google.zxing.common.BitMatrix;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -63,6 +64,9 @@ import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.json.JSONObject;
+
+import java.util.Random;
+import java.util.UUID;
 
 /**
  * This class manages the behavior for all of the introductory fragments as well
@@ -328,12 +332,13 @@ public class FragmentOrganizer extends Fragment {
                 String message = ((TextView) getActivity().findViewById(
                         R.id.editText1)).getText().toString();
                 float priority = 1.0f;
-                messageStore.addMessage(message, priority);
+				String mId = UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes())+"_"+System.currentTimeMillis();
+                messageStore.addMessage(message, priority, mId);
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
 
 				//BETA
-				JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(),"unknown_messageid",priority,message);
+				JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(),mId,priority,message);
 				if(NetworkHandler.getInstance() != null){
 					NetworkHandler.getInstance().sendEventReport(report);
 				}

@@ -156,8 +156,12 @@ public class CryptographicExchange extends Exchange {
         if(NetworkHandler.getInstance() != null){
           String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
           for(RangzenMessage message : cm.messages){
-              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), "unknown_messageId", message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
+              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), message.mId, message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
               NetworkHandler.getInstance().sendEventReport(report);
+              if(!message.isMine()){
+                JSONObject report2 = ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), message.mId, message.priority,message.text);
+                NetworkHandler.getInstance().sendEventReport(report2);
+              }
           }
         }
     }
@@ -193,7 +197,7 @@ public class CryptographicExchange extends Exchange {
     //BETA
     String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
     for(RangzenMessage message : mMessagesReceived){
-      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(),mThisDeviceUUID, "unknown_messageId", message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
+      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(),mThisDeviceUUID, message.mId, message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
       NetworkHandler.getInstance().sendEventReport(report);
     }
     //BETA END

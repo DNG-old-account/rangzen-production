@@ -30,6 +30,7 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 
@@ -43,6 +44,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 
 /**
  * Storage for Rangzen messages that uses StorageBase underneath. If
@@ -67,6 +69,8 @@ public class MessageStore {
    * priorities.
    */
   private static final String MESSAGE_PRIORITY_KEY = "RangzenMessagePriority-";
+
+  private static final String MESSAGE_ID_KEY = "rangzenMessageId-";
 
   /**
    * The number of bins to use for storing messages. Each bin stores
@@ -119,6 +123,10 @@ public class MessageStore {
    */
   private static String getMessagePriorityKey(String msg) {
     return MESSAGE_PRIORITY_KEY + msg;
+  }
+
+  private static String getMessageIdKey(String msg){
+    return MESSAGE_ID_KEY + msg;
   }
 
   /**
@@ -188,13 +196,15 @@ public class MessageStore {
    * @return Returns true if the message was added. If the message already
    *         exists, does not modify the store and returns false.
    */
-  public boolean addMessage(String msg, double priority) {
+  public boolean addMessage(String msg, double priority, String mId) {
     checkPriority(priority);
 
     // Check whether we have the message already (perhaps in another bin).
     // TODO(barath): Consider improving performance by selecting a different
     // key.
     String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
+
+    String msgIdKey = MESSAGE_ID_KEY + msg;
 
     // A value less than all priorities in the store.
     final double MIN_PRIORITY = -1.0f;
@@ -215,6 +225,7 @@ public class MessageStore {
     store.putDouble(msgPriorityKey, priority);
     msgs.add(msg);
     store.putSet(binKey, msgs);
+    store.put(msgIdKey, mId);
     
     /** Sending the broadcast here when a message is added to the phone. **/
     Intent intent = new Intent();
@@ -299,6 +310,10 @@ public class MessageStore {
    */
   public double getMessagePriority(String msg, double defvalue) {
     return store.getDouble(getMessagePriorityKey(msg), defvalue);
+  }
+
+  public String getMessageId(String msg) {
+    return ""+store.get(getMessageIdKey(msg));
   }
 
   /**
@@ -390,7 +405,8 @@ public class MessageStore {
 
       for (String m : msgs) {
         double priority = getMessagePriority(m, -1);
-        topk.add(new Message(priority, m));
+        String mId = getMessageId(m);
+        topk.add(new Message(priority, m, mId));
       }
     }
     Collections.sort(topk, new Comparator<Message>() {
@@ -426,10 +442,13 @@ public class MessageStore {
     private double mPriority;
     /** The contents of the message. */
     private String mMessage;
+    /** The id of the message. */
+    private String mId;
 
-    public Message(double priority, String message) {
+    public Message(double priority, String message, String id) {
       mPriority = priority;
       mMessage = message;
+      mId = id;
     }
 
     public String getMessage() {
@@ -438,6 +457,15 @@ public class MessageStore {
 
     public double getPriority() {
       return mPriority;
+    }
+
+    public String getMId() {
+      return mId;
+    }
+
+    public boolean isMine() {
+      String myUuid = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+      return (this.mId != null) ? this.mId.contains(myUuid) : false;
     }
   }
 }

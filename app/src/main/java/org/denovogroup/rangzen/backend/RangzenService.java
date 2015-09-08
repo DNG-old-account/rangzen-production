@@ -436,7 +436,7 @@ public class RangzenService extends Service {
             if (mMessageStore.contains(message.text)) {
               mMessageStore.updatePriority(message.text, newPriority);
             } else {
-              mMessageStore.addMessage(message.text, newPriority);
+              mMessageStore.addMessage(message.text, newPriority, message.mId);
             }
           } catch (IllegalArgumentException e) {
               //BETA
@@ -463,11 +463,13 @@ public class RangzenService extends Service {
       public void failure(Exchange exchange, String reason, String reportId) {
           //BETA
           Map<String,Object> reportValues = new HashMap<String,Object>();
-          reportValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, exchange.getReceivedMessages().size());
-          reportValues.put(ReportsMaker.EVENT_FAILED_KEY, exchange.getReceivedMessages().size());
-          reportValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
-          reportValues.put(ReportsMaker.EVENT_ERRORS_KEY, reason);
-          ReportsMaker.editReport(reportId, reportValues);
+          if(exchange.getReceivedMessages() != null) {
+              reportValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, exchange.getReceivedMessages().size());
+              reportValues.put(ReportsMaker.EVENT_FAILED_KEY, exchange.getReceivedMessages().size());
+              reportValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
+              reportValues.put(ReportsMaker.EVENT_ERRORS_KEY, reason);
+              ReportsMaker.editReport(reportId, reportValues);
+          }
           //BETA END
         Log.e(TAG, "Exchange failed, reason: " + reason);
         RangzenService.this.cleanupAfterExchange(reportId);

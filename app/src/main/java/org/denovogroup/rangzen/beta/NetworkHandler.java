@@ -106,7 +106,7 @@ public class NetworkHandler {
         if(report != null){
             try {
                 //Convert to parse object
-                ParseObject testObject = new ParseObject("EventTracking");
+                ParseObject testObject = new ParseObject(report.getString(ReportsMaker.EVENT_TAG_KEY));
                 Iterator<?> keys = report.keys();
                 while(keys.hasNext()) {
                     String key = (String)keys.next();
