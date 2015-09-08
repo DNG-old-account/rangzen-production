@@ -44,6 +44,7 @@ import android.os.IBinder;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -434,6 +435,11 @@ public class RangzenService extends Service {
           double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
           try {
             if (mMessageStore.contains(message.text)) {
+                //BETA
+                double oldPriority = message.priority;
+                JSONObject report = ReportsMaker.getMessagePriorityChangedBySystemReport(System.currentTimeMillis(),message.mId, oldPriority,newPriority,message.text);
+                NetworkHandler.getInstance(getApplicationContext()).sendEventReport(report);
+                //BETA END
               mMessageStore.updatePriority(message.text, newPriority);
             } else {
               mMessageStore.addMessage(message.text, newPriority, message.mId);
