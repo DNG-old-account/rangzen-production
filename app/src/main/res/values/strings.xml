@@ -60,4 +60,7 @@
     <string name="TrackingServiceNotificationTitle">Rangzen Tracking service</string>
     <string name="TrackingServiceNotification">Please do not turn this off during the beta</string>
 
+    <string name="Upvote">Upvote</string>
+    <string name="Downvote">Downvote</string>
+
 </resources>

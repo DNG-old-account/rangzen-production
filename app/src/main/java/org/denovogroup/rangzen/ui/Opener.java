@@ -59,9 +59,12 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.baoyz.swipemenulistview.SwipeMenuListView;
 
 /**
  * This class is the manager of all of the fragments that are clickable in the
@@ -80,7 +83,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     private static final String TAG = "Opener";
 
     // Create reciever object
-    private BroadcastReceiver receiver = new NewMessageReceiver();
+    private BroadcastReceiver receiver = new MessageEventReceiver();
 
     // Set When broadcast event will fire.
     private IntentFilter filter = new IntentFilter(MessageStore.NEW_MESSAGE);
@@ -110,6 +113,9 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        filter.addAction(MessageStore.DELETE_MESSAGE);
+
         setContentView(R.layout.drawer_layout);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         // activityRootView = drawerLayout;
@@ -363,13 +369,13 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     }
 
     /**
-     * Creates a new instance of the NewMessageReceiver and registers it every
+     * Creates a new instance of the MessageEventReceiver and registers it every
      * time that the app is available/brought to the user.
      */
     @Override
     protected void onResume() {
         super.onResume();
-        notifyDataSetChanged();
+        notifyDataSetChanged(ListFragmentOrganizer.FragmentType.FEED);
         registerReceiver(receiver, filter);
         Log.i(TAG, "Registered receiver");
     }
@@ -381,7 +387,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      * @author jesus
      * 
      */
-    public class NewMessageReceiver extends BroadcastReceiver {
+    public class MessageEventReceiver extends BroadcastReceiver {
 
         /**
          * When the receiver is activated then that means a message has been
@@ -399,21 +405,20 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
          */
         @Override
         public void onReceive(Context context, Intent intent) {
-            notifyDataSetChanged();
+            notifyDataSetChanged(ListFragmentOrganizer.FragmentType.FEED);
         }
     }
 
     /**
-     * Find the adapter and call its notifyDataSetChanged method.
+     * Request the specified listView to update its view
      */
-    private void notifyDataSetChanged() {
+    private void notifyDataSetChanged(ListFragmentOrganizer.FragmentType listType) {
         Fragment feed = getSupportFragmentManager().findFragmentById(
                 R.id.mainContent);
         if (feed instanceof ListFragmentOrganizer) {
             ListFragmentOrganizer org = (ListFragmentOrganizer) feed;
-            FeedListAdapter adapt = (FeedListAdapter) org.getListView()
-                    .getAdapter();
-            adapt.notifyDataSetChanged();
+
+            org.resetListAdapter(listType);
         }
     }
 }
