@@ -222,8 +222,8 @@ public class Exchange implements Runnable {
    * object, and write that Message out to the output stream.
    */
   private void sendMessages() {
-    List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
     for (int k=0; k<NUM_MESSAGES_TO_SEND; k++) {
+        List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
       MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
       if (messageFromStore == null) {
         break;
@@ -232,11 +232,12 @@ public class Exchange implements Runnable {
                                      .text(messageFromStore.getMessage())
                                      .priority(messageFromStore.getPriority())
                                      .build());
+
+        CleartextMessages messagesMessage = new CleartextMessages.Builder()
+                .messages(messages)
+                .build();
+        lengthValueWrite(out, messagesMessage);
     }
-    CleartextMessages messagesMessage = new CleartextMessages.Builder()
-                                                             .messages(messages)
-                                                             .build();
-    lengthValueWrite(out, messagesMessage); 
   }
 
   /**
@@ -269,8 +270,15 @@ public class Exchange implements Runnable {
    * Receive messages from the remote device.
    */
   private void receiveMessages() {
-    CleartextMessages mMessagesReceived = lengthValueRead(in, CleartextMessages.class);
-    this.mMessagesReceived = mMessagesReceived.messages;
+      try {
+          while(in.available() != 0) {
+              CleartextMessages mMessagesReceived = lengthValueRead(in, CleartextMessages.class);
+              if(this.mMessagesReceived == null) this.mMessagesReceived = new ArrayList<RangzenMessage>();
+              this.mMessagesReceived.addAll(mMessagesReceived.messages);
+          }
+      } catch (IOException e) {
+          e.printStackTrace();
+      }
   }
 
   /**

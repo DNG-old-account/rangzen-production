@@ -8,3 +8,4 @@
 .keystore
 /app/*.apk
 *.jks
+.idea/codeStyleSettings.xml

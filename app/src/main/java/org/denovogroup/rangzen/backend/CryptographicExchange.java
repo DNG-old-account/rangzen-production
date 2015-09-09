@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.backend;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection.ServerReplyTuple;
 import org.denovogroup.rangzen.objects.ClientMessage;
+import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.objects.ServerMessage;
 
 import java.io.InputStream;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.List;
 
 import android.util.Log;
 
@@ -140,11 +142,19 @@ public class CryptographicExchange extends Exchange {
    */
   private void sendClientMessage() throws IOException {
     ArrayList<ByteString> blindedFriends = Crypto.byteArraysToStrings(mClientPSI.encodeBlindedItems());
-    ClientMessage cm = new ClientMessage.Builder()
-                                        .messages(getMessages())
-                                        .blindedFriends(blindedFriends)
-                                        .build();
-    boolean success = lengthValueWrite(out, cm);
+      //create a message pool to be sent and send each message individually to allow partial data recovery in case of connection loss
+      boolean success = true;
+      List<RangzenMessage> messagesPool = getMessages();
+      for(RangzenMessage message : messagesPool){
+          List<RangzenMessage> messageWrapper = new ArrayList<>();
+          messageWrapper.add(message);
+          ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
+                  .blindedFriends(blindedFriends)
+                  .build();
+          if(!lengthValueWrite(out, cm)){
+              success = false;
+          }
+      }
     if (!success) {
       setExchangeStatus(Status.ERROR);
       setErrorMessage("Length/value write of client message failed.");
@@ -158,21 +168,26 @@ public class CryptographicExchange extends Exchange {
    * @return A ClientMessage sent by the remote party, or null in the case of an error.
    */
   private void receiveClientMessage() throws IOException {
-    mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
+      //inputStream.available return 0 only when the end of the stream has been reached, meaning all messages has been recovered
+      while(in.available() != 0) {
+          mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
     
-    if (mRemoteClientMessage == null) {
-      setExchangeStatus(Status.ERROR);
-      setErrorMessage("Remote client message was not received.");
-      throw new IOException("Remote client message not received.");
-    }
+        if (mRemoteClientMessage == null) {
+          setExchangeStatus(Status.ERROR);
+          setErrorMessage("Remote client message was not received.");
+          throw new IOException("Remote client message not received.");
+        }
 
-    if (mRemoteClientMessage.messages == null) {
-      setExchangeStatus(Status.ERROR);
-      setErrorMessage("Remote client messages field was null");
-      throw new IOException("Remote client messages field was null");
-    }
-
-    mMessagesReceived = mRemoteClientMessage.messages;
+        if (mRemoteClientMessage.messages == null) {
+          setExchangeStatus(Status.ERROR);
+          setErrorMessage("Remote client messages field was null");
+          throw new IOException("Remote client messages field was null");
+        }
+          //if recipient list is not instantiated yet create it
+        if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
+          //Add everything passed in the passed wrapper to the pool
+          mMessagesReceived.addAll(mRemoteClientMessage.messages);
+      }
   }
 
   /**
