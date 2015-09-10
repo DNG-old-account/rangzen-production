@@ -236,37 +236,39 @@ public class Exchange implements Runnable {
   private void sendMessages() {
     //BETA
     List<String> reports = new ArrayList<>();
-    List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
     for (int k=0; k<NUM_MESSAGES_TO_SEND; k++) {
-      MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
-      if (messageFromStore == null) {
-        break;
-      }
-      messages.add(new RangzenMessage.Builder()
-              .text(messageFromStore.getMessage())
-              .priority(messageFromStore.getPriority())
-              .mId(messageFromStore.getMId())
-              .build());
-      //BETA
-      String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-      reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, messageFromStore.getMId(), messageFromStore.getPriority(), Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()))));
-      if(!messageFromStore.isMine()) reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), messageFromStore.getMId(), messageFromStore.getPriority(),messageFromStore.getMessage())));
-    }
-    CleartextMessages messagesMessage = new CleartextMessages.Builder()
-                                                             .messages(messages)
-                                                             .build();
-    if(lengthValueWrite(out, messagesMessage)){
-      //BETA
-      for(String id : reports){
-        if(NetworkHandler.getInstance() != null){
-          NetworkHandler.getInstance().sendEventReport(ReportsMaker.getBacklogedReport(id));
-          ReportsMaker.removeReport(id);
+        List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
+        MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
+        if (messageFromStore == null) {
+            break;
         }
-      }
-    } else {
-      for(String id : reports){
-        ReportsMaker.removeReport(id);
-      }
+        messages.add(new RangzenMessage.Builder()
+                .text(messageFromStore.getMessage())
+                .priority(messageFromStore.getPriority())
+                .mId(messageFromStore.getMId())
+                .build());
+        //BETA
+        String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+        reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, messageFromStore.getMId(), messageFromStore.getPriority(), Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()))));
+        if (!messageFromStore.isMine())
+            reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), messageFromStore.getMId(), messageFromStore.getPriority(), messageFromStore.getMessage())));
+
+        CleartextMessages messagesMessage = new CleartextMessages.Builder()
+                .messages(messages)
+                .build();
+        if (lengthValueWrite(out, messagesMessage)) {
+            //BETA
+            for (String id : reports) {
+                if (NetworkHandler.getInstance() != null) {
+                    NetworkHandler.getInstance().sendEventReport(ReportsMaker.getBacklogedReport(id));
+                    ReportsMaker.removeReport(id);
+                }
+            }
+        } else {
+              for (String id : reports) {
+                  ReportsMaker.removeReport(id);
+              }
+        }
     }
   }
 
@@ -300,14 +302,17 @@ public class Exchange implements Runnable {
    * Receive messages from the remote device.
    */
   private void receiveMessages() {
-    CleartextMessages mMessagesReceived = lengthValueRead(in, CleartextMessages.class);
-    this.mMessagesReceived = mMessagesReceived.messages;
-
-    //BETA
-    String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-    for(RangzenMessage message : this.mMessagesReceived){
-      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, message.mId, message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
-    }
+      try {
+          while(in.available() != 0) {
+              CleartextMessages mMessagesReceived = lengthValueRead(in, CleartextMessages.class);
+              if(this.mMessagesReceived == null) this.mMessagesReceived = new ArrayList<RangzenMessage>();
+              this.mMessagesReceived.addAll(mMessagesReceived.messages);
+          }
+      } catch (IOException e) {}
+      for(RangzenMessage message : this.mMessagesReceived){
+          String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+          JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, message.mId, message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
+      }
   }
 
   /**

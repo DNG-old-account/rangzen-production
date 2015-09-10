@@ -48,240 +48,263 @@ import java.util.Set;
  * automatically encrypts and decrypts data before storing in Android.
  */
 public class StorageBase {
-  /** Specifies to not encrypt stored data in the backing store. */
-  public static final int ENCRYPTION_NONE = 1;
+    /**
+     * Specifies to not encrypt stored data in the backing store.
+     */
+    public static final int ENCRYPTION_NONE = 1;
 
-  /**
-   * Specifies to encrypt the stored data in the backing store using AES-GCM
-   *
-   * TODO(barath): Add support for this mode.
-   */
-  public static final int ENCRYPTION_AES_GCM = 2;
+    /**
+     * Specifies to encrypt the stored data in the backing store using AES-GCM
+     * <p/>
+     * TODO(barath): Add support for this mode.
+     */
+    public static final int ENCRYPTION_AES_GCM = 2;
 
-  /**
-   * Specifies to use the default setting for encryption.
-   *
-   * TODO(barath): Once we have settled on the encryption default, change this setting to use
-   * encryption rather than none.
-   */
-  public static final int ENCRYPTION_DEFAULT = ENCRYPTION_NONE;
+    /**
+     * Specifies to use the default setting for encryption.
+     * <p/>
+     * TODO(barath): Once we have settled on the encryption default, change this setting to use
+     * encryption rather than none.
+     */
+    public static final int ENCRYPTION_DEFAULT = ENCRYPTION_NONE;
 
-  /** A handle for the preferences store that this instance is using to back all storage calls. */
-  private SharedPreferences store;
+    /**
+     * A handle for the preferences store that this instance is using to back all storage calls.
+     */
+    private SharedPreferences store;
 
-  /** A handle for the editor that allows us to modify data in the store. */
-  private SharedPreferences.Editor editor;
+    /**
+     * A handle for the editor that allows us to modify data in the store.
+     */
+    private SharedPreferences.Editor editor;
 
-  /** The default local preferences file name used for storing all data. */
-  private static final String STORE_FILE_NAME = "RangzenData";
+    /**
+     * The default local preferences file name used for storing all data.
+     */
+    private static final String STORE_FILE_NAME = "RangzenData";
 
-  /**
-   * Creates a store for any Rangzen data, with a consistent application of encryption of that
-   * stored data, as specified.
-   *
-   * @param context The app instance for which to perform storage.
-   *
-   * @param encryptionMode The encryption mode to use for all calls using this instance.
-   */
-  public StorageBase(Context context, int encryptionMode) throws IllegalArgumentException {
-    // TODO(barath): Remove this check once we support more encryption modes.
-    if (encryptionMode != ENCRYPTION_NONE) {
-      throw new IllegalArgumentException("encryptionMode " + encryptionMode + " not supported.");
+    /**
+     * Creates a store for any Rangzen data, with a consistent application of encryption of that
+     * stored data, as specified.
+     *
+     * @param context        The app instance for which to perform storage.
+     * @param encryptionMode The encryption mode to use for all calls using this instance.
+     */
+    public StorageBase(Context context, int encryptionMode) throws IllegalArgumentException {
+        // TODO(barath): Remove this check once we support more encryption modes.
+        if (encryptionMode != ENCRYPTION_NONE) {
+            throw new IllegalArgumentException("encryptionMode " + encryptionMode + " not supported.");
+        }
+
+        store = context.getSharedPreferences(STORE_FILE_NAME, Context.MODE_PRIVATE);
+        editor = store.edit();
     }
 
-    store = context.getSharedPreferences(STORE_FILE_NAME, Context.MODE_PRIVATE);
-    editor = store.edit();
-  }
+    /**
+     * Stores the given key-value pair in the Rangzen generic store.
+     *
+     * @param key   The key under which to store the data.
+     * @param value The value to store.
+     */
+    public void put(String key, String value) {
+        // TODO(barath): Change this storage approach once we are encrypting.
+        editor.putString(key, value);
 
-  /**
-   * Stores the given key-value pair in the Rangzen generic store.
-   *
-   * @param key The key under which to store the data.
-   * @param value The value to store.
-   */
-  public void put(String key, String value) {
-    // TODO(barath): Change this storage approach once we are encrypting.
-    editor.putString(key, value);
+        // TODO(barath): Consider whether we should use .commit() instead of apply().
+        editor.apply();
+    }
 
-    // TODO(barath): Consider whether we should use .commit() instead of apply().
-    editor.apply();
-  }
+    /**
+     * Stores the given object in the Rangzen generic store, using Java's object
+     * serialization and base64 coding.
+     *
+     * @param key   The key under which to store the data.
+     * @param value The object to store, which must be serializable.
+     */
+    public void putObject(String key, Object value) throws IOException,
+            StreamCorruptedException, OptionalDataException {
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        ObjectOutputStream o = new ObjectOutputStream(b);
+        o.writeObject(value);
+        o.close();
 
-  /**
-   * Stores the given object in the Rangzen generic store, using Java's object
-   * serialization and base64 coding.
-   *
-   * @param key The key under which to store the data.
-   * @param value The object to store, which must be serializable.
-   */
-  public void putObject(String key, Object value) throws IOException,
-         StreamCorruptedException, OptionalDataException {
-    ByteArrayOutputStream b = new ByteArrayOutputStream();
-    ObjectOutputStream o = new ObjectOutputStream(b);
-    o.writeObject(value);
-    o.close();
+        put(key, new String(Base64.encode(b.toByteArray(), Base64.DEFAULT)));
+    }
 
-    put(key, new String(Base64.encode(b.toByteArray(), Base64.DEFAULT))); 
-  }
+    /**
+     * Stores the given set of strings in the Rangzen generic store.
+     *
+     * @param key    The key under which to store the data.
+     * @param values The values to store.
+     */
+    public void putSet(String key, Set<String> values) {
+        // TODO(barath): Change this storage approach once we are encrypting.
+        editor.putStringSet(key, values);
 
-  /**
-   * Stores the given set of strings in the Rangzen generic store.
-   *
-   * @param key The key under which to store the data.
-   * @param values The values to store.
-   */
-  public void putSet(String key, Set<String> values) {
-    // TODO(barath): Change this storage approach once we are encrypting.
-    editor.putStringSet(key, values);
+        // TODO(barath): Consider whether we should use .commit() instead of apply().
+        editor.apply();
+    }
 
-    // TODO(barath): Consider whether we should use .commit() instead of apply().
-    editor.apply();
-  }
+    /**
+     * Stores the given float in the Rangzen generic store.
+     *
+     * @param key   The key under which to store the data.
+     * @param value The value to store.
+     */
+    public void putFloat(String key, float value) {
+        // TODO(barath): Change this storage approach once we are encrypting.
+        editor.putFloat(key, value);
 
-  /**
-   * Stores the given float in the Rangzen generic store.
-   *
-   * @param key The key under which to store the data.
-   * @param value The value to store.
-   */
-  public void putFloat(String key, float value) {
-    // TODO(barath): Change this storage approach once we are encrypting.
-    editor.putFloat(key, value);
+        // TODO(barath): Consider whether we should use .commit() instead of apply().
+        editor.apply();
+    }
 
-    // TODO(barath): Consider whether we should use .commit() instead of apply().
-    editor.apply();
-  }
+    /**
+     * Remove the data associated with the given key from the
+     * Rangzen generic store.
+     *
+     * @param key   The key under which to store the data.
+     */
+    public void removeData(String key) {
+        // TODO(barath): Change this storage approach once we are encrypting.
+        // Doubles can't be stored directly, so we have to store them as converted
+        // to longs, since longs have the same number of bits.
+        editor.remove(key);
 
-  /**
-   * Stores the given float in the Rangzen generic store.
-   *
-   * @param key The key under which to store the data.
-   * @param value The value to store.
-   */
-  public void putDouble(String key, double value) {
-    // TODO(barath): Change this storage approach once we are encrypting.
-    // Doubles can't be stored directly, so we have to store them as converted
-    // to longs, since longs have the same number of bits.
-    editor.putLong(key, Double.doubleToLongBits(value));
+        // TODO(barath): Consider whether we should use .commit() instead of apply().
+        editor.apply();
+    }
 
-    // TODO(barath): Consider whether we should use .commit() instead of apply().
-    editor.apply();
-  }
+    /**
+     * Stores the given float in the Rangzen generic store.
+     *
+     * @param key   The key under which to store the data.
+     * @param value The value to store.
+     */
+    public void putDouble(String key, double value) {
+        // TODO(barath): Change this storage approach once we are encrypting.
+        // Doubles can't be stored directly, so we have to store them as converted
+        // to longs, since longs have the same number of bits.
+        editor.putLong(key, Double.doubleToLongBits(value));
 
-  /**
-   * Stores the given int in the Rangzen generic store.
-   *
-   * @param key The key under which to store the data.
-   * @param value The value to store.
-   */
-  public void putInt(String key, int value) {
-    // TODO(barath): Change this storage approach once we are encrypting.
-    editor.putInt(key, value);
+        // TODO(barath): Consider whether we should use .commit() instead of apply().
+        editor.apply();
+    }
 
-    // TODO(barath): Consider whether we should use .commit() instead of apply().
-    editor.apply();
-  }
+    /**
+     * Stores the given int in the Rangzen generic store.
+     *
+     * @param key   The key under which to store the data.
+     * @param value The value to store.
+     */
+    public void putInt(String key, int value) {
+        // TODO(barath): Change this storage approach once we are encrypting.
+        editor.putInt(key, value);
 
-  /**
-   * Stores the given long in the Rangzen generic store.
-   *
-   * @param key The key under which to store the data.
-   * @param value The value to store.
-   */
-  public void putLong(String key, long value) {
-    // TODO(barath): Change this storage approach once we are encrypting.
-    editor.putLong(key, value);
+        // TODO(barath): Consider whether we should use .commit() instead of apply().
+        editor.apply();
+    }
 
-    // TODO(barath): Consider whether we should use .commit() instead of apply().
-    editor.apply();
-  }
+    /**
+     * Stores the given long in the Rangzen generic store.
+     *
+     * @param key   The key under which to store the data.
+     * @param value The value to store.
+     */
+    public void putLong(String key, long value) {
+        // TODO(barath): Change this storage approach once we are encrypting.
+        editor.putLong(key, value);
 
-  /**
-   * Retrieves the value associated with the given key.
-   *
-   * @param key The key under which to retrieve a value from the store.
-   * @return The value requested or null if not found.
-   */
-  public String get(String key) {
-    // TODO(barath): Change this retrieval approach once we are encrypting.
-    return store.getString(key, null);
-  }
+        // TODO(barath): Consider whether we should use .commit() instead of apply().
+        editor.apply();
+    }
 
-  /**
-   * Retrieves the object associated with the given key.
-   *
-   * @param key The key under which to retrieve a object from the store.
-   * @return The object requested or null if not found.
-   */
-  public Object getObject(String key) throws IOException,
-         ClassNotFoundException, StreamCorruptedException, OptionalDataException {
-    String v = get(key);
-    if (v == null) return null;
+    /**
+     * Retrieves the value associated with the given key.
+     *
+     * @param key The key under which to retrieve a value from the store.
+     * @return The value requested or null if not found.
+     */
+    public String get(String key) {
+        // TODO(barath): Change this retrieval approach once we are encrypting.
+        return store.getString(key, null);
+    }
 
-    ObjectInputStream o = new ObjectInputStream(
-        new ByteArrayInputStream(Base64.decode(v, Base64.DEFAULT)));
-    return o.readObject();
-  }
+    /**
+     * Retrieves the object associated with the given key.
+     *
+     * @param key The key under which to retrieve a object from the store.
+     * @return The object requested or null if not found.
+     */
+    public Object getObject(String key) throws IOException,
+            ClassNotFoundException, StreamCorruptedException, OptionalDataException {
+        String v = get(key);
+        if (v == null) return null;
 
-  /**
-   * Retrieves the values associated with the given key.
-   *
-   * @param key The key under which to retrieve values from the store.
-   * @return The values requested or null if not found.
-   */
-  public Set<String> getSet(String key) {
-    // TODO(barath): Change this retrieval approach once we are encrypting.
-    return store.getStringSet(key, null);
-  }
+        ObjectInputStream o = new ObjectInputStream(
+                new ByteArrayInputStream(Base64.decode(v, Base64.DEFAULT)));
+        return o.readObject();
+    }
 
-  /**
-   * Retrieves the value associated with the given key.
-   *
-   * @param key The key under which to retrieve a value from the store.
-   * @param defvalue The default value to return if not found.
-   * @return The value requested or defvalue if not found.
-   */
-  public float getFloat(String key, float defvalue) {
-    // TODO(barath): Change this retrieval approach once we are encrypting.
-    return store.getFloat(key, defvalue);
-  }
-   
-  /**
-   * Retrieves the value associated with the given key.
-   *
-   * @param key The key under which to retrieve a value from the store.
-   * @param defvalue The default value to return if not found.
-   * @return The value requested or defvalue if not found.
-   */
-  public double getDouble(String key, double defvalue) {
-    // TODO(barath): Change this retrieval approach once we are encrypting.
-    // Stored as a long, so we have to convert it back to a double as we retrieve it.
-    // This is because SharedPreferences can't store doubles directly, but
-    // longs have the same number of bits as a double.
-    return Double.longBitsToDouble(store.getLong(key, Double.doubleToLongBits(defvalue)));
-  }
+    /**
+     * Retrieves the values associated with the given key.
+     *
+     * @param key The key under which to retrieve values from the store.
+     * @return The values requested or null if not found.
+     */
+    public Set<String> getSet(String key) {
+        // TODO(barath): Change this retrieval approach once we are encrypting.
+        return store.getStringSet(key, null);
+    }
 
-  /**
-   * Retrieves the value associated with the given key.
-   *
-   * @param key The key under which to retrieve a value from the store.
-   * @param defvalue The default value to return if not found.
-   * @return The value requested or defvalue if not found.
-   */
-  public int getInt(String key, int defvalue) {
-    // TODO(barath): Change this retrieval approach once we are encrypting.
-    return store.getInt(key, defvalue);
-  }
+    /**
+     * Retrieves the value associated with the given key.
+     *
+     * @param key      The key under which to retrieve a value from the store.
+     * @param defvalue The default value to return if not found.
+     * @return The value requested or defvalue if not found.
+     */
+    public float getFloat(String key, float defvalue) {
+        // TODO(barath): Change this retrieval approach once we are encrypting.
+        return store.getFloat(key, defvalue);
+    }
 
-  /**
-   * Retrieves the value associated with the given key.
-   *
-   * @param key The key under which to retrieve a value from the store.
-   * @param defvalue The default value to return if not found.
-   * @return The value requested or defvalue if not found.
-   */
-  public long getLong(String key, long defvalue) {
-    // TODO(barath): Change this retrieval approach once we are encrypting.
-    return store.getLong(key, defvalue);
-  }
+    /**
+     * Retrieves the value associated with the given key.
+     *
+     * @param key      The key under which to retrieve a value from the store.
+     * @param defvalue The default value to return if not found.
+     * @return The value requested or defvalue if not found.
+     */
+    public double getDouble(String key, double defvalue) {
+        // TODO(barath): Change this retrieval approach once we are encrypting.
+        // Stored as a long, so we have to convert it back to a double as we retrieve it.
+        // This is because SharedPreferences can't store doubles directly, but
+        // longs have the same number of bits as a double.
+        return Double.longBitsToDouble(store.getLong(key, Double.doubleToLongBits(defvalue)));
+    }
+
+    /**
+     * Retrieves the value associated with the given key.
+     *
+     * @param key      The key under which to retrieve a value from the store.
+     * @param defvalue The default value to return if not found.
+     * @return The value requested or defvalue if not found.
+     */
+    public int getInt(String key, int defvalue) {
+        // TODO(barath): Change this retrieval approach once we are encrypting.
+        return store.getInt(key, defvalue);
+    }
+
+    /**
+     * Retrieves the value associated with the given key.
+     *
+     * @param key      The key under which to retrieve a value from the store.
+     * @param defvalue The default value to return if not found.
+     * @return The value requested or defvalue if not found.
+     */
+    public long getLong(String key, long defvalue) {
+        // TODO(barath): Change this retrieval approach once we are encrypting.
+        return store.getLong(key, defvalue);
+    }
 }
