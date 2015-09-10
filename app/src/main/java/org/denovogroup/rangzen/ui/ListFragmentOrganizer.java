@@ -62,7 +62,7 @@ import org.denovogroup.rangzen.backend.Utils;
  */
 public class ListFragmentOrganizer extends Fragment {
 
-    private static final double PRIORITY_INCREMENT = 0.1d;
+    private static final double PRIORITY_INCREMENT = 0.01d;
     private boolean shouldRefreshList = false;
 
     /**
@@ -157,11 +157,37 @@ public class ListFragmentOrganizer extends Fragment {
 
                     switch (swipeMenu.getMenuItem(index).getId()) {
                         case upvoteItemId:
-                            store.updatePriority(message.getMessage(), message.getPriority() + PRIORITY_INCREMENT);
+                            double oneAbove = 0;
+                            double twoAbove = 0;
+                            if(position > 0) {
+                                MessageStore.Message aboveMessage = store.getKthMessage(position - 1);
+                                oneAbove = aboveMessage.getPriority();
+                                if(position > 1){
+                                    MessageStore.Message twoAboveMessage = store.getKthMessage(position - 2);
+                                    twoAbove = twoAboveMessage.getPriority();
+                                }
+                            }
+                            double addedPriority = Math.min(PRIORITY_INCREMENT,
+                                    (Math.max(0,oneAbove - message.getPriority())+(Math.max(0,twoAbove-oneAbove))/2));
+                            double newHigherPriority = message.getPriority() + ((addedPriority > 0) ? addedPriority : PRIORITY_INCREMENT);
+                            store.updatePriority(message.getMessage(), newHigherPriority);
                             updateViewDelayed = true;
                             break;
                         case downvoteItemId:
-                            store.updatePriority(message.getMessage(), message.getPriority() - PRIORITY_INCREMENT);
+                            double oneBelow = 0;
+                            double twoBelow = 0;
+                            if(position < store.getMessageCount() -1 ) {
+                                MessageStore.Message belowMessage = store.getKthMessage(position + 1);
+                                oneBelow = belowMessage.getPriority();
+                                if(position < store.getMessageCount() - 2){
+                                    MessageStore.Message twoBelowMessage = store.getKthMessage(position + 2);
+                                    twoBelow = twoBelowMessage.getPriority();
+                                }
+                            }
+                            double subtractedPriority = Math.min(PRIORITY_INCREMENT,
+                                    (Math.max(0,message.getPriority() - oneBelow)+(Math.max(0,oneBelow - twoBelow))/2));
+                            double newLowerPriority = message.getPriority() - ((subtractedPriority > 0) ? subtractedPriority : PRIORITY_INCREMENT);
+                            store.updatePriority(message.getMessage(), newLowerPriority);
                             updateViewDelayed = true;
                             break;
                         case deleteItemId:

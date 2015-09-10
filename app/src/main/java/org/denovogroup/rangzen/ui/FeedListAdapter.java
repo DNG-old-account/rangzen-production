@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.ui;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -125,8 +126,8 @@ public class FeedListAdapter extends BaseAdapter {
             mViewHolder = (ViewHolder) convertView.getTag();
         }
         mViewHolder.mHashtagView.setText(message.getMessage());
-        DecimalFormat formater = new DecimalFormat("#.##");
-        mViewHolder.mUpvoteView.setText(formater.format(message.getPriority()));
+
+        mViewHolder.mUpvoteView.setText(Integer.toString((int) Math.round(100 * message.getPriority())));
 
         return convertView;
     }

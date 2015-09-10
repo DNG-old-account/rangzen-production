@@ -240,7 +240,7 @@ public class MessageStore {
     }
 
     /**
-     * Update the priority of a message, if it exists in the store and supplied priority is within permitted range.
+     * Update the priority of a message, if it exists in the store
      *
      * @param msg      The message whose priority should be changed.
      * @param priority The new priority to set.
@@ -252,7 +252,7 @@ public class MessageStore {
             checkPriority(priority);
         } catch (IllegalArgumentException e){
             e.printStackTrace();
-            return false;
+            priority = (priority > MAX_PRIORITY_VALUE) ? MAX_PRIORITY_VALUE : MIN_PRIORITY_VALUE;
         }
 
         // A value less than all priorities in the store.
