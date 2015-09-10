@@ -71,11 +71,6 @@ public class MessageStore {
     public static final String NEW_MESSAGE = "org.denovogroup.rangzen.NEW_MESSAGE_ACTION";
 
     /**
-     * Intent action for message removal from the store.
-     */
-    public static final String DELETE_MESSAGE = "org.denovogroup.rangzen.DELETE_MESSAGE_ACTION";
-
-    /**
      * The internal key used in the underlying store for Rangzen message
      * priorities.
      */
@@ -101,7 +96,7 @@ public class MessageStore {
     /**
      * The max priority value.
      */
-    private static final double MAX_PRIORITY_VALUE = 2.0f;
+    private static final double MAX_PRIORITY_VALUE = 1.0f;
 
     // The default value that indicates not found.
     public static final double NOT_FOUND = -2.0f;
@@ -115,7 +110,7 @@ public class MessageStore {
             throws IllegalArgumentException {
         if (priority < MIN_PRIORITY_VALUE || priority > MAX_PRIORITY_VALUE) {
             throw new IllegalArgumentException("Priority " + priority
-                    + " is outside valid range of [0,2]");
+                    + " is outside valid range of ["+MIN_PRIORITY_VALUE+",+MAX"+MAX_PRIORITY_VALUE+"]");
         }
     }
 
@@ -245,15 +240,20 @@ public class MessageStore {
     }
 
     /**
-     * Update the priority of a message, if it exists in the store.
+     * Update the priority of a message, if it exists in the store and supplied priority is within permitted range.
      *
      * @param msg      The message whose priority should be changed.
      * @param priority The new priority to set.
      * @return True if the message was in the store (and its priority was changed),
      * false otherwise.
      */
-  /* package */ boolean updatePriority(String msg, double priority) {
-        checkPriority(priority);
+    public boolean updatePriority(String msg, double priority) {
+        try {
+            checkPriority(priority);
+        } catch (IllegalArgumentException e){
+            e.printStackTrace();
+            return false;
+        }
 
         // A value less than all priorities in the store.
         final double MIN_PRIORITY = -1.0f;
@@ -286,12 +286,10 @@ public class MessageStore {
      * Removes the given message from the store.
      *
      * @param msg The message to remove.
-     * @param priority The priority to associate with the message. The priority must
-     *                 be [0,1].
      * @return Returns true if the message was removed. If the message was not
      * found, returns false.
      */
-    public boolean deleteMessage(String msg, double priority) {
+    public boolean deleteMessage(String msg) {
 
         // TODO(barath): Consider improving performance by selecting a different
         // key.
@@ -307,21 +305,18 @@ public class MessageStore {
         }
 
         // Get the existing message set for the bin.
+        Double priority = store.getDouble(msgPriorityKey, NOT_FOUND);
+        if(priority == NOT_FOUND) return false;
+
         String binKey = getBinKeyForPriority(priority);
         Set<String> msgs = store.getSet(binKey);
-        if (msgs == null) {
-            return false;
-        }
+
+        if (msgs == null) return false;
 
         // Remove the message with the given priority, from the bin.
         store.removeData(msgPriorityKey);
         msgs.remove(msg);
         store.putSet(binKey, msgs);
-
-        /** Sending the broadcast here when a message is removed to the phone. **/
-        Intent intent = new Intent();
-        intent.setAction(DELETE_MESSAGE);
-        mContext.sendBroadcast(intent);
 
         return true;
     }

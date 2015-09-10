@@ -43,6 +43,8 @@ import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.StorageBase;
 
+import java.text.DecimalFormat;
+
 public class FeedListAdapter extends BaseAdapter {
 
     /** Activity context passed in to the FeedListAdapter. */
@@ -123,7 +125,8 @@ public class FeedListAdapter extends BaseAdapter {
             mViewHolder = (ViewHolder) convertView.getTag();
         }
         mViewHolder.mHashtagView.setText(message.getMessage());
-        mViewHolder.mUpvoteView.setText(Double.toString(message.getPriority()));
+        DecimalFormat formater = new DecimalFormat("#.##");
+        mViewHolder.mUpvoteView.setText(formater.format(message.getPriority()));
 
         return convertView;
     }

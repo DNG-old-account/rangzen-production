@@ -114,8 +114,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        filter.addAction(MessageStore.DELETE_MESSAGE);
-
         setContentView(R.layout.drawer_layout);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         // activityRootView = drawerLayout;

@@ -31,13 +31,13 @@
 
 package org.denovogroup.rangzen.ui;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.Display;
@@ -45,7 +45,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ListView;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuCreator;
@@ -63,7 +62,8 @@ import org.denovogroup.rangzen.backend.Utils;
  */
 public class ListFragmentOrganizer extends Fragment {
 
-
+    private static final double PRIORITY_INCREMENT = 0.1d;
+    private boolean shouldRefreshList = false;
 
     /**
      * There are two list Fragments in the ui, the feed and possibly the friends
@@ -121,7 +121,7 @@ public class ListFragmentOrganizer extends Fragment {
                     upvoteItem.setBackground(new ColorDrawable(Color.parseColor("#b7b7b7")));
                     upvoteItem.setWidth(Utils.dpToPx(60, getActivity()));
                     upvoteItem.setIcon(R.drawable.ic_thumb_up);
-                    upvoteItem.getIcon().setAlpha(60);
+                    upvoteItem.getIcon().setAlpha(65);
                     upvoteItem.setTitle(R.string.Upvote);
                     upvoteItem.setTitleSize(14);
                     upvoteItem.setTitleColor(Color.GRAY);
@@ -130,7 +130,7 @@ public class ListFragmentOrganizer extends Fragment {
                     SwipeMenuItem downvoteItem = new SwipeMenuItem(getActivity());
                     downvoteItem.setId(downvoteItemId);
                     downvoteItem.setBackground(new ColorDrawable(Color.parseColor("#b7b7b7")));
-                    downvoteItem.setWidth(Utils.dpToPx(60, getActivity()));
+                    downvoteItem.setWidth(Utils.dpToPx(65, getActivity()));
                     downvoteItem.setIcon(R.drawable.ic_thumb_down);
                     downvoteItem.getIcon().setAlpha(60);
                     downvoteItem.setTitle(R.string.Downvote);
@@ -153,18 +153,33 @@ public class ListFragmentOrganizer extends Fragment {
                 public boolean onMenuItemClick(int position, SwipeMenu swipeMenu, int index) {
                     MessageStore store = new MessageStore(getActivity(), StorageBase.ENCRYPTION_DEFAULT);
                     MessageStore.Message message = store.getKthMessage(position);
+                    boolean updateViewDelayed = false;
 
                     switch (swipeMenu.getMenuItem(index).getId()) {
                         case upvoteItemId:
-                            //TODO
+                            store.updatePriority(message.getMessage(), message.getPriority() + PRIORITY_INCREMENT);
+                            updateViewDelayed = true;
                             break;
                         case downvoteItemId:
-                            //TODO
+                            store.updatePriority(message.getMessage(), message.getPriority() - PRIORITY_INCREMENT);
+                            updateViewDelayed = true;
                             break;
                         case deleteItemId:
-                            store.deleteMessage(message.getMessage(), message.getPriority());
+                            store.deleteMessage(message.getMessage());
+                            resetListAdapter(FragmentType.FEED);
                             break;
                     }
+
+                    if(updateViewDelayed){
+                        Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                resetListAdapter(FragmentType.FEED);
+                            }
+                        }, 360);
+                    }
+
                     return false;
                 }
             });
