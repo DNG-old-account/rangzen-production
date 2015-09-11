@@ -55,6 +55,9 @@ import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.backend.Utils;
+import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
+import org.json.JSONObject;
 
 /**
  * This class is meant to be an organizer for the list views that will be
@@ -170,6 +173,10 @@ public class ListFragmentOrganizer extends Fragment {
                             double addedPriority = Math.min(PRIORITY_INCREMENT,
                                     (Math.max(0,oneAbove - message.getPriority())+(Math.max(0,twoAbove-oneAbove))/2));
                             double newHigherPriority = message.getPriority() + ((addedPriority > 0) ? addedPriority : PRIORITY_INCREMENT);
+                            //BETA
+                            JSONObject report = ReportsMaker.getMessagePriorityChangedByUserReport(System.currentTimeMillis(), message.getMId(),message.getPriority(),newHigherPriority,message.getMessage());
+                            NetworkHandler.getInstance(getActivity()).sendEventReport(report);
+                            //BETA END
                             store.updatePriority(message.getMessage(), newHigherPriority);
                             updateViewDelayed = true;
                             break;
@@ -187,10 +194,18 @@ public class ListFragmentOrganizer extends Fragment {
                             double subtractedPriority = Math.min(PRIORITY_INCREMENT,
                                     (Math.max(0,message.getPriority() - oneBelow)+(Math.max(0,oneBelow - twoBelow))/2));
                             double newLowerPriority = message.getPriority() - ((subtractedPriority > 0) ? subtractedPriority : PRIORITY_INCREMENT);
+                            //BETA
+                            JSONObject report2 = ReportsMaker.getMessagePriorityChangedByUserReport(System.currentTimeMillis(), message.getMId(),message.getPriority(),newLowerPriority,message.getMessage());
+                            NetworkHandler.getInstance(getActivity()).sendEventReport(report2);
+                            //BETA END
                             store.updatePriority(message.getMessage(), newLowerPriority);
                             updateViewDelayed = true;
                             break;
                         case deleteItemId:
+                            //BETA
+                            JSONObject report3 = ReportsMaker.getMessageDeletedReport(System.currentTimeMillis(),message.getMId(),message.getPriority(),message.getMessage());
+                            NetworkHandler.getInstance(getActivity()).sendEventReport(report3);
+                            //BETA END
                             store.deleteMessage(message.getMessage());
                             resetListAdapter(FragmentType.FEED);
                             break;

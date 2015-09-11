@@ -34,6 +34,7 @@ import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection.ServerReplyTuple;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
+import org.denovogroup.rangzen.beta.StopWatch;
 import org.denovogroup.rangzen.objects.ClientMessage;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.objects.ServerMessage;
@@ -146,11 +147,14 @@ public class CryptographicExchange extends Exchange {
    * from the message store and blinded friends from the friend store.
    */
   private void sendClientMessage() throws IOException {
+      //BETA
+      StopWatch watch = new StopWatch();
     ArrayList<ByteString> blindedFriends = Crypto.byteArraysToStrings(mClientPSI.encodeBlindedItems());
       //create a message pool to be sent and send each message individually to allow partial data recovery in case of connection loss
       boolean success = true;
       List<RangzenMessage> messagesPool = getMessages();
       for(RangzenMessage message : messagesPool){
+          watch.start();
           List<RangzenMessage> messageWrapper = new ArrayList<>();
           messageWrapper.add(message);
           ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
@@ -160,18 +164,18 @@ public class CryptographicExchange extends Exchange {
               success = false;
           } else {
               //BETA
-              if(success){
-                  if(NetworkHandler.getInstance() != null){
-                      String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-                      for(RangzenMessage msg : cm.messages){
-                          JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), msg.mId, msg.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
-                          NetworkHandler.getInstance().sendEventReport(report);
-                          if(!msg.isMine()){
-                              JSONObject report2 = ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), msg.mId, msg.priority,msg.text);
-                              NetworkHandler.getInstance().sendEventReport(report2);
-                          }
+              watch.stop();
+              if(NetworkHandler.getInstance() != null){
+                  String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+                  for(RangzenMessage msg : cm.messages){
+                      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), msg.mId, msg.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
+                      NetworkHandler.getInstance().sendEventReport(report);
+                      if(!msg.isMine()){
+                          JSONObject report2 = ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), msg.mId, msg.priority,msg.text);
+                          NetworkHandler.getInstance().sendEventReport(report2);
                       }
                   }
+
               }
               //BETA END
           }
@@ -189,8 +193,12 @@ public class CryptographicExchange extends Exchange {
    * @return A ClientMessage sent by the remote party, or null in the case of an error.
    */
   private void receiveClientMessage() throws IOException {
+      //BETA
+      String times = "";
+      StopWatch watch = new StopWatch();
       //inputStream.available return 0 only when the end of the stream has been reached, meaning all messages has been recovered
       while(in.available() != 0) {
+          watch.start();
           mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
     
         if (mRemoteClientMessage == null) {
@@ -208,11 +216,14 @@ public class CryptographicExchange extends Exchange {
         if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
           //Add everything passed in the passed wrapper to the pool
           mMessagesReceived.addAll(mRemoteClientMessage.messages);
+
+          watch.stop();
+          times = times.concat(Long.toString(watch.getElapsedTime()).concat(","));
       }
     //BETA
     String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
     for(RangzenMessage message : mMessagesReceived){
-      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(),mThisDeviceUUID, message.mId, message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
+      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(),mThisDeviceUUID, message.mId, message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()), times);
       NetworkHandler.getInstance().sendEventReport(report);
     }
     //BETA END

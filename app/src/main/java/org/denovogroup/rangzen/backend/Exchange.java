@@ -38,6 +38,7 @@ import android.util.Log;
 
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
+import org.denovogroup.rangzen.beta.StopWatch;
 import org.denovogroup.rangzen.objects.CleartextFriends;
 import org.denovogroup.rangzen.objects.CleartextMessages;
 import org.denovogroup.rangzen.objects.RangzenMessage;
@@ -236,7 +237,9 @@ public class Exchange implements Runnable {
   private void sendMessages() {
     //BETA
     List<String> reports = new ArrayList<>();
+      StopWatch watch = new StopWatch();
     for (int k=0; k<NUM_MESSAGES_TO_SEND; k++) {
+        watch.start();
         List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
         MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
         if (messageFromStore == null) {
@@ -247,9 +250,10 @@ public class Exchange implements Runnable {
                 .priority(messageFromStore.getPriority())
                 .mId(messageFromStore.getMId())
                 .build());
+        watch.stop();
         //BETA
         String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-        reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, messageFromStore.getMId(), messageFromStore.getPriority(), Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()))));
+        reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, messageFromStore.getMId(), messageFromStore.getPriority(), Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime())));
         if (!messageFromStore.isMine())
             reports.add(ReportsMaker.prepReport(ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), messageFromStore.getMId(), messageFromStore.getPriority(), messageFromStore.getMessage())));
 
@@ -302,16 +306,21 @@ public class Exchange implements Runnable {
    * Receive messages from the remote device.
    */
   private void receiveMessages() {
+      String times = "";
+      StopWatch watch = new StopWatch();
       try {
           while(in.available() != 0) {
+              watch.start();
               CleartextMessages mMessagesReceived = lengthValueRead(in, CleartextMessages.class);
               if(this.mMessagesReceived == null) this.mMessagesReceived = new ArrayList<RangzenMessage>();
               this.mMessagesReceived.addAll(mMessagesReceived.messages);
+              watch.stop();
+              times = times.concat(Long.toString(watch.getElapsedTime()).concat(","));
           }
       } catch (IOException e) {}
       for(RangzenMessage message : this.mMessagesReceived){
           String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-          JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, message.mId, message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()));
+          JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, message.mId, message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()),times);
       }
   }
 

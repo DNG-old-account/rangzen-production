@@ -76,6 +76,7 @@ public class ReportsMaker {
     public static final String EVENT_MUTUAL_FRIENDS_KEY = "Mutual_friends";
     public static final String EVENT_NETWORK_TYPE_KEY = "Network_type";
     public static final String EVENT_NETWORK_STATE_KEY = "Network_state";
+    public static final String EVENT_EXCHANGE_TIMES_KEY = "ExchangeTimes";
 
     public static final String AGGREGATE_FILE_NAME = "Saved_statistics";
     public static final String AGGREGATE_SEARCHES_KEY = "Searchs";
@@ -148,7 +149,7 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getMessageExchangeReport(long timestamp, String sender, String receiver, String messageId, double priority, float mutualFriends){
+    public static JSONObject getMessageExchangeReport(long timestamp, String sender, String receiver, String messageId, double priority, float mutualFriends, String exchangeTimes){
         try{
             String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
@@ -162,6 +163,7 @@ public class ReportsMaker {
             testObject.put(EVENT_RECEIVER_KEY, receiver);
             testObject.put(EVENT_MESSAGE_ID_KEY, messageId);
             testObject.put(EVENT_MUTUAL_FRIENDS_KEY, mutualFriends);
+            testObject.put(EVENT_EXCHANGE_TIMES_KEY, exchangeTimes);
             return testObject;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -412,5 +414,9 @@ public class ReportsMaker {
         SharedPreferences.Editor editor = pref.edit();
         editor.clear();
         editor.commit();
+    }
+
+    public static void updatePerformanceStatistic(){
+
     }
 }
