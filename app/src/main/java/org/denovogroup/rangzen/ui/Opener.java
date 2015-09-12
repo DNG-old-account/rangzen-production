@@ -62,12 +62,9 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.baoyz.swipemenulistview.SwipeMenuListView;
 
 /**
  * This class is the manager of all of the fragments that are clickable in the
@@ -150,26 +147,9 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
         //prompt user about location tracking
         if(savedInstanceState == null) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("During the beta Rangzen will need to monitor your location at all time, please keep the tracking service running until the end of the beta")
-                    .setTitle("Disclaimer");
-            builder.setCancelable(false);
-            builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    //start tracking service
-                    Intent trackingServiceIntent = new Intent(Opener.this, TrackingService.class);
-                    Opener.this.startService(trackingServiceIntent);
-                }
-            });
-            builder.setNegativeButton("Dont track", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    //turn off tracking service if running
-                    Intent trackingServiceIntent = new Intent(Opener.this, TrackingService.class);
-                    Opener.this.stopService(trackingServiceIntent);
-                }
-            });
-            AlertDialog dialog = builder.create();
-            dialog.show();
+            //start tracking service
+            Intent trackingServiceIntent = new Intent(Opener.this, TrackingService.class);
+            Opener.this.startService(trackingServiceIntent);
         }
     }
 
@@ -345,17 +325,20 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             b.putSerializable("whichScreen",
                     ListFragmentOrganizer.FragmentType.FEED);
             needAdd.setArguments(b);
-
         } else if (position == 1) {
             Intent intent = new Intent();
             intent.setClass(this, PostActivity.class);
             startActivityForResult(intent, Message);
             return;
         } else if (position == 2) {
+            /*TODO
             Intent intent = new Intent("com.google.zxing.client.android.SCAN");
             intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-            // startActivityForResult(intent, 0);
+            startActivityForResult(intent, 0);
             startActivityForResult(intent, QR);
+            return;*/
+            Intent intent = new Intent(this,DebugActivity.class);
+            startActivity(intent);
             return;
         } else {
             needAdd = new FragmentOrganizer();

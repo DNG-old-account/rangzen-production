@@ -122,7 +122,9 @@ public class TrackingService extends Service implements LocationListener {
         super.onDestroy();
 
         if(receiver != null) {
-            unregisterReceiver(receiver);
+            try {
+                unregisterReceiver(receiver);
+            } catch (IllegalArgumentException e){}
             receiver = null;
         }
 

@@ -25,7 +25,7 @@
     <string-array name="sidebar">
         <item>Feed</item>
         <item>New Post</item>
-        <item>Add Friend</item>
+        <item>Debug</item><!--<item>Add Friend</item>-->
         <item>Info</item>
     </string-array>
 
