@@ -2,18 +2,15 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/listitem_selector"
-    android:minHeight="30dp"
-    android:orientation="vertical"
-    android:paddingBottom="3dp"
-    android:paddingEnd="0dp"
-    android:paddingStart="0dp"
-    android:paddingTop="17dp" >
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingBottom="17dp" >
+        android:paddingBottom="17dp"
+        android:minHeight="50dp"
+        android:background="@drawable/feed_item_bg"
+        android:layout_marginLeft="30dp">
 
         <TextView
             android:id="@+id/upvoteView"
@@ -22,13 +19,6 @@
             android:gravity="center"
             android:paddingEnd="15dp"
             android:paddingStart="25dp"
-            android:textColor="@android:color/black" />
-
-        <LinearLayout
-            android:layout_width="1dp"
-            android:layout_height="fill_parent"
-            android:paddingEnd="15dp"
-            android:paddingStart="0dp"
             android:textColor="@android:color/black" />
 
         <LinearLayout

@@ -17,6 +17,10 @@
     <com.baoyz.swipemenulistview.SwipeMenuListView
         android:id="@+id/list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:dividerHeight="10dp"
+        android:divider="@android:color/transparent"
+        android:headerDividersEnabled="true"
+        android:footerDividersEnabled="true"/>
 
 </FrameLayout>

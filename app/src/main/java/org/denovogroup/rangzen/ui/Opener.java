@@ -39,10 +39,8 @@ import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.StorageBase;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
@@ -102,7 +100,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         messageStore
                 .addMessage(
                         "This is the Rangzen message feed. Messages in the ether will appear here.",
-                        1L, "demo");
+                        1L,"demo");
         return true;
     }
 
@@ -141,8 +139,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         };
 
         mDrawerLayout.setDrawerListener(mDrawerListener);
-        getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.LEFT);
 
         //prompt user about location tracking
@@ -170,11 +168,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      */
     public void switchToFeed() {
         Log.d("Opener", "Switching to feed fragment.");
-        Fragment needAdd = new ListFragmentOrganizer();
+        Fragment needAdd = new FeedFragment();
         Bundle b = new Bundle();
-        b.putSerializable("whichScreen",
-                ListFragmentOrganizer.FragmentType.FEED);
-        needAdd.setArguments(b);
         FragmentManager fragmentManager = getSupportFragmentManager();
 
         FragmentTransaction ft = fragmentManager.beginTransaction();
@@ -320,11 +315,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     public void showFragment(int position) {
         Fragment needAdd = null;
         if (position == 0) {
-            needAdd = new ListFragmentOrganizer();
-            Bundle b = new Bundle();
-            b.putSerializable("whichScreen",
-                    ListFragmentOrganizer.FragmentType.FEED);
-            needAdd.setArguments(b);
+            needAdd = new FeedFragment();
         } else if (position == 1) {
             Intent intent = new Intent();
             intent.setClass(this, PostActivity.class);
@@ -334,6 +325,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             /*TODO
             Intent intent = new Intent("com.google.zxing.client.android.SCAN");
             intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+            // startActivityForResult(intent, 0);
             startActivityForResult(intent, 0);
             startActivityForResult(intent, QR);
             return;*/
@@ -383,7 +375,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     @Override
     protected void onResume() {
         super.onResume();
-        notifyDataSetChanged(ListFragmentOrganizer.FragmentType.FEED);
+        notifyDataSetChanged();
         registerReceiver(receiver, filter);
         Log.i(TAG, "Registered receiver");
     }
@@ -413,20 +405,18 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
          */
         @Override
         public void onReceive(Context context, Intent intent) {
-            notifyDataSetChanged(ListFragmentOrganizer.FragmentType.FEED);
+            notifyDataSetChanged();
         }
     }
 
     /**
-     * Request the specified listView to update its view
+     * Request currently displayed fragment to refresh its view if its utilizing the Refreshable interface
      */
-    private void notifyDataSetChanged(ListFragmentOrganizer.FragmentType listType) {
-        Fragment feed = getSupportFragmentManager().findFragmentById(
+    private void notifyDataSetChanged() {
+        Fragment fragment = getSupportFragmentManager().findFragmentById(
                 R.id.mainContent);
-        if (feed instanceof ListFragmentOrganizer) {
-            ListFragmentOrganizer org = (ListFragmentOrganizer) feed;
-
-            org.resetListAdapter(listType);
+        if (fragment instanceof Refreshable) {
+            ((Refreshable) fragment).refreshView();
         }
     }
 }
