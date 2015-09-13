@@ -59,12 +59,9 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.baoyz.swipemenulistview.SwipeMenuListView;
 
 /**
  * This class is the manager of all of the fragments that are clickable in the
@@ -141,8 +138,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         };
 
         mDrawerLayout.setDrawerListener(mDrawerListener);
-        getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.LEFT);
     }
 
@@ -163,11 +160,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      */
     public void switchToFeed() {
         Log.d("Opener", "Switching to feed fragment.");
-        Fragment needAdd = new ListFragmentOrganizer();
+        Fragment needAdd = new FeedFragment();
         Bundle b = new Bundle();
-        b.putSerializable("whichScreen",
-                ListFragmentOrganizer.FragmentType.FEED);
-        needAdd.setArguments(b);
         FragmentManager fragmentManager = getSupportFragmentManager();
 
         FragmentTransaction ft = fragmentManager.beginTransaction();
@@ -313,12 +307,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     public void showFragment(int position) {
         Fragment needAdd = null;
         if (position == 0) {
-            needAdd = new ListFragmentOrganizer();
-            Bundle b = new Bundle();
-            b.putSerializable("whichScreen",
-                    ListFragmentOrganizer.FragmentType.FEED);
-            needAdd.setArguments(b);
-
+            needAdd = new FeedFragment();
         } else if (position == 1) {
             Intent intent = new Intent();
             intent.setClass(this, PostActivity.class);
@@ -373,7 +362,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     @Override
     protected void onResume() {
         super.onResume();
-        notifyDataSetChanged(ListFragmentOrganizer.FragmentType.FEED);
+        notifyDataSetChanged();
         registerReceiver(receiver, filter);
         Log.i(TAG, "Registered receiver");
     }
@@ -403,20 +392,18 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
          */
         @Override
         public void onReceive(Context context, Intent intent) {
-            notifyDataSetChanged(ListFragmentOrganizer.FragmentType.FEED);
+            notifyDataSetChanged();
         }
     }
 
     /**
-     * Request the specified listView to update its view
+     * Request currently displayed fragment to refresh its view if its utilizing the Refreshable interface
      */
-    private void notifyDataSetChanged(ListFragmentOrganizer.FragmentType listType) {
-        Fragment feed = getSupportFragmentManager().findFragmentById(
+    private void notifyDataSetChanged() {
+        Fragment fragment = getSupportFragmentManager().findFragmentById(
                 R.id.mainContent);
-        if (feed instanceof ListFragmentOrganizer) {
-            ListFragmentOrganizer org = (ListFragmentOrganizer) feed;
-
-            org.resetListAdapter(listType);
+        if (fragment instanceof Refreshable) {
+            ((Refreshable) fragment).refreshView();
         }
     }
 }

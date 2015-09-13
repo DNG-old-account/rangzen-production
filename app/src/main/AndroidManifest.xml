@@ -25,12 +25,8 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/rangzen_app_name"
-        android:theme="@android:style/Theme.Black"
+        android:theme="@style/MyTheme1"
         android:name="org.denovogroup.rangzen.ui.RangzenApplication">
-
-        <service
-            android:name=".beta.locationtracking.TrackingService"
-            android:enabled="true" />
 
         <service
             android:name=".backend.RangzenService"
