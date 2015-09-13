@@ -67,7 +67,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                 SwipeMenuItem upvoteItem = new SwipeMenuItem(getActivity());
                 upvoteItem.setId(upvoteItemId);
                 upvoteItem.setBackground(new ColorDrawable(Color.parseColor("#b7b7b7")));
-                upvoteItem.setWidth(Utils.dpToPx(60, getActivity()));
+                upvoteItem.setWidth(Utils.dpToPx(80, getActivity()));
                 upvoteItem.setIcon(R.drawable.ic_thumb_up);
                 upvoteItem.getIcon().setAlpha(65);
                 upvoteItem.setTitle(R.string.Upvote);
@@ -78,7 +78,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                 SwipeMenuItem downvoteItem = new SwipeMenuItem(getActivity());
                 downvoteItem.setId(downvoteItemId);
                 downvoteItem.setBackground(new ColorDrawable(Color.parseColor("#b7b7b7")));
-                downvoteItem.setWidth(Utils.dpToPx(65, getActivity()));
+                downvoteItem.setWidth(Utils.dpToPx(80, getActivity()));
                 downvoteItem.setIcon(R.drawable.ic_thumb_down);
                 downvoteItem.getIcon().setAlpha(60);
                 downvoteItem.setTitle(R.string.Downvote);
@@ -89,7 +89,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                 SwipeMenuItem deleteItem = new SwipeMenuItem(getActivity());
                 deleteItem.setId(deleteItemId);
                 deleteItem.setBackground(new ColorDrawable(Color.RED));
-                deleteItem.setWidth(Utils.dpToPx(60, getActivity()));
+                deleteItem.setWidth(Utils.dpToPx(80, getActivity()));
                 deleteItem.setIcon(R.drawable.ic_bin);
                 deleteItem.getIcon().setAlpha(60);
                 menu.addMenuItem(deleteItem);

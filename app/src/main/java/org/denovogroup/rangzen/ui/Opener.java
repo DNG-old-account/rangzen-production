@@ -33,18 +33,23 @@ package org.denovogroup.rangzen.ui;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
+import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.ui.FragmentOrganizer.FragmentType;
 import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.StorageBase;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
@@ -378,6 +383,12 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         notifyDataSetChanged();
         registerReceiver(receiver, filter);
         Log.i(TAG, "Registered receiver");
+
+        if(!Utils.isBluetoothEnabled()){
+            showNoBluetoothDialog();
+        } else if(! Utils.isWifiEnabled(this)){
+            showNoWifiDialog();
+        }
     }
 
     /**
@@ -418,5 +429,67 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         if (fragment instanceof Refreshable) {
             ((Refreshable) fragment).refreshView();
         }
+    }
+
+    /** create and display a dialog prompting the user about the enabled
+     * state of the bluetooth service.
+     */
+    private void showNoBluetoothDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_bluetooth);
+        builder.setTitle(R.string.dialog_no_bluetooth_title);
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                if(!Utils.isWifiEnabled(Opener.this)){
+                    showNoWifiDialog();
+                }
+            }
+        });
+        builder.setPositiveButton(R.string.turn_on, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
+                if(btAdapter != null){
+                    btAdapter.enable();
+                }
+                dialog.dismiss();
+                if(!Utils.isWifiEnabled(Opener.this)){
+                    showNoWifiDialog();
+                }
+            }
+        });
+        builder.setMessage(R.string.dialog_no_bluetooth_message);
+        builder.create();
+        builder.show();
+    }
+
+    /** create and display a dialog prompting the user about the enabled
+     * state of the wifi service.
+     */
+    private void showNoWifiDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_wifi);
+        builder.setTitle(R.string.dialog_no_wifi_title);
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.setPositiveButton(R.string.turn_on, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                if(wifiManager != null){
+                    wifiManager.setWifiEnabled(true);
+                }
+                dialog.dismiss();
+            }
+        });
+        builder.setMessage(R.string.dialog_no_wifi_message);
+        builder.create();
+        builder.show();
     }
 }

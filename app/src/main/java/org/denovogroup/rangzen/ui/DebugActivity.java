@@ -3,6 +3,7 @@ package org.denovogroup.rangzen.ui;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
@@ -10,10 +11,15 @@ import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.FriendStore;
+import org.denovogroup.rangzen.backend.Peer;
+import org.denovogroup.rangzen.backend.PeerManager;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 
+import java.util.List;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by Liran on 9/12/2015.
@@ -22,8 +28,11 @@ import java.util.Set;
  */
 public class DebugActivity extends ActionBarActivity {
 
+    private TextView appVersionTv;
     private TextView myIdTv;
     private TextView myFriendsTv;
+    private TextView connectionsTv;
+    private Timer connectionsTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,11 +42,31 @@ public class DebugActivity extends ActionBarActivity {
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        appVersionTv = (TextView) findViewById(R.id.app_ver);
         myIdTv = (TextView) findViewById(R.id.user_id);
         myFriendsTv = (TextView) findViewById(R.id.friends_id);
+        connectionsTv = (TextView) findViewById(R.id.connections);
 
+        String version = "0.0";
+        try {
+            version = getPackageManager().getPackageInfo(getPackageName(),0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        appVersionTv.setText(version);
         myIdTv.setText("" + getMyId());
-        myFriendsTv.setText(""+getMyFriendsIds());
+        myFriendsTv.setText("" + getMyFriendsIds());
+
+        List<Peer> peers = PeerManager.getInstance(this).getPeers();
+        String connections = "";
+
+        if(peers != null){
+            for(Peer peer : peers){
+                connections += peer.toString()+"\n";
+            }
+        }
+
+        connectionsTv.setText(connections);
     }
 
     public void showServiceDialog(View view) {
@@ -79,5 +108,37 @@ public class DebugActivity extends ActionBarActivity {
         }
 
         return friends;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        connectionsTimer = new Timer();
+        connectionsTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                List<Peer> peers = PeerManager.getInstance(DebugActivity.this).getPeers();
+                String connections = "";
+
+                if(peers != null){
+                    for(Peer peer : peers){
+                        connections += peer.toString()+"\n";
+                    }
+                }
+                final String finalConnections = connections;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        connectionsTv.setText(finalConnections);
+                    }
+                });
+            }
+        }, 1000,1000);
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        connectionsTimer.cancel();
     }
 }
