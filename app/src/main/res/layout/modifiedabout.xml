@@ -172,6 +172,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:paddingTop="10dp"
-        android:text="@string/optOut" />
+        android:text="@string/report_bug" />
 
 </LinearLayout>
