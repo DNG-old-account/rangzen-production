@@ -33,6 +33,7 @@ public class RangzenApplication extends Application{
         Fabric.with(this, new Crashlytics());
 
         /** Initialize Parse */
+        Parse.enableLocalDatastore(getApplicationContext());
         Parse.initialize(this, "4XIuXX5JTtAQFQFPJ9M7L1E7o2Tr3oN67bf3hiRU", "02cnF9azewOD0MPqpmfSWpi5TB2XyRTQDY3Rrxno");
         ParsePush.subscribeInBackground("beta");
         ParseInstallation.getCurrentInstallation().saveInBackground();

@@ -147,7 +147,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         if(savedInstanceState == null) {
             //start tracking service
             Intent trackingServiceIntent = new Intent(Opener.this, TrackingService.class);
-            Opener.this.startService(trackingServiceIntent);
+            //TODO Opener.this.startService(trackingServiceIntent);
         }
     }
 

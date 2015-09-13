@@ -121,11 +121,10 @@ public class NetworkHandler {
                         }
                     }
                 }
-                testObject.save();
+                //this will make sure the report is saved into local cache until sent to parse
+                testObject.saveEventually();
                 return true;
             } catch (JSONException e) {
-                e.printStackTrace();
-            } catch (ParseException e) {
                 e.printStackTrace();
             }
         }

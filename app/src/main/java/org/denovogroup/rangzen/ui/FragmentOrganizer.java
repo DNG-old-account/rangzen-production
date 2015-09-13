@@ -64,6 +64,7 @@ import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.util.Random;
 import java.util.UUID;
@@ -327,10 +328,13 @@ public class FragmentOrganizer extends Fragment {
              */
             @Override
             public void onClick(View v) {
-                MessageStore messageStore = new MessageStore(getActivity(),
-                        StorageBase.ENCRYPTION_DEFAULT);
                 String message = ((TextView) getActivity().findViewById(
                         R.id.editText1)).getText().toString();
+
+                if(message.isEmpty()) return;
+
+                MessageStore messageStore = new MessageStore(getActivity(),
+                        StorageBase.ENCRYPTION_DEFAULT);
                 float priority = 1.0f;
 				String mId = UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes())+"_"+System.currentTimeMillis();
                 messageStore.addMessage(message, priority, mId);
