@@ -91,7 +91,7 @@ public class MessageStore {
     /**
      * The min priority value.
      */
-    private static final double MIN_PRIORITY_VALUE = 0.0f;
+    private static final double MIN_PRIORITY_VALUE = 0.01f;
 
     /**
      * The max priority value.
