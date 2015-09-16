@@ -48,6 +48,7 @@ import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -297,29 +298,6 @@ public class FragmentOrganizer extends Fragment {
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,
                 InputMethodManager.HIDE_IMPLICIT_ONLY);
-		messageBox.addTextChangedListener(new TextWatcher() {
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count,
-                                          int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before,
-                                      int count) {
-                TextView characterCount = (TextView) getActivity()
-                        .findViewById(R.id.characterCount);
-                EditText textBox = (EditText) getActivity().findViewById(
-                        R.id.editText1);
-                characterCount.setText(String.valueOf(140 - textBox.getText()
-                        .length()));
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-
-        });
 		Button cancel = (Button) view7.findViewById(R.id.button1);
 		cancel.setOnClickListener(new View.OnClickListener() {
 
@@ -330,7 +308,7 @@ public class FragmentOrganizer extends Fragment {
                 message.setText("");
             }
         });
-		Button send = (Button) view7.findViewById(R.id.button2);
+		final Button send = (Button) view7.findViewById(R.id.button2);
 		send.setOnClickListener(new View.OnClickListener() {
 
             /**
@@ -356,8 +334,54 @@ public class FragmentOrganizer extends Fragment {
             }
 
         });
+        messageBox.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                                      int count) {
+                TextView characterCount = (TextView) getActivity()
+                        .findViewById(R.id.characterCount);
+                EditText textBox = (EditText) getActivity().findViewById(
+                        R.id.editText1);
+                characterCount.setText(String.valueOf(140 - textBox.getText()
+                        .length()));
+
+                if(isTextValid(s.toString())){
+                    send.setEnabled(true);
+                    send.setAlpha(1);
+                } else {
+                    send.setEnabled(false);
+                    send.setAlpha(0.5f);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+
+        });
+
+        send.setEnabled(false);
+        send.setAlpha(0.5f);
+
 		return view7;
 	}
+
+    private boolean isTextValid(String text){
+        boolean valid = false;
+        for(char c : text.toCharArray()){
+            if((c != ' ') && (c != '\n')){
+                valid = true;
+                break;
+            }
+        }
+        return valid;
+    }
 
 	/**
 	 * This takes the image, caches it, resizes it and then adds it to the

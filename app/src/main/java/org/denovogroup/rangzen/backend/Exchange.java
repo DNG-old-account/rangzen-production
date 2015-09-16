@@ -425,6 +425,7 @@ public class Exchange implements Runnable {
     try {
       byte[] encodedMessage = Exchange.lengthValueEncode(m).array();
       outputStream.write(encodedMessage);
+        outputStream.flush();
       return true;
     } catch (IOException e) {
       Log.e(TAG, "Length/value write failed with exception: " + e);
