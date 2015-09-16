@@ -16,7 +16,6 @@
     <string name="continueButton">Continue</string>
     <string name="action_search">Search</string>
     <string name="new_post">Add Post</string>
-    <string name="optOut">Opt-Out</string>
     <string name="open">Navigation Drawer is Open</string>
     <string name="close">Navigation Drawer is Closed</string>
     <string name="empty">There are no items</string>
@@ -25,7 +24,7 @@
     <string-array name="sidebar">
         <item>Feed</item>
         <item>New Post</item>
-        <item>Add Friend</item>
+        <item>Debug</item><!--<item>Add Friend</item>-->
         <item>Info</item>
     </string-array>
 
@@ -59,5 +58,17 @@
     <string name="TrackingServiceStarting">Rangzen tracking is on</string>
     <string name="TrackingServiceNotificationTitle">Rangzen Tracking service</string>
     <string name="TrackingServiceNotification">Please do not turn this off during the beta</string>
+
+    <string name="Upvote">Upvote</string>
+    <string name="Downvote">Downvote</string>
+    <string name="dialog_no_bluetooth_title">Bluetooth is off</string>
+    <string name="dialog_no_bluetooth_message">It seems like bluetooth is disabled, Rangzen cannot run properly without enabling bluetooth.</string>
+    <string name="turn_on">Turn on</string>
+    <string name="dialog_no_wifi_title">WiFi is off</string>
+    <string name="dialog_no_wifi_message">It seems like WiFi direct is disabled, Rangzen cannot run properly without enabling WiFi.</string>
+    <string name="report_bug">Report a bug</string>
+    <string name="report_bug_hint">Describe the error you\'ve encountered</string>
+    <string name="send">Send</string>
+    <string name="sending_bug_report">Sending bug report</string>
 
 </resources>

@@ -2,8 +2,13 @@
 // Source file: /Users/barathraghavan/code/rangzen/rangzen/buck-out/gen/proto-repo/compile_protobufs__srcs/RangzenMessage.proto
 package org.denovogroup.rangzen.objects;
 
+import android.bluetooth.BluetoothAdapter;
+
 import com.squareup.wire.Message;
 import com.squareup.wire.ProtoField;
+
+import java.util.Random;
+import java.util.UUID;
 
 import static com.squareup.wire.Message.Datatype.DOUBLE;
 import static com.squareup.wire.Message.Datatype.STRING;
@@ -16,6 +21,7 @@ public final class RangzenMessage extends Message {
 
   public static final String DEFAULT_TEXT = "";
   public static final Double DEFAULT_PRIORITY = 0D;
+  public static final String DEFAULT_ID = "";
 
   /**
    * The message's text, as a String.
@@ -29,13 +35,20 @@ public final class RangzenMessage extends Message {
   @ProtoField(tag = 2, type = DOUBLE, label = REQUIRED)
   public final Double priority;
 
-  public RangzenMessage(String text, Double priority) {
+  /**
+   * The message's id, as a String.
+   */
+  @ProtoField(tag = 3, type = STRING, label = REQUIRED)
+  public final String mId;
+
+  public RangzenMessage(String text, Double priority, String mId) {
     this.text = text;
     this.priority = priority;
+    this.mId = (mId == null || mId.isEmpty()) ? UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes())+"_"+System.currentTimeMillis() : mId;
   }
 
   private RangzenMessage(Builder builder) {
-    this(builder.text, builder.priority);
+    this(builder.text, builder.priority, builder.mId);
     setBuilder(builder);
   }
 
@@ -45,7 +58,8 @@ public final class RangzenMessage extends Message {
     if (!(other instanceof RangzenMessage)) return false;
     RangzenMessage o = (RangzenMessage) other;
     return equals(text, o.text)
-        && equals(priority, o.priority);
+        && equals(priority, o.priority)
+        && equals(mId, o.mId);
   }
 
   @Override
@@ -59,10 +73,16 @@ public final class RangzenMessage extends Message {
     return result;
   }
 
+  public boolean isMine() {
+    String myUuid = ""+UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+    return (this.mId != null) ? this.mId.contains(myUuid) : false;
+  }
+
   public static final class Builder extends Message.Builder<RangzenMessage> {
 
     public String text;
     public Double priority;
+    public String mId;
 
     public Builder() {
     }
@@ -72,6 +92,7 @@ public final class RangzenMessage extends Message {
       if (message == null) return;
       this.text = message.text;
       this.priority = message.priority;
+      this.mId = message.mId;
     }
 
     /**
@@ -87,6 +108,14 @@ public final class RangzenMessage extends Message {
      */
     public Builder priority(Double priority) {
       this.priority = priority;
+      return this;
+    }
+
+    /**
+     * The message's id, as a string.
+     */
+    public Builder mId(String mId) {
+      this.mId = mId;
       return this;
     }
 

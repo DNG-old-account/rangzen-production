@@ -33,16 +33,21 @@ package org.denovogroup.rangzen.ui;
 
 import com.google.zxing.common.BitMatrix;
 
+import android.bluetooth.BluetoothAdapter;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Display;
@@ -63,6 +68,22 @@ import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
+
+import java.util.Random;
+import java.util.UUID;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Properties;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 /**
  * This class manages the behavior for all of the introductory fragments as well
@@ -119,6 +140,13 @@ public class FragmentOrganizer extends Fragment {
 
 			View view5 = (View) inflater.inflate(R.layout.info, container,
 					false);
+
+            view5.findViewById(R.id.reportBug).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    reportBug();
+                }
+            });
 			return view5;
 
 		case TRANSPARENT:
@@ -215,16 +243,16 @@ public class FragmentOrganizer extends Fragment {
 	private View secondIntro(LayoutInflater inflater, ViewGroup container) {
 		View view1 = inflater.inflate(R.layout.secondintro, container, false);
 		mCurrentRelativeLayout = (RelativeLayout) view1
-				.findViewById(R.id.secondIntro);
+                .findViewById(R.id.secondIntro);
 		iv = (ImageView) view1.findViewById(R.id.imageView2);
 		showFullScreenImage(R.drawable.newyorkyyyyy);
 
-		makeRanzenTextView();
+        makeRanzenTextView();
 
 		Button cont1 = (Button) view1.findViewById(R.id.contButton2);
 		cont1.setText("Continue");
-		cont1.setTextColor(Color.WHITE);
-		cont1.bringToFront();
+        cont1.setTextColor(Color.WHITE);
+        cont1.bringToFront();
 		TextView tv2 = (TextView) view1.findViewById(R.id.textView2);
 		tv2.bringToFront();
 		mCurrentRelativeLayout.bringToFront();
@@ -274,42 +302,42 @@ public class FragmentOrganizer extends Fragment {
 		View view7 = inflater.inflate(R.layout.makepost, container, false);
 		EditText messageBox = (EditText) view7.findViewById(R.id.editText1);
 		InputMethodManager imm = (InputMethodManager) getActivity()
-				.getSystemService(Context.INPUT_METHOD_SERVICE);
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,
-				InputMethodManager.HIDE_IMPLICIT_ONLY);
+                InputMethodManager.HIDE_IMPLICIT_ONLY);
 		messageBox.addTextChangedListener(new TextWatcher() {
 
-			@Override
-			public void beforeTextChanged(CharSequence s, int start, int count,
-					int after) {
-			}
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+            }
 
-			@Override
-			public void onTextChanged(CharSequence s, int start, int before,
-					int count) {
-				TextView characterCount = (TextView) getActivity()
-						.findViewById(R.id.characterCount);
-				EditText textBox = (EditText) getActivity().findViewById(
-						R.id.editText1);
-				characterCount.setText(String.valueOf(140 - textBox.getText()
-						.length()));
-			}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                                      int count) {
+                TextView characterCount = (TextView) getActivity()
+                        .findViewById(R.id.characterCount);
+                EditText textBox = (EditText) getActivity().findViewById(
+                        R.id.editText1);
+                characterCount.setText(String.valueOf(140 - textBox.getText()
+                        .length()));
+            }
 
-			@Override
-			public void afterTextChanged(Editable s) {
-			}
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
 
-		});
+        });
 		Button cancel = (Button) view7.findViewById(R.id.button1);
 		cancel.setOnClickListener(new View.OnClickListener() {
 
-			@Override
-			public void onClick(View v) {
-				EditText message = (EditText) getActivity().findViewById(
-						R.id.editText1);
-				message.setText("");
-			}
-		});
+            @Override
+            public void onClick(View v) {
+                EditText message = (EditText) getActivity().findViewById(
+                        R.id.editText1);
+                message.setText("");
+            }
+        });
 		Button send = (Button) view7.findViewById(R.id.button2);
 		send.setOnClickListener(new View.OnClickListener() {
 
@@ -317,23 +345,27 @@ public class FragmentOrganizer extends Fragment {
              * Stores the text of the TextView in the MessageStore with
              * default priority 1.0f. Displays a Toast upon completion and
              * exits the Activity.
-             * 
+             *
              * @param v
              *            The view which is clicked - in this case, the Button.
              */
             @Override
             public void onClick(View v) {
-                MessageStore messageStore = new MessageStore(getActivity(),
-                        StorageBase.ENCRYPTION_DEFAULT);
                 String message = ((TextView) getActivity().findViewById(
                         R.id.editText1)).getText().toString();
+
+                if(message.isEmpty()) return;
+
+                MessageStore messageStore = new MessageStore(getActivity(),
+                        StorageBase.ENCRYPTION_DEFAULT);
                 float priority = 1.0f;
-                messageStore.addMessage(message, priority);
+				String mId = UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes())+"_"+System.currentTimeMillis();
+                messageStore.addMessage(message, priority, mId);
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
 
 				//BETA
-				JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(),"unknown_messageid",priority,message);
+				JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(),mId,priority,message);
 				if(NetworkHandler.getInstance() != null){
 					NetworkHandler.getInstance().sendEventReport(report);
 				}
@@ -357,7 +389,7 @@ public class FragmentOrganizer extends Fragment {
 	private void showFullScreenImage(int picture) {
 		Display display = getActivity().getWindowManager().getDefaultDisplay();
 		Point size = new Point();
-		display.getSize(size);
+        display.getSize(size);
 		int width = size.x;
 		int height = size.y;
 
@@ -475,4 +507,99 @@ public class FragmentOrganizer extends Fragment {
 		return px;
 	}
 
+    /**Open a dialog to send a bug report to dedicated server*/
+    public void reportBug() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.report_bug);
+
+        final EditText input = new EditText(getActivity());
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setHint(R.string.report_bug_hint);
+        input.setMinEms(2);
+        builder.setView(input);
+        builder.setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if(!input.getText().toString().isEmpty()) {
+                    sendMail(input.getText().toString());
+                    input.clearFocus();
+                }
+                dialog.dismiss();
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        builder.show();
+        input.requestFocus();
+        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+    }
+
+    private void sendMail(String messageBody) {
+        Session session = createSessionObject();
+
+        try {
+            Message message = createMessage(messageBody, session);
+            new SendMailTask().execute(message);
+        } catch (AddressException e) {
+            e.printStackTrace();
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Session createSessionObject() {
+        Properties properties = new Properties();
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.starttls.enable", "true");
+        properties.put("mail.smtp.host", "smtp.gmail.com");
+        properties.put("mail.smtp.port", "587");
+
+        return Session.getInstance(properties, new javax.mail.Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication("username", "password");
+            }
+        });
+    }
+
+    private Message createMessage(String messageBody, Session session) throws MessagingException, UnsupportedEncodingException {
+        Message message = new MimeMessage(session);
+        message.setFrom(new InternetAddress("rangzen_user@denovogroup.com", "Rangzen User"));
+        String recipient = "support@denovogroup.com";
+        message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient, recipient));
+        message.setSubject("Bug report by user");
+        message.setText(messageBody);
+        return message;
+    }
+
+    private class SendMailTask extends AsyncTask<Message, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Toast.makeText(getActivity(),R.string.sending_bug_report, Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected Void doInBackground(Message... messages) {
+            try {
+                Transport.send(messages[0]);
+            } catch (MessagingException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
 }

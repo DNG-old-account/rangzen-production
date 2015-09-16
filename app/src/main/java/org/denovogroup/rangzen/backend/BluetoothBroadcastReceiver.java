@@ -30,14 +30,21 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Parcelable;
 import android.util.Log;
+
+import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
+import org.json.JSONObject;
 
 
 /**
@@ -81,6 +88,20 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
    */
   @Override
   public void onReceive(Context context, Intent intent) {
+    //BETA
+    //send report to parse
+    String extraAction = intent.getAction();
+    if(BluetoothAdapter.ACTION_STATE_CHANGED.equals(extraAction)) {
+
+      int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
+      if(state == BluetoothAdapter.STATE_ON || state == BluetoothAdapter.STATE_OFF) {
+        boolean isEnabled = (state == BluetoothAdapter.STATE_ON) ? true : false;
+        JSONObject report = ReportsMaker.getNetworkStateChangedReport(System.currentTimeMillis(), "Bluetooth", isEnabled);
+        NetworkHandler.getInstance(context).sendEventReport(report);
+      }
+    }
+    //BETA END
+
     String action = intent.getAction();
     if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
       onBluetoothActionStateChanged(context, intent);

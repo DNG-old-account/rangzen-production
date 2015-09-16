@@ -23,6 +23,7 @@ import android.util.Log;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
+import org.denovogroup.rangzen.beta.WifiStateReceiver;
 import org.json.JSONObject;
 
 import java.util.Timer;
@@ -49,7 +50,7 @@ public class TrackingService extends Service implements LocationListener {
     private static final String LOG_TAG = "TrackingService";
     private static final int SECOND = 1000;
     private static final int UPDATE_TIME_INTERVAL = 10 * SECOND;
-    private static final float UPDATE_DISTANCE_INTERVAL = 0; // this is the real limit on location updates, min time is just a hint
+    private static final float UPDATE_DISTANCE_INTERVAL = 1; // this is the real limit on location updates, min time is just a hint
     private static final int NOTIFICATION_ID = R.string.TrackingServiceNotification;
 
     private static TrackedLocation lastLocationSent;
@@ -57,8 +58,7 @@ public class TrackingService extends Service implements LocationListener {
     private static boolean isFlushing = false;
     private static NotificationManager notificationManager;
 
-    private BroadcastReceiver networkStateReceiver;
-    private IntentFilter filter = new IntentFilter();
+    public static WifiStateReceiver receiver;
 
     @Nullable
     @Override
@@ -78,6 +78,8 @@ public class TrackingService extends Service implements LocationListener {
         Log.d(LOG_TAG, "Tracking service started");
         notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         showNotification();
+
+        receiver = new WifiStateReceiver(getApplicationContext());
 
         locationManager = (LocationManager) getSystemService(Service.LOCATION_SERVICE);
         /*Register for updates from the specified location provider, all incoming transmission will be handled
@@ -99,22 +101,6 @@ public class TrackingService extends Service implements LocationListener {
                 flushCache();
             }
         }, 0, UPDATE_TIME_INTERVAL);
-
-        //As a side job also listen to connectivity changes
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        networkStateReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                ConnectivityManager cm = (ConnectivityManager) getSystemService(Service.CONNECTIVITY_SERVICE);
-                int networkType = intent.getIntExtra(ConnectivityManager.EXTRA_NETWORK_TYPE, -1);
-                NetworkInfo info = cm.getNetworkInfo(networkType);
-                if((networkType == ConnectivityManager.TYPE_BLUETOOTH || networkType == ConnectivityManager.TYPE_WIFI) && info != null) {
-                    JSONObject report = ReportsMaker.getNetworkStateChangedReport(System.currentTimeMillis(),info.getTypeName(),info.isAvailable());
-                    NetworkHandler.getInstance(context).sendEventReport(report);
-                }
-            }
-        };
-        registerReceiver(networkStateReceiver,filter);
     }
 
     private void showNotification() {
@@ -134,7 +120,13 @@ public class TrackingService extends Service implements LocationListener {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(networkStateReceiver);
+
+        if(receiver != null) {
+            try {
+                unregisterReceiver(receiver);
+            } catch (IllegalArgumentException e){}
+            receiver = null;
+        }
 
         locationManager.removeUpdates(this);
         stopForeground(true);
