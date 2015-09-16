@@ -108,6 +108,9 @@ public class CryptographicExchange extends Exchange {
       // Receive server message.
       receiveServerMessage();
 
+        //Update tracker with new messages
+        updateReadStateTracker();
+
       computeSharedFriends();
       
       setExchangeStatus(Status.SUCCESS);
@@ -123,7 +126,7 @@ public class CryptographicExchange extends Exchange {
       callback.failure(this, getErrorMessage());
     }
   }
-  
+
   /**
    * Initializes the client and server PSI objects with the node's friends.
    */

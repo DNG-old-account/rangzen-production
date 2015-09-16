@@ -64,6 +64,7 @@ import android.widget.Toast;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
+import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.StorageBase;
 
 import java.io.UnsupportedEncodingException;
@@ -329,6 +330,7 @@ public class FragmentOrganizer extends Fragment {
                 messageStore.addMessage(message, priority);
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
+                ReadStateTracker.setReadState(getActivity().getApplicationContext(), message, false);
                 getActivity().setResult(1);
                 getActivity().finish();
             }

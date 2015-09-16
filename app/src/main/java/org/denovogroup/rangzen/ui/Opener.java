@@ -32,6 +32,7 @@
 package org.denovogroup.rangzen.ui;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.ui.FragmentOrganizer.FragmentType;
 import org.denovogroup.rangzen.backend.FriendStore;
@@ -146,6 +147,11 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.LEFT);
+
+        if(savedInstanceState == null){
+            //Start the read state tracker to tell what messages are not read yet
+            ReadStateTracker.initTracker(getApplicationContext());
+        }
     }
 
     /**
@@ -376,6 +382,13 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         } else if(! Utils.isWifiEnabled(this)){
             showNoWifiDialog();
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        //mark all the messages as read
+        ReadStateTracker.markAllAsRead(getApplicationContext());
     }
 
     /**

@@ -33,11 +33,13 @@ package org.denovogroup.rangzen.backend;
 import com.squareup.wire.Wire;
 import com.squareup.wire.Message;
 
+import android.content.Context;
 import android.util.Log;
 
 import org.denovogroup.rangzen.objects.CleartextFriends;
 import org.denovogroup.rangzen.objects.CleartextMessages;
 import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.denovogroup.rangzen.ui.RangzenApplication;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -297,11 +299,14 @@ public class Exchange implements Runnable {
       receiveFriends();
       Log.i(TAG, "Received friends. About to receive messages.");
       receiveMessages();
+        Log.i(TAG, "Updated read state of received messages.");
+        updateReadStateTracker();
     } else {
       receiveFriends();
       receiveMessages();
       sendFriends();
       sendMessages();
+        updateReadStateTracker();
     }
     if (getExchangeStatus() == Status.IN_PROGRESS) {
       setExchangeStatus(Status.SUCCESS);
@@ -496,7 +501,7 @@ public class Exchange implements Runnable {
     
     // TODO(lerner): Add noise.
     return Math.max(fractionOfFriendsPriority(remote, commonFriends, myFriends),
-                    stored);
+            stored);
   }
 
   /** Compute the priority score for a person normalized by his number of friends.
@@ -517,5 +522,13 @@ public class Exchange implements Runnable {
       trustMultiplier = sharedFriends / (double) myFriends;
     }
     return priority * trustMultiplier;
-  } 
+  }
+
+    public void updateReadStateTracker() {
+        if(mMessagesReceived != null && RangzenApplication.getAppContext() != null){
+            for(RangzenMessage message : mMessagesReceived){
+                ReadStateTracker.setReadState(RangzenApplication.getAppContext() ,message.text, false);
+            }
+        }
+    }
 }
