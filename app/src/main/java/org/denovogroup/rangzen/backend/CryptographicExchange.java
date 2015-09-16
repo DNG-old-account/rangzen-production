@@ -68,6 +68,9 @@ public class CryptographicExchange extends Exchange {
   /** PSI computation for the half of the exchange where we're the "server". */
   private PrivateSetIntersection mServerPSI;
 
+    /** Friends list received from the remote party */
+    private ArrayList<byte[]> remoteBlindedFriends;
+
   /** ClientMessage received from the remote party. */
   private ClientMessage mRemoteClientMessage;
 
@@ -98,7 +101,10 @@ public class CryptographicExchange extends Exchange {
       // TODO(lerner): This (initializing PSIs) is costly, so we may want to
       // do this offline if it's making exchanges slow.
       initializePSIObjects();
-
+        //Send client's friends
+        sendFriends();
+        //receive server's friends
+        receiveFriends();
       // Send client message.
       sendClientMessage();
       // Receive client message.
@@ -107,6 +113,9 @@ public class CryptographicExchange extends Exchange {
       sendServerMessage();
       // Receive server message.
       receiveServerMessage();
+
+        //Update tracker with new messages
+        updateReadStateTracker();
 
       computeSharedFriends();
       
@@ -123,7 +132,7 @@ public class CryptographicExchange extends Exchange {
       callback.failure(this, getErrorMessage(), getReportId());
     }
   }
-  
+
   /**
    * Initializes the client and server PSI objects with the node's friends.
    */
@@ -142,9 +151,47 @@ public class CryptographicExchange extends Exchange {
     }
   }
 
+    /**
+     * Construct and send a ClientMessage to the remote party including
+     * blinded friends from the friend store.
+     */
+    private void sendFriends() throws IOException{
+        ArrayList<ByteString> blindedFriends = Crypto.byteArraysToStrings(mClientPSI.encodeBlindedItems());
+        ClientMessage cm = new ClientMessage.Builder()
+                .blindedFriends(blindedFriends)
+                .build();
+        if(!lengthValueWrite(out, cm)) {
+            setExchangeStatus(Status.ERROR);
+            setErrorMessage("Length/value write of client friends failed.");
+            throw new IOException("Length/value write of client friends failed, but exception is hidden (see Exchange.java)");
+        }
+    }
+
+
+    private void receiveFriends() throws IOException{
+        mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
+
+        if (mRemoteClientMessage == null) {
+            setExchangeStatus(Status.ERROR);
+            setErrorMessage("Remote client friends was not received.");
+            throw new IOException("Remote client friends not received.");
+        }
+
+        if (mRemoteClientMessage.blindedFriends == null) {
+            setExchangeStatus(Status.ERROR);
+            setErrorMessage("Remote client friends field was null");
+            throw new IOException("Remote client friends field was null");
+        }
+
+        // This can't return null because byteStringsToArrays only returns null
+        // when passed null, and we already checked that ClientMessage.blindedFriends
+        // isn't null.
+        remoteBlindedFriends = Crypto.byteStringsToArrays(mRemoteClientMessage.blindedFriends);
+    }
+
   /**
-   * Construct and send a ClientMessage to the remote party including both messages
-   * from the message store and blinded friends from the friend store.
+   * Construct and send a ClientMessage to the remote party including messages
+   * from the message store.
    */
   private void sendClientMessage() throws IOException {
       //BETA
@@ -158,7 +205,6 @@ public class CryptographicExchange extends Exchange {
           List<RangzenMessage> messageWrapper = new ArrayList<>();
           messageWrapper.add(message);
           ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
-                  .blindedFriends(blindedFriends)
                   .build();
           if(!lengthValueWrite(out, cm)){
               success = false;
@@ -238,20 +284,14 @@ public class CryptographicExchange extends Exchange {
                                           IOException {
     if (mRemoteClientMessage == null) {
       throw new IOException("Remote client message was null in sendServerMessage.");
-    } else if (mRemoteClientMessage.blindedFriends == null) {
+    } else if (remoteBlindedFriends == null) {
       throw new IOException("Remove client message blinded friends is null in sendServerMessage.");
     }
-
-    // This can't return null because byteStringsToArrays only returns null
-    // when passed null, and we already checked that ClientMessage.blindedFriends
-    // isn't null.
-    ArrayList<byte[]> remoteBlindedItems;
-    remoteBlindedItems = Crypto.byteStringsToArrays(mRemoteClientMessage.blindedFriends);
 
     // Calculate responses that appear in the ServerMessage.
     ServerReplyTuple srt;
     try { 
-      srt = mServerPSI.replyToBlindedItems(remoteBlindedItems);
+      srt = mServerPSI.replyToBlindedItems(remoteBlindedFriends);
     } catch (NoSuchAlgorithmException e) {
       Log.wtf(TAG, "No such algorithm in replyToBlindedItems: " + e);
       setExchangeStatus(Status.ERROR);

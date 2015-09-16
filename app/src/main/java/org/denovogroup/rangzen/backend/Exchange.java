@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.backend;
 import com.squareup.wire.Wire;
 import com.squareup.wire.Message;
 
+import android.content.Context;
 import android.bluetooth.BluetoothAdapter;
 import android.util.Log;
 
@@ -42,6 +43,7 @@ import org.denovogroup.rangzen.beta.StopWatch;
 import org.denovogroup.rangzen.objects.CleartextFriends;
 import org.denovogroup.rangzen.objects.CleartextMessages;
 import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.denovogroup.rangzen.ui.RangzenApplication;
 import org.json.JSONObject;
 
 import java.io.InputStream;
@@ -340,11 +342,14 @@ public class Exchange implements Runnable {
       receiveFriends();
       Log.i(TAG, "Received friends. About to receive messages.");
       receiveMessages();
+        Log.i(TAG, "Updated read state of received messages.");
+        updateReadStateTracker();
     } else {
       receiveFriends();
       receiveMessages();
       sendFriends();
       sendMessages();
+        updateReadStateTracker();
     }
     if (getExchangeStatus() == Status.IN_PROGRESS) {
       setExchangeStatus(Status.SUCCESS);
@@ -468,6 +473,7 @@ public class Exchange implements Runnable {
     try {
       byte[] encodedMessage = Exchange.lengthValueEncode(m).array();
       outputStream.write(encodedMessage);
+        outputStream.flush();
       return true;
     } catch (IOException e) {
       Log.e(TAG, "Length/value write failed with exception: " + e);
@@ -560,6 +566,14 @@ public class Exchange implements Runnable {
     }
     return priority * trustMultiplier;
   }
+
+    public void updateReadStateTracker() {
+        if(mMessagesReceived != null && RangzenApplication.getAppContext() != null){
+            for(RangzenMessage message : mMessagesReceived){
+                ReadStateTracker.setReadState(RangzenApplication.getAppContext() ,message.text, false);
+            }
+        }
+    }
 
   public String getReportId(){
     return reportId;

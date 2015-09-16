@@ -30,21 +30,20 @@
  */
 package org.denovogroup.rangzen.backend;
 
-import android.app.Service;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Parcelable;
 import android.util.Log;
 
-import org.denovogroup.rangzen.beta.NetworkHandler;
-import org.denovogroup.rangzen.beta.ReportsMaker;
-import org.json.JSONObject;
+import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.ui.Opener;
 
 
 /**
@@ -88,20 +87,6 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
    */
   @Override
   public void onReceive(Context context, Intent intent) {
-    //BETA
-    //send report to parse
-    String extraAction = intent.getAction();
-    if(BluetoothAdapter.ACTION_STATE_CHANGED.equals(extraAction)) {
-
-      int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
-      if(state == BluetoothAdapter.STATE_ON || state == BluetoothAdapter.STATE_OFF) {
-        boolean isEnabled = (state == BluetoothAdapter.STATE_ON) ? true : false;
-        JSONObject report = ReportsMaker.getNetworkStateChangedReport(System.currentTimeMillis(), "Bluetooth", isEnabled);
-        NetworkHandler.getInstance(context).sendEventReport(report);
-      }
-    }
-    //BETA END
-
     String action = intent.getAction();
     if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
       onBluetoothActionStateChanged(context, intent);
@@ -144,7 +129,34 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
                                                                      currentStateString,
                                                                      currentState));
 
+      switch(currentState){
+          case BluetoothAdapter.STATE_TURNING_OFF:
+          case BluetoothAdapter.STATE_OFF:
+              showNoBluetoothNotification(context);
+              break;
+      }
+
   }
+
+    /** create and display a dialog prompting the user about the enabled
+     * state of the bluetooth service.
+     */
+    private void showNoBluetoothNotification(Context context){
+        if(context == null) return;
+
+        int notificationId = R.string.dialog_no_bluetooth_message;
+
+        Intent notificationIntent = new Intent(context, Opener.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
+
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notification = new Notification.Builder(context).setContentTitle(context.getText(R.string.dialog_no_bluetooth_title))
+                .setContentText(context.getText(R.string.dialog_no_bluetooth_message))
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .build();
+        mNotificationManager.notify(notificationId, notification);
+    }
 
   /**
    * Called to handle events raised when the Bluetooths system broadcasts the
