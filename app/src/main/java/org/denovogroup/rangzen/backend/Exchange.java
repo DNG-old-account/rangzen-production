@@ -341,14 +341,11 @@ public class Exchange implements Runnable {
       receiveFriends();
       Log.i(TAG, "Received friends. About to receive messages.");
       receiveMessages();
-        Log.i(TAG, "Updated read state of received messages.");
-        updateReadStateTracker();
     } else {
       receiveFriends();
       receiveMessages();
       sendFriends();
       sendMessages();
-        updateReadStateTracker();
     }
     if (getExchangeStatus() == Status.IN_PROGRESS) {
       setExchangeStatus(Status.SUCCESS);
@@ -568,12 +565,4 @@ public class Exchange implements Runnable {
     }
     return priority * trustMultiplier;
   }
-
-    public void updateReadStateTracker() {
-        if(mMessagesReceived != null && RangzenApplication.getAppContext() != null){
-            for(RangzenMessage message : mMessagesReceived){
-                ReadStateTracker.setReadState(RangzenApplication.getAppContext() ,message.text, false);
-            }
-        }
-    }
 }

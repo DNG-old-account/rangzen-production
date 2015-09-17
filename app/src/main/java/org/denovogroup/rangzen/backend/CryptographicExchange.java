@@ -117,9 +117,6 @@ public class CryptographicExchange extends Exchange {
       // Receive server message.
       receiveServerMessage();
 
-        //Update tracker with new messages
-        updateReadStateTracker();
-
       computeSharedFriends();
       
       setExchangeStatus(Status.SUCCESS);

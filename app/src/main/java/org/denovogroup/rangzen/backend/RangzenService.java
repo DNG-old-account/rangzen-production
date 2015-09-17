@@ -42,6 +42,7 @@ import android.net.NetworkInfo;
 import android.os.IBinder;
 
 import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.denovogroup.rangzen.ui.RangzenApplication;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -397,6 +398,8 @@ public class RangzenService extends Service {
               mMessageStore.updatePriority(message.text, newPriority);
             } else {
               mMessageStore.addMessage(message.text, newPriority);
+                //mark this message as unread
+                ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
             }
           } catch (IllegalArgumentException e) {
             Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
@@ -432,6 +435,8 @@ public class RangzenService extends Service {
                             mMessageStore.updatePriority(message.text, newPriority);
                         } else {
                             mMessageStore.addMessage(message.text, newPriority);
+                            //mark this message as unread
+                            ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
                         }
                     } catch (IllegalArgumentException e) {
                         Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
