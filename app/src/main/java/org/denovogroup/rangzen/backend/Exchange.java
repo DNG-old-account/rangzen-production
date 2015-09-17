@@ -296,8 +296,6 @@ public class Exchange implements Runnable {
           } catch (Exception e){}
       }
 
-      Log.d("liran","sender claim to be sending "+messageCount+" messages");
-
       //if recipient list is not instantiated yet create it
       if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
 
