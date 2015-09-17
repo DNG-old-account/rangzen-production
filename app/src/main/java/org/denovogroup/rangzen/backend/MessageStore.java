@@ -193,7 +193,11 @@ public class MessageStore {
      * exists, does not modify the store and returns false.
      */
     public boolean addMessage(String msg, double priority) {
-        checkPriority(priority);
+        try {
+            checkPriority(priority);
+        } catch (IllegalArgumentException e){
+            priority = (priority > MAX_PRIORITY_VALUE) ? MAX_PRIORITY_VALUE : MIN_PRIORITY_VALUE;
+        }
 
         // Check whether we have the message already (perhaps in another bin).
         // TODO(barath): Consider improving performance by selecting a different
@@ -251,7 +255,6 @@ public class MessageStore {
         try {
             checkPriority(priority);
         } catch (IllegalArgumentException e){
-            e.printStackTrace();
             priority = (priority > MAX_PRIORITY_VALUE) ? MAX_PRIORITY_VALUE : MIN_PRIORITY_VALUE;
         }
 
