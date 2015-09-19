@@ -1,6 +1,7 @@
 package org.denovogroup.rangzen.ui;
 
 import android.app.Application;
+import android.content.Context;
 
 import com.parse.Parse;
 import com.parse.ParseInstallation;

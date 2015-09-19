@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.ui;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,7 +42,10 @@ import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
+import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.StorageBase;
+
+import java.text.DecimalFormat;
 
 public class FeedListAdapter extends BaseAdapter {
 
@@ -117,13 +121,18 @@ public class FeedListAdapter extends BaseAdapter {
                     .findViewById(R.id.upvoteView);
             mViewHolder.mHashtagView = (TextView) convertView
                     .findViewById(R.id.hashtagView);
+            mViewHolder.mNewView = convertView
+                    .findViewById(R.id.unread_indicator);
 
             convertView.setTag(mViewHolder);
         } else {
             mViewHolder = (ViewHolder) convertView.getTag();
         }
         mViewHolder.mHashtagView.setText(message.getMessage());
-        mViewHolder.mUpvoteView.setText(Double.toString(message.getPriority()));
+
+        mViewHolder.mUpvoteView.setText(Integer.toString((int) Math.round(100 * message.getPriority())));
+
+        mViewHolder.mNewView.setVisibility(ReadStateTracker.isRead(message.getMessage()) ? View.GONE : View.VISIBLE);
 
         return convertView;
     }
@@ -141,5 +150,9 @@ public class FeedListAdapter extends BaseAdapter {
          */
         private TextView mUpvoteView;
 
+        /**
+         * The view object that holds the new message indicator for this current row item.
+         */
+        private View mNewView;
     }
 }

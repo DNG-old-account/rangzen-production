@@ -30,6 +30,9 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -46,6 +49,9 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.util.Log;
+
+import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.ui.Opener;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -211,6 +217,7 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
       // Wifi Direct mode is enabled
       // TODO(lerner): Do something since it's enabled?
     } else if (state == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
+        showNoWifiNotification();
       Log.d(TAG, "Wifi Direct disabled");
       // Wifi Direct mode is disabled
       // TODO(lerner): Do something since it's disabled?
@@ -460,4 +467,24 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
       Log.e(TAG, "Invocation target exception: " + e);
     }
   }
+
+    /** create and display a dialog prompting the user about the enabled
+     * state of the wifi service.
+     */
+    private void showNoWifiNotification(){
+        if(mContext == null) return;
+
+        int notificationId = R.string.dialog_no_wifi_message;
+
+        Intent notificationIntent = new Intent(mContext, Opener.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, notificationIntent, 0);
+
+        NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notification = new Notification.Builder(mContext).setContentTitle(mContext.getText(R.string.dialog_no_wifi_title))
+                .setContentText(mContext.getText(R.string.dialog_no_wifi_message))
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .build();
+        mNotificationManager.notify(notificationId, notification);
+    }
 }

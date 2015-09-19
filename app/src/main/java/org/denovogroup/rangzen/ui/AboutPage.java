@@ -31,9 +31,13 @@
 
 package org.denovogroup.rangzen.ui;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.app.Activity;
 
@@ -51,22 +55,6 @@ public class AboutPage extends Activity {
     @Override
     protected void onCreate(Bundle arg0) {
         super.onCreate(arg0);
-        LinearLayout lin = (LinearLayout) View.inflate(this, R.layout.info, null);
-        setContentView(R.layout.modifiedabout);
-        Button button = (Button) findViewById(R.id.continueBeforeMaps);
-        button.setText("Continue");
-        button.setOnClickListener(new View.OnClickListener() { 
-            @Override
-            public void onClick(View v) {
-                // TODO(Jesus): Update this activity to current needs.
-                // Doesn't need any buttons or anything, should have different text.
-                // Might also just want to remove it entirely?
-                //
-                // Intent intent = new Intent();
-                // intent.setClass(v.getContext(), MapsActivity.class);
-                // startActivity(intent);
-                // finish();
-            }
-        });
+        setContentView(R.layout.about);
     }
 }

@@ -41,8 +41,17 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import android.os.Handler;
 import android.util.Log;
 
 import okio.ByteString;
@@ -61,6 +70,9 @@ public class CryptographicExchange extends Exchange {
   
   /** PSI computation for the half of the exchange where we're the "server". */
   private PrivateSetIntersection mServerPSI;
+
+    /** Friends list received from the remote party */
+    private ArrayList<byte[]> remoteBlindedFriends;
 
   /** ClientMessage received from the remote party. */
   private ClientMessage mRemoteClientMessage;
@@ -92,7 +104,10 @@ public class CryptographicExchange extends Exchange {
       // TODO(lerner): This (initializing PSIs) is costly, so we may want to
       // do this offline if it's making exchanges slow.
       initializePSIObjects();
-
+        //Send client's friends
+        sendFriends();
+        //receive server's friends
+        receiveFriends();
       // Send client message.
       sendClientMessage();
       // Receive client message.
@@ -105,19 +120,23 @@ public class CryptographicExchange extends Exchange {
       computeSharedFriends();
       
       setExchangeStatus(Status.SUCCESS);
+
       callback.success(this);
     } catch (Exception e) {  // Treat ALL exceptions as fatal.
-      // This status setting should be redundant (whoever threw the exception
-      // should have set the status to ERROR before throwing the exception) but
-      // this maintains the invariant that whenever callback.failure is called
-      // the error code is ERROR.
-      Log.e(TAG, "Exception while run()ing CryptographicExchange: " + e);
-      setExchangeStatus(Status.ERROR);
-
-      callback.failure(this, getErrorMessage());
+        Log.e(TAG, "Exception while run()ing CryptographicExchange: " + e);
+        if(getExchangeStatus() == Status.ERROR_RECOVERABLE){
+            callback.recover(this, getErrorMessage());
+        } else {
+            // This status setting should be redundant (whoever threw the exception
+            // should have set the status to ERROR before throwing the exception) but
+            // this maintains the invariant that whenever callback.failure is called
+            // the error code is ERROR.
+            setExchangeStatus(Status.ERROR);
+            callback.failure(this, getErrorMessage());
+        }
     }
   }
-  
+
   /**
    * Initializes the client and server PSI objects with the node's friends.
    */
@@ -136,23 +155,66 @@ public class CryptographicExchange extends Exchange {
     }
   }
 
+    /**
+     * Construct and send a ClientMessage to the remote party including
+     * blinded friends from the friend store.
+     */
+    private void sendFriends() throws IOException{
+        ArrayList<ByteString> blindedFriends = Crypto.byteArraysToStrings(mClientPSI.encodeBlindedItems());
+        ClientMessage cm = new ClientMessage.Builder()
+                .blindedFriends(blindedFriends)
+                .build();
+        if(!lengthValueWrite(out, cm)) {
+            setExchangeStatus(Status.ERROR);
+            setErrorMessage("Length/value write of client friends failed.");
+            throw new IOException("Length/value write of client friends failed, but exception is hidden (see Exchange.java)");
+        }
+    }
+
+
+    private void receiveFriends() throws IOException{
+        mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
+
+        if (mRemoteClientMessage == null) {
+            setExchangeStatus(Status.ERROR);
+            setErrorMessage("Remote client friends was not received.");
+            throw new IOException("Remote client friends not received.");
+        }
+
+        if (mRemoteClientMessage.blindedFriends == null) {
+            setExchangeStatus(Status.ERROR);
+            setErrorMessage("Remote client friends field was null");
+            throw new IOException("Remote client friends field was null");
+        }
+
+        // This can't return null because byteStringsToArrays only returns null
+        // when passed null, and we already checked that ClientMessage.blindedFriends
+        // isn't null.
+        remoteBlindedFriends = Crypto.byteStringsToArrays(mRemoteClientMessage.blindedFriends);
+    }
+
   /**
-   * Construct and send a ClientMessage to the remote party including both messages
-   * from the message store and blinded friends from the friend store.
+   * Construct and send a ClientMessage to the remote party including messages
+   * from the message store.
    */
   private void sendClientMessage() throws IOException {
-    ArrayList<ByteString> blindedFriends = Crypto.byteArraysToStrings(mClientPSI.encodeBlindedItems());
       //create a message pool to be sent and send each message individually to allow partial data recovery in case of connection loss
       boolean success = true;
       List<RangzenMessage> messagesPool = getMessages();
-      for(RangzenMessage message : messagesPool){
-          List<RangzenMessage> messageWrapper = new ArrayList<>();
-          messageWrapper.add(message);
-          ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
-                  .blindedFriends(blindedFriends)
-                  .build();
-          if(!lengthValueWrite(out, cm)){
-              success = false;
+      //notify the recipient how many items we expect to send him.
+      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messagesPool.size()),1d);
+
+      if(!lengthValueWrite(out, exchangeInfoMessage)){
+          success = false;
+      } else {
+          for (RangzenMessage message : messagesPool) {
+              List<RangzenMessage> messageWrapper = new ArrayList<>();
+              messageWrapper.add(message);
+              ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
+                      .build();
+              if (!lengthValueWrite(out, cm)) {
+                  success = false;
+              }
           }
       }
     if (!success) {
@@ -168,26 +230,66 @@ public class CryptographicExchange extends Exchange {
    * @return A ClientMessage sent by the remote party, or null in the case of an error.
    */
   private void receiveClientMessage() throws IOException {
-      //inputStream.available return 0 only when the end of the stream has been reached, meaning all messages has been recovered
-      while(in.available() != 0) {
-          mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
-    
-        if (mRemoteClientMessage == null) {
-          setExchangeStatus(Status.ERROR);
-          setErrorMessage("Remote client message was not received.");
-          throw new IOException("Remote client message not received.");
-        }
 
-        if (mRemoteClientMessage.messages == null) {
-          setExchangeStatus(Status.ERROR);
-          setErrorMessage("Remote client messages field was null");
-          throw new IOException("Remote client messages field was null");
-        }
-          //if recipient list is not instantiated yet create it
-        if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
-          //Add everything passed in the passed wrapper to the pool
-          mMessagesReceived.addAll(mRemoteClientMessage.messages);
+      //the first message received is a hint, telling the us how many messages will be sent
+      int messageCount = 0;
+      RangzenMessage exchangeInfo = lengthValueRead(in, RangzenMessage.class);
+      if(exchangeInfo != null){
+          try {
+              messageCount = Integer.parseInt(exchangeInfo.text);
+          } catch (Exception e){}
       }
+
+      //if recipient list is not instantiated yet create it
+      if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
+
+      //Define the get single message task
+      class ReceiveSingleMessage implements Callable<String>{
+
+          @Override
+          public String call() throws Exception {
+              mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
+
+              if (mRemoteClientMessage == null) {
+                  return "Remote client message not received.";
+              }
+
+              if (mRemoteClientMessage.messages == null) {
+                  return "Remote client messages field was null";
+              }
+              //Add everything passed in the wrapper to the pool
+              mMessagesReceived.addAll(mRemoteClientMessage.messages);
+              return null;
+          }
+      }
+
+      //read from the stream until either times out or get all the messages
+      ExecutorService executor = Executors.newSingleThreadExecutor();
+      while(mMessagesReceived.size() < messageCount) {
+          try {
+              String exception = executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
+              if (exception != null && !exception.isEmpty()) {
+                  executor.shutdown();
+                  if (mMessagesReceived.isEmpty()) {
+                      setExchangeStatus(Status.ERROR);
+                  } else {
+                      setExchangeStatus(Status.ERROR_RECOVERABLE);
+                  }
+                  setErrorMessage(exception);
+                  throw new IOException(exception);
+              }
+          } catch (InterruptedException |ExecutionException | TimeoutException e) {
+              executor.shutdown();
+              if (mMessagesReceived.isEmpty()) {
+                  setExchangeStatus(Status.ERROR);
+              } else {
+                  setExchangeStatus(Status.ERROR_RECOVERABLE);
+              }
+              setErrorMessage("Message receiving timed out");
+              throw new IOException ("Message receiving timed out");
+          }
+      }
+      executor.shutdown();
   }
 
   /**
@@ -196,22 +298,16 @@ public class CryptographicExchange extends Exchange {
    */
   private void sendServerMessage() throws NoSuchAlgorithmException, 
                                           IOException {
-    if (mRemoteClientMessage == null) {
+      if (mRemoteClientMessage == null) {
       throw new IOException("Remote client message was null in sendServerMessage.");
-    } else if (mRemoteClientMessage.blindedFriends == null) {
+    } else if (remoteBlindedFriends == null) {
       throw new IOException("Remove client message blinded friends is null in sendServerMessage.");
     }
-
-    // This can't return null because byteStringsToArrays only returns null
-    // when passed null, and we already checked that ClientMessage.blindedFriends
-    // isn't null.
-    ArrayList<byte[]> remoteBlindedItems;
-    remoteBlindedItems = Crypto.byteStringsToArrays(mRemoteClientMessage.blindedFriends);
 
     // Calculate responses that appear in the ServerMessage.
     ServerReplyTuple srt;
     try { 
-      srt = mServerPSI.replyToBlindedItems(remoteBlindedItems);
+      srt = mServerPSI.replyToBlindedItems(remoteBlindedFriends);
     } catch (NoSuchAlgorithmException e) {
       Log.wtf(TAG, "No such algorithm in replyToBlindedItems: " + e);
       setExchangeStatus(Status.ERROR);

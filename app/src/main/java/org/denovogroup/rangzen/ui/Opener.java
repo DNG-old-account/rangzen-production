@@ -32,18 +32,24 @@
 package org.denovogroup.rangzen.ui;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.backend.ReadStateTracker;
+import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.ui.FragmentOrganizer.FragmentType;
 import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.StorageBase;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
@@ -59,12 +65,9 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.baoyz.swipemenulistview.SwipeMenuListView;
 
 /**
  * This class is the manager of all of the fragments that are clickable in the
@@ -114,8 +117,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        filter.addAction(MessageStore.DELETE_MESSAGE);
-
         setContentView(R.layout.drawer_layout);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         // activityRootView = drawerLayout;
@@ -143,9 +144,14 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         };
 
         mDrawerLayout.setDrawerListener(mDrawerListener);
-        getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.LEFT);
+
+        if(savedInstanceState == null){
+            //Start the read state tracker to tell what messages are not read yet
+            ReadStateTracker.initTracker(getApplicationContext());
+        }
     }
 
     /**
@@ -165,11 +171,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      */
     public void switchToFeed() {
         Log.d("Opener", "Switching to feed fragment.");
-        Fragment needAdd = new ListFragmentOrganizer();
+        Fragment needAdd = new FeedFragment();
         Bundle b = new Bundle();
-        b.putSerializable("whichScreen",
-                ListFragmentOrganizer.FragmentType.FEED);
-        needAdd.setArguments(b);
         FragmentManager fragmentManager = getSupportFragmentManager();
 
         FragmentTransaction ft = fragmentManager.beginTransaction();
@@ -315,12 +318,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     public void showFragment(int position) {
         Fragment needAdd = null;
         if (position == 0) {
-            needAdd = new ListFragmentOrganizer();
-            Bundle b = new Bundle();
-            b.putSerializable("whichScreen",
-                    ListFragmentOrganizer.FragmentType.FEED);
-            needAdd.setArguments(b);
-
+            needAdd = new FeedFragment();
         } else if (position == 1) {
             Intent intent = new Intent();
             intent.setClass(this, PostActivity.class);
@@ -375,9 +373,22 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     @Override
     protected void onResume() {
         super.onResume();
-        notifyDataSetChanged(ListFragmentOrganizer.FragmentType.FEED);
+        notifyDataSetChanged();
         registerReceiver(receiver, filter);
         Log.i(TAG, "Registered receiver");
+
+        if(!Utils.isBluetoothEnabled()){
+            showNoBluetoothDialog();
+        } else if(! Utils.isWifiEnabled(this)){
+            showNoWifiDialog();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        //mark all the messages as read
+        ReadStateTracker.markAllAsRead(getApplicationContext());
     }
 
     /**
@@ -405,20 +416,80 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
          */
         @Override
         public void onReceive(Context context, Intent intent) {
-            notifyDataSetChanged(ListFragmentOrganizer.FragmentType.FEED);
+            notifyDataSetChanged();
         }
     }
 
     /**
-     * Request the specified listView to update its view
+     * Request currently displayed fragment to refresh its view if its utilizing the Refreshable interface
      */
-    private void notifyDataSetChanged(ListFragmentOrganizer.FragmentType listType) {
-        Fragment feed = getSupportFragmentManager().findFragmentById(
+    private void notifyDataSetChanged() {
+        Fragment fragment = getSupportFragmentManager().findFragmentById(
                 R.id.mainContent);
-        if (feed instanceof ListFragmentOrganizer) {
-            ListFragmentOrganizer org = (ListFragmentOrganizer) feed;
-
-            org.resetListAdapter(listType);
+        if (fragment instanceof Refreshable) {
+            ((Refreshable) fragment).refreshView();
         }
+    }
+
+    /** create and display a dialog prompting the user about the enabled
+     * state of the bluetooth service.
+     */
+    private void showNoBluetoothDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_bluetooth);
+        builder.setTitle(R.string.dialog_no_bluetooth_title);
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                if(!Utils.isWifiEnabled(Opener.this)){
+                    showNoWifiDialog();
+                }
+            }
+        });
+        builder.setPositiveButton(R.string.turn_on, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
+                if(btAdapter != null){
+                    btAdapter.enable();
+                }
+                dialog.dismiss();
+                if(!Utils.isWifiEnabled(Opener.this)){
+                    showNoWifiDialog();
+                }
+            }
+        });
+        builder.setMessage(R.string.dialog_no_bluetooth_message);
+        builder.create();
+        builder.show();
+    }
+
+    /** create and display a dialog prompting the user about the enabled
+     * state of the wifi service.
+     */
+    private void showNoWifiDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_wifi);
+        builder.setTitle(R.string.dialog_no_wifi_title);
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.setPositiveButton(R.string.turn_on, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                if(wifiManager != null){
+                    wifiManager.setWifiEnabled(true);
+                }
+                dialog.dismiss();
+            }
+        });
+        builder.setMessage(R.string.dialog_no_wifi_message);
+        builder.create();
+        builder.show();
     }
 }

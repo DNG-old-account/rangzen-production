@@ -42,6 +42,7 @@ import android.net.NetworkInfo;
 import android.os.IBinder;
 
 import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.denovogroup.rangzen.ui.RangzenApplication;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -244,7 +245,7 @@ public class RangzenService extends Service {
      * background tasks.
      */
     public void backgroundTasks() {
-        // Log.v(TAG, "Background Tasks Started");
+        Log.v(TAG, "Background Tasks Started");
 
         // TODO(lerner): Why not just use mPeerManager?
         PeerManager peerManager = PeerManager.getInstance(getApplicationContext());
@@ -397,6 +398,8 @@ public class RangzenService extends Service {
               mMessageStore.updatePriority(message.text, newPriority);
             } else {
               mMessageStore.addMessage(message.text, newPriority);
+                //mark this message as unread
+                ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
             }
           } catch (IllegalArgumentException e) {
             Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
@@ -413,6 +416,38 @@ public class RangzenService extends Service {
         Log.e(TAG, "Exchange failed, reason: " + reason);
         RangzenService.this.cleanupAfterExchange();
       }
+
+        @Override
+        public void recover(Exchange exchange, String reason) {
+            Log.e(TAG, "Exchange failed but data can be recovered, reason: " + reason);
+            List<RangzenMessage> newMessages = exchange.getReceivedMessages();
+            int friendOverlap = Math.max(exchange.getCommonFriends(), 0);
+            Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
+            Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
+            if(newMessages != null) {
+                for (RangzenMessage message : newMessages) {
+                    Set<String> myFriends = mFriendStore.getAllFriends();
+                    double stored = mMessageStore.getPriority(message.text);
+                    double remote = message.priority;
+                    double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
+                    try {
+                        if (mMessageStore.contains(message.text)) {
+                            mMessageStore.updatePriority(message.text, newPriority);
+                        } else {
+                            mMessageStore.addMessage(message.text, newPriority);
+                            //mark this message as unread
+                            ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
+                        }
+                    } catch (IllegalArgumentException e) {
+                        Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
+                                        ", %d friends, %d friends in common",
+                                message.text, newPriority, message.priority,
+                                myFriends.size(), friendOverlap));
+                    }
+                }
+            }
+            RangzenService.this.cleanupAfterExchange();
+        }
     };
 
     /**

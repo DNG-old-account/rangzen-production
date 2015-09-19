@@ -33,11 +33,13 @@ package org.denovogroup.rangzen.backend;
 import com.squareup.wire.Wire;
 import com.squareup.wire.Message;
 
+import android.content.Context;
 import android.util.Log;
 
 import org.denovogroup.rangzen.objects.CleartextFriends;
 import org.denovogroup.rangzen.objects.CleartextMessages;
 import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.denovogroup.rangzen.ui.RangzenApplication;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -48,6 +50,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Performs a single exchange with a Rangzen peer.
@@ -90,7 +98,8 @@ public class Exchange implements Runnable {
   enum Status {
     IN_PROGRESS,
     SUCCESS,
-    ERROR
+    ERROR,
+      ERROR_RECOVERABLE
   }
   /**
    * Whether the exchange has completed successfully. Starts false and remains
@@ -110,6 +119,9 @@ public class Exchange implements Runnable {
 
   /** Number of bytes in a megabyte. */
   private static final int MEGABYTES = 1024 * 1024;
+
+    /** The number of milliseconds until a single message exchange times out */
+    public static final long EXCHANGE_TIMEOUT = 2000;
 
   /**
    * Size, in bytes, of the maximum size message we'll try to read with lengthValueRead.
@@ -222,22 +234,27 @@ public class Exchange implements Runnable {
    * object, and write that Message out to the output stream.
    */
   private void sendMessages() {
-    for (int k=0; k<NUM_MESSAGES_TO_SEND; k++) {
-        List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
-      MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
-      if (messageFromStore == null) {
-        break;
-      }
-      messages.add(new RangzenMessage.Builder()
-                                     .text(messageFromStore.getMessage())
-                                     .priority(messageFromStore.getPriority())
-                                     .build());
+      //notify the recipient how many items we expect to send him.
+      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(NUM_MESSAGES_TO_SEND),1d);
+      if(lengthValueWrite(out, exchangeInfoMessage)) {
+          // Send messages
+          for (int k = 0; k < NUM_MESSAGES_TO_SEND; k++) {
+              List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
+              MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
+              if (messageFromStore == null) {
+                  break;
+              }
+              messages.add(new RangzenMessage.Builder()
+                      .text(messageFromStore.getMessage())
+                      .priority(messageFromStore.getPriority())
+                      .build());
 
-        CleartextMessages messagesMessage = new CleartextMessages.Builder()
-                .messages(messages)
-                .build();
-        lengthValueWrite(out, messagesMessage);
-    }
+              CleartextMessages messagesMessage = new CleartextMessages.Builder()
+                      .messages(messages)
+                      .build();
+              lengthValueWrite(out, messagesMessage);
+          }
+      }
   }
 
   /**
@@ -270,15 +287,40 @@ public class Exchange implements Runnable {
    * Receive messages from the remote device.
    */
   private void receiveMessages() {
-      try {
-          while(in.available() != 0) {
-              CleartextMessages mMessagesReceived = lengthValueRead(in, CleartextMessages.class);
-              if(this.mMessagesReceived == null) this.mMessagesReceived = new ArrayList<RangzenMessage>();
-              this.mMessagesReceived.addAll(mMessagesReceived.messages);
-          }
-      } catch (IOException e) {
-          e.printStackTrace();
+      //the first message received is a hint, telling the us how many messages will be sent
+      int messageCount = 0;
+      RangzenMessage exchangeInfo = lengthValueRead(in, RangzenMessage.class);
+      if(exchangeInfo != null){
+          try {
+              messageCount = Integer.parseInt(exchangeInfo.text);
+          } catch (Exception e){}
       }
+
+      //if recipient list is not instantiated yet create it
+      if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
+
+      //Define the get single message task
+      class ReceiveSingleMessage implements Callable<String> {
+
+          @Override
+          public String call() throws Exception {
+              CleartextMessages mCurrentReceived = lengthValueRead(in, CleartextMessages.class);
+              mMessagesReceived.addAll(mCurrentReceived.messages);
+              return null;
+          }
+      }
+
+      //read from the stream until either times out or get all the messages
+      ExecutorService executor = Executors.newSingleThreadExecutor();
+      while(mMessagesReceived.size() < messageCount) {
+          try {
+              executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
+          } catch (InterruptedException |ExecutionException | TimeoutException e) {
+              e.printStackTrace();
+              break;
+          }
+      }
+      executor.shutdown();
   }
 
   /**
@@ -317,6 +359,9 @@ public class Exchange implements Runnable {
       callback.success(this);
       return;
 
+    }else if(getExchangeStatus() == Status.ERROR_RECOVERABLE){
+        callback.recover(this, mErrorMessage);
+        return;
     } else {
       callback.failure(this, mErrorMessage);
       return;
@@ -334,7 +379,7 @@ public class Exchange implements Runnable {
    * number is not yet known because the exchage hasn't completed yet or has failed.
    */
   public int getCommonFriends() {
-    if (getExchangeStatus() == Status.SUCCESS) {
+    if (getExchangeStatus() == Status.SUCCESS || getExchangeStatus() == Status.ERROR_RECOVERABLE) {
       return commonFriends;
     } else {
       return -1;
@@ -355,7 +400,7 @@ public class Exchange implements Runnable {
    * the exchange hasn't completed yet or the exchange failed.
    */ 
   public List<RangzenMessage> getReceivedMessages() {
-    if (getExchangeStatus() == Status.SUCCESS) {
+    if (getExchangeStatus() == Status.SUCCESS || getExchangeStatus() == Status.ERROR_RECOVERABLE) {
       return mMessagesReceived;
     } else {
       return null;
@@ -375,7 +420,7 @@ public class Exchange implements Runnable {
    * the exchange hasn't completed yet or the exchange failed.
    */ 
   public CleartextFriends getReceivedFriends() {
-    if (getExchangeStatus() == Status.SUCCESS) {
+    if (getExchangeStatus() == Status.SUCCESS || getExchangeStatus() == Status.ERROR_RECOVERABLE) {
       return mFriendsReceived;
     } else {
       return null;
@@ -425,6 +470,7 @@ public class Exchange implements Runnable {
     try {
       byte[] encodedMessage = Exchange.lengthValueEncode(m).array();
       outputStream.write(encodedMessage);
+        outputStream.flush();
       return true;
     } catch (IOException e) {
       Log.e(TAG, "Length/value write failed with exception: " + e);
@@ -495,7 +541,7 @@ public class Exchange implements Runnable {
     
     // TODO(lerner): Add noise.
     return Math.max(fractionOfFriendsPriority(remote, commonFriends, myFriends),
-                    stored);
+            stored);
   }
 
   /** Compute the priority score for a person normalized by his number of friends.
@@ -516,5 +562,5 @@ public class Exchange implements Runnable {
       trustMultiplier = sharedFriends / (double) myFriends;
     }
     return priority * trustMultiplier;
-  } 
+  }
 }
