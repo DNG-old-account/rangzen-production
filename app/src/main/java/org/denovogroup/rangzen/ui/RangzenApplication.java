@@ -41,6 +41,8 @@ public class RangzenApplication extends Application{
         FriendStore store = new FriendStore(getApplicationContext(), StorageBase.ENCRYPTION_DEFAULT);
         //put this device's public id into the installation table to allow private push notification sending
         thisInstallation.put("publicId",store.getPublicDeviceIDString());
+        String myPublicId = store.getPublicDeviceIDString();
+        thisInstallation.put("readableId",myPublicId.substring(myPublicId.length()-9));
         thisInstallation.saveInBackground();
 
         /**Try to get friends from parse and register if first run*/
