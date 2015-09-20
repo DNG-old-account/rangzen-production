@@ -28,6 +28,8 @@ import java.util.TimerTask;
  */
 public class DebugActivity extends ActionBarActivity {
 
+    private static final int ID_LENGTH = 8;
+
     private TextView appVersionTv;
     private TextView myIdTv;
     private TextView myFriendsTv;
@@ -96,7 +98,7 @@ public class DebugActivity extends ActionBarActivity {
         FriendStore store = new FriendStore(this, StorageBase.ENCRYPTION_DEFAULT);
         String myId = store.getPublicDeviceIDString();
 
-        return myId;
+        return myId.substring(myId.length()-1-ID_LENGTH);
     }
 
     public String getMyFriendsIds() {
@@ -104,7 +106,7 @@ public class DebugActivity extends ActionBarActivity {
         FriendStore store = new FriendStore(this, StorageBase.ENCRYPTION_DEFAULT);
         Set<String> friendsSet = store.getAllFriends();
         for(String str : friendsSet){
-            friends += str+"\n";
+            friends += str.substring(str.length()-1-ID_LENGTH)+"\n";
         }
 
         return friends;
