@@ -7,9 +7,13 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
+import com.parse.FindCallback;
+import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseInstallation;
 import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.SaveCallback;
 
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.locationtracking.TrackedLocation;
@@ -144,6 +148,8 @@ public class NetworkHandler {
      */
     public boolean sendEventReport(JSONObject report){
 
+        sendPinnedReports();
+
         if(report != null){
             try {
                 //Convert to parse object
@@ -163,13 +169,47 @@ public class NetworkHandler {
                     }
                 }
                 //this will make sure the report is saved into local cache until sent to parse
-                testObject.saveEventually();
+                if(NetworkHandler.getInstance() != null && NetworkHandler.getInstance().isNetworkConnected()){
+                    //testObject.saveEventually();
+                    testObject.pinInBackground(testObject.getClassName());
+                } else {
+                    testObject.pinInBackground(testObject.getClassName());
+                }
                 return true;
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
         return false;
+    }
+
+    /** Run over the local parse datastore and tries to send the items in it, cleaning any item which has been sent */
+    private void sendPinnedReports(){
+        String[] querytypes = {ReportsMaker.LogEvent.event_tag.MESSAGE,
+                ReportsMaker.LogEvent.event_tag.NETWORK,
+                ReportsMaker.LogEvent.event_tag.SOCIAL_GRAPH,
+                ReportsMaker.LogEvent.event_tag.UI};
+
+        for(String querytype : querytypes){
+            ParseQuery<ParseObject> query = ParseQuery.getQuery(querytype);
+            query.fromLocalDatastore().findInBackground(new FindCallback<ParseObject>() {
+                @Override
+                public void done(final List<ParseObject> list, ParseException e) {
+                    if(list != null && e == null) {
+                        ParseObject.saveAllInBackground(list, new SaveCallback() {
+                            @Override
+                            public void done(ParseException e) {
+                                try {
+                                    ParseObject.unpinAll(list);
+                                } catch (ParseException e1) {
+                                    e1.printStackTrace();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
     }
 
     private long getObjectSizeInBytes(Object obj) {

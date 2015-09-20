@@ -43,10 +43,10 @@ public class ReportsMaker {
 
     public static class LogEvent{
         public static class event_tag{
-            static final String SOCIAL_GRAPH = "SOCIAL_GRAPH";
-            static final String MESSAGE = "MESSAGE";
-            static final String NETWORK = "NETWORK";
-            static final String UI = "UI";
+            public static final String SOCIAL_GRAPH = "SOCIAL_GRAPH";
+            public static final String MESSAGE = "MESSAGE";
+            public static final String NETWORK = "NETWORK";
+            public static final String UI = "UI";
         }
 
         public static class event_action{
