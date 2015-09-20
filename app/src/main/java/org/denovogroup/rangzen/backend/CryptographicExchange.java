@@ -38,6 +38,7 @@ import org.denovogroup.rangzen.beta.StopWatch;
 import org.denovogroup.rangzen.objects.ClientMessage;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.objects.ServerMessage;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.InputStream;
@@ -45,6 +46,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.Arrays;
 import java.util.List;
@@ -222,8 +225,30 @@ public class CryptographicExchange extends Exchange {
                       .build();
               if (!lengthValueWrite(out, cm)) {
                   success = false;
+
+                  //BETA
+                  Map<String,Object> edits = new HashMap();
+                  int failed = 0;
+                  try {
+                      failed = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_FAILED_KEY);
+                  } catch (JSONException e) {
+                      e.printStackTrace();
+                  }
+                  edits.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, failed+1);
+                  ReportsMaker.editReport(getReportId(), edits);
+                  //BETA END
               } else {
                   //BETA
+                  Map<String,Object> edits = new HashMap();
+                  int succesful = 0;
+                  try {
+                      succesful = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_SUCCESSFUL_KEY);
+                  } catch (JSONException e) {
+                      e.printStackTrace();
+                  }
+                  edits.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, succesful+1);
+                  ReportsMaker.editReport(getReportId(), edits);
+
                   watch.stop();
                   if (NetworkHandler.getInstance() != null) {
                       String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
@@ -298,11 +323,21 @@ public class CryptographicExchange extends Exchange {
               String exception = executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
               // BETA
               watch.stop();
-              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
-              if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
-              //BETA END
               if (exception != null && !exception.isEmpty()) {
                   executor.shutdown();
+
+                  //BETA
+                  Map<String,Object> edits = new HashMap();
+                  int failed = 0;
+                  try {
+                      failed = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_FAILED_KEY);
+                  } catch (JSONException e) {
+                      e.printStackTrace();
+                  }
+                  edits.put(ReportsMaker.EVENT_FAILED_KEY, failed+1);
+                  ReportsMaker.editReport(getReportId(), edits);
+                  //BETA END
+
                   if (mMessagesReceived.isEmpty()) {
                       setExchangeStatus(Status.ERROR);
                   } else {
@@ -310,6 +345,21 @@ public class CryptographicExchange extends Exchange {
                   }
                   setErrorMessage(exception);
                   throw new IOException(exception);
+              } else {
+                  //BETA
+                  Map<String,Object> edits = new HashMap();
+                  int succesful = 0;
+                  try {
+                      succesful = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_SUCCESSFUL_KEY);
+                  } catch (JSONException e) {
+                      e.printStackTrace();
+                  }
+                  edits.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, succesful+1);
+                  ReportsMaker.editReport(getReportId(), edits);
+
+                  JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
+                  if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
+                  //BETA END
               }
           } catch (InterruptedException |ExecutionException | TimeoutException e) {
               executor.shutdown();
