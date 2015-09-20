@@ -30,6 +30,7 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 
@@ -103,14 +104,15 @@ public class MessageStore {
 
 
     /**
-     * Ensures that the given priority value is in range.
+     * Check that the given priority value is in range.
+     * @throws IllegalArgumentException if value is outside of range
      */
   /* package */
     static void checkPriority(double priority)
             throws IllegalArgumentException {
         if (priority < MIN_PRIORITY_VALUE || priority > MAX_PRIORITY_VALUE) {
             throw new IllegalArgumentException("Priority " + priority
-                    + " is outside valid range of ["+MIN_PRIORITY_VALUE+",+MAX"+MAX_PRIORITY_VALUE+"]");
+                    + " is outside valid range of ["+MIN_PRIORITY_VALUE+","+MAX_PRIORITY_VALUE+"]");
         }
     }
 
@@ -193,6 +195,7 @@ public class MessageStore {
      * exists, does not modify the store and returns false.
      */
     public boolean addMessage(String msg, double priority) {
+        //Check if priority is within allowed range and fix it to closest edge if outside of range.
         try {
             checkPriority(priority);
         } catch (IllegalArgumentException e){
@@ -252,6 +255,7 @@ public class MessageStore {
      * false otherwise.
      */
     public boolean updatePriority(String msg, double priority) {
+        //Check if priority is within allowed range and fix it to closest edge if outside of range.
         try {
             checkPriority(priority);
         } catch (IllegalArgumentException e){
