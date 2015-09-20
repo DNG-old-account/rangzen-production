@@ -45,7 +45,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+<<<<<<< HEAD
 import java.util.UUID;
+import java.util.List;
+
+import android.bluetooth.BluetoothAdapter;
+=======
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -56,8 +61,8 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import android.bluetooth.BluetoothAdapter;
 import android.os.Handler;
+>>>>>>> 69d5f602f9d18c0f6b3810fa180cdca7e53fbf8a
 import android.util.Log;
 
 import okio.ByteString;
@@ -126,19 +131,33 @@ public class CryptographicExchange extends Exchange {
       computeSharedFriends();
       
       setExchangeStatus(Status.SUCCESS);
+<<<<<<< HEAD
       callback.success(this, getReportId());
+    } catch (Exception e) {  // Treat ALL exceptions as fatal.
+      // This status setting should be redundant (whoever threw the exception
+      // should have set the status to ERROR before throwing the exception) but
+      // this maintains the invariant that whenever callback.failure is called
+      // the error code is ERROR.
+      Log.e(TAG, "Exception while run()ing CryptographicExchange: " + e);
+      setExchangeStatus(Status.ERROR);
+
+      callback.failure(this, getErrorMessage(), getReportId());
+=======
+
+      callback.success(this);
     } catch (Exception e) {  // Treat ALL exceptions as fatal.
         Log.e(TAG, "Exception while run()ing CryptographicExchange: " + e);
         if(getExchangeStatus() == Status.ERROR_RECOVERABLE){
-            callback.recover(this, getErrorMessage(), getReportId());
+            callback.recover(this, getErrorMessage());
         } else {
             // This status setting should be redundant (whoever threw the exception
             // should have set the status to ERROR before throwing the exception) but
             // this maintains the invariant that whenever callback.failure is called
             // the error code is ERROR.
             setExchangeStatus(Status.ERROR);
-            callback.failure(this, getErrorMessage(), getReportId());
+            callback.failure(this, getErrorMessage());
         }
+>>>>>>> 69d5f602f9d18c0f6b3810fa180cdca7e53fbf8a
     }
   }
 
@@ -205,40 +224,51 @@ public class CryptographicExchange extends Exchange {
   private void sendClientMessage() throws IOException {
       //BETA
       StopWatch watch = new StopWatch();
+    ArrayList<ByteString> blindedFriends = Crypto.byteArraysToStrings(mClientPSI.encodeBlindedItems());
       //create a message pool to be sent and send each message individually to allow partial data recovery in case of connection loss
       boolean success = true;
       List<RangzenMessage> messagesPool = getMessages();
+<<<<<<< HEAD
+      for(RangzenMessage message : messagesPool){
+          watch.start();
+          List<RangzenMessage> messageWrapper = new ArrayList<>();
+          messageWrapper.add(message);
+          ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
+                  .build();
+          if(!lengthValueWrite(out, cm)){
+              success = false;
+          } else {
+              //BETA
+              watch.stop();
+              if(NetworkHandler.getInstance() != null){
+                  String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+                  for(RangzenMessage msg : cm.messages){
+                      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), msg.mId, msg.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
+                      NetworkHandler.getInstance().sendEventReport(report);
+                      if(!msg.isMine()){
+                          JSONObject report2 = ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), msg.mId, msg.priority,msg.text);
+                          NetworkHandler.getInstance().sendEventReport(report2);
+                      }
+                  }
+
+              }
+              //BETA END
+=======
       //notify the recipient how many items we expect to send him.
-      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messagesPool.size()),1d, null);
+      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messagesPool.size()),1d);
 
       if(!lengthValueWrite(out, exchangeInfoMessage)){
           success = false;
       } else {
           for (RangzenMessage message : messagesPool) {
-              watch.start();
               List<RangzenMessage> messageWrapper = new ArrayList<>();
               messageWrapper.add(message);
               ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
                       .build();
               if (!lengthValueWrite(out, cm)) {
                   success = false;
-              } else {
-                  //BETA
-                  watch.stop();
-                  if (NetworkHandler.getInstance() != null) {
-                      String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-                      for (RangzenMessage msg : cm.messages) {
-                          JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), msg.mId, msg.priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), "" + watch.getElapsedTime());
-                          NetworkHandler.getInstance().sendEventReport(report);
-                          if (!msg.isMine()) {
-                              JSONObject report2 = ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), msg.mId, msg.priority, msg.text);
-                              NetworkHandler.getInstance().sendEventReport(report2);
-                          }
-                      }
-
-                  }
-                  //BETA END
               }
+>>>>>>> 69d5f602f9d18c0f6b3810fa180cdca7e53fbf8a
           }
       }
     if (!success) {
@@ -254,6 +284,44 @@ public class CryptographicExchange extends Exchange {
    * @return A ClientMessage sent by the remote party, or null in the case of an error.
    */
   private void receiveClientMessage() throws IOException {
+<<<<<<< HEAD
+      //BETA
+      String times = "";
+      StopWatch watch = new StopWatch();
+      //inputStream.available return 0 only when the end of the stream has been reached, meaning all messages has been recovered
+      while(in.available() != 0) {
+          watch.start();
+          mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
+    
+        if (mRemoteClientMessage == null) {
+          setExchangeStatus(Status.ERROR);
+          setErrorMessage("Remote client message was not received.");
+          throw new IOException("Remote client message not received.");
+        }
+
+        if (mRemoteClientMessage.messages == null) {
+          setExchangeStatus(Status.ERROR);
+          setErrorMessage("Remote client messages field was null");
+          throw new IOException("Remote client messages field was null");
+        }
+          //if recipient list is not instantiated yet create it
+        if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
+          //Add everything passed in the passed wrapper to the pool
+          mMessagesReceived.addAll(mRemoteClientMessage.messages);
+
+          watch.stop();
+          times = times.concat(Long.toString(watch.getElapsedTime()).concat(","));
+      }
+    //BETA
+    String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+    for(RangzenMessage message : mMessagesReceived){
+      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(),mThisDeviceUUID, message.mId, message.priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()), times);
+      NetworkHandler.getInstance().sendEventReport(report);
+    }
+    //BETA END
+
+=======
+
       //the first message received is a hint, telling the us how many messages will be sent
       int messageCount = 0;
       RangzenMessage exchangeInfo = lengthValueRead(in, RangzenMessage.class);
@@ -262,9 +330,6 @@ public class CryptographicExchange extends Exchange {
               messageCount = Integer.parseInt(exchangeInfo.text);
           } catch (Exception e){}
       }
-    //BETA
-      StopWatch watch = new StopWatch();
-      String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
 
       //if recipient list is not instantiated yet create it
       if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
@@ -293,14 +358,7 @@ public class CryptographicExchange extends Exchange {
       ExecutorService executor = Executors.newSingleThreadExecutor();
       while(mMessagesReceived.size() < messageCount) {
           try {
-              //BETA
-              watch.start();
               String exception = executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
-              // BETA
-              watch.stop();
-              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
-              if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
-              //BETA END
               if (exception != null && !exception.isEmpty()) {
                   executor.shutdown();
                   if (mMessagesReceived.isEmpty()) {
@@ -323,6 +381,7 @@ public class CryptographicExchange extends Exchange {
           }
       }
       executor.shutdown();
+>>>>>>> 69d5f602f9d18c0f6b3810fa180cdca7e53fbf8a
   }
 
   /**

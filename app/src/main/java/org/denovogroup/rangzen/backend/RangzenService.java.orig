@@ -44,8 +44,11 @@ import android.os.IBinder;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.objects.RangzenMessage;
+<<<<<<< HEAD
 import org.json.JSONObject;
+=======
 import org.denovogroup.rangzen.ui.RangzenApplication;
+>>>>>>> 69d5f602f9d18c0f6b3810fa180cdca7e53fbf8a
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -443,9 +446,13 @@ public class RangzenService extends Service {
                 //BETA END
               mMessageStore.updatePriority(message.text, newPriority);
             } else {
+<<<<<<< HEAD
               mMessageStore.addMessage(message.text, newPriority, message.mId);
+=======
+              mMessageStore.addMessage(message.text, newPriority);
                 //mark this message as unread
                 ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
+>>>>>>> 69d5f602f9d18c0f6b3810fa180cdca7e53fbf8a
             }
           } catch (IllegalArgumentException e) {
               //BETA
@@ -485,7 +492,7 @@ public class RangzenService extends Service {
       }
 
         @Override
-        public void recover(Exchange exchange, String reason, String reportId) {
+        public void recover(Exchange exchange, String reason) {
             Log.e(TAG, "Exchange failed but data can be recovered, reason: " + reason);
             List<RangzenMessage> newMessages = exchange.getReceivedMessages();
             int friendOverlap = Math.max(exchange.getCommonFriends(), 0);
@@ -499,29 +506,13 @@ public class RangzenService extends Service {
                     double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
                     try {
                         if (mMessageStore.contains(message.text)) {
-                            //BETA
-                            double oldPriority = message.priority;
-                            JSONObject report = ReportsMaker.getMessagePriorityChangedBySystemReport(System.currentTimeMillis(),message.mId, oldPriority,newPriority,message.text);
-                            NetworkHandler.getInstance(getApplicationContext()).sendEventReport(report);
-                            //BETA END
                             mMessageStore.updatePriority(message.text, newPriority);
                         } else {
-                            mMessageStore.addMessage(message.text, newPriority, message.mId);
+                            mMessageStore.addMessage(message.text, newPriority);
                             //mark this message as unread
                             ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
                         }
                     } catch (IllegalArgumentException e) {
-                        //BETA
-                        Map<String,Object> reportsValues = new HashMap<String,Object>();
-                        reportsValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, newMessages.size());
-                        reportsValues.put(ReportsMaker.EVENT_FAILED_KEY, newMessages.size());
-                        reportsValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
-                        reportsValues.put(ReportsMaker.EVENT_ERRORS_KEY, String.format("Attempted to add/update message %s with priority (%f/%f)" +
-                                        ", %d friends, %d friends in common",
-                                message.text, newPriority, message.priority,
-                                myFriends.size(), friendOverlap));
-                        ReportsMaker.editReport(reportId, reportsValues);
-                        //BETA END
                         Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
                                         ", %d friends, %d friends in common",
                                 message.text, newPriority, message.priority,
@@ -529,7 +520,7 @@ public class RangzenService extends Service {
                     }
                 }
             }
-            RangzenService.this.cleanupAfterExchange(reportId);
+            RangzenService.this.cleanupAfterExchange();
         }
     };
 

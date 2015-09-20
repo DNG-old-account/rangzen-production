@@ -107,15 +107,14 @@ public class MessageStore {
 
 
     /**
-     * Check that the given priority value is in range.
-     * @throws IllegalArgumentException if value is outside of range
+     * Ensures that the given priority value is in range.
      */
   /* package */
     static void checkPriority(double priority)
             throws IllegalArgumentException {
         if (priority < MIN_PRIORITY_VALUE || priority > MAX_PRIORITY_VALUE) {
             throw new IllegalArgumentException("Priority " + priority
-                    + " is outside valid range of ["+MIN_PRIORITY_VALUE+","+MAX_PRIORITY_VALUE+"]");
+                    + " is outside valid range of ["+MIN_PRIORITY_VALUE+",+MAX"+MAX_PRIORITY_VALUE+"]");
         }
     }
 
@@ -201,12 +200,17 @@ public class MessageStore {
      * @return Returns true if the message was added. If the message already
      * exists, does not modify the store and returns false.
      */
+<<<<<<< HEAD
   public boolean addMessage(String msg, double priority, String mId) {
+        checkPriority(priority);
+=======
+    public boolean addMessage(String msg, double priority) {
         try {
             checkPriority(priority);
         } catch (IllegalArgumentException e){
             priority = (priority > MAX_PRIORITY_VALUE) ? MAX_PRIORITY_VALUE : MIN_PRIORITY_VALUE;
         }
+>>>>>>> 69d5f602f9d18c0f6b3810fa180cdca7e53fbf8a
 
         // Check whether we have the message already (perhaps in another bin).
         // TODO(barath): Consider improving performance by selecting a different
@@ -264,7 +268,6 @@ public class MessageStore {
      * false otherwise.
      */
     public boolean updatePriority(String msg, double priority) {
-        //Check if priority is within allowed range and fix it to closest edge if outside of range.
         try {
             checkPriority(priority);
         } catch (IllegalArgumentException e){

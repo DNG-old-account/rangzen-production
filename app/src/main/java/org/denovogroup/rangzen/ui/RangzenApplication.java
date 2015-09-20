@@ -27,14 +27,11 @@ import java.util.List;
 public class RangzenApplication extends Application{
 
     private static String TAG = "RangzenApplication";
-    private static Context appContext;
 
     @Override
     public final void onCreate() {
         super.onCreate();
         Fabric.with(this, new Crashlytics());
-
-        appContext = this;
 
         /** Initialize Parse */
         Parse.enableLocalDatastore(getApplicationContext());
@@ -79,9 +76,5 @@ public class RangzenApplication extends Application{
                 }
             }
         });
-    }
-
-    public static Context getAppContext(){
-        return appContext;
     }
 }

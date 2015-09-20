@@ -49,4 +49,14 @@ public interface ExchangeCallback {
    * @param reason A string describing why the exchange failed.
    */
   public void failure(Exchange exchange, String reason, String reportId);
+
+
+    /**
+     * Called if the exchange failed (network failure, protocol violation, etc.) but some data
+     * can still be recovered.
+     *
+     * @param exchange The Exchange object which executed the failed exchange.
+     * @param reason A string describing why the exchange failed.
+     */
+    public void recover(Exchange exchange, String reason, String reportId);
 }
