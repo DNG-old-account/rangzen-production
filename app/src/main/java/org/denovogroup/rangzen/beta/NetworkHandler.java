@@ -16,9 +16,14 @@ import org.denovogroup.rangzen.beta.locationtracking.TrackedLocation;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -70,7 +75,43 @@ public class NetworkHandler {
         return false;
     }
 
-    /** Send location data to the server
+    /** Send multiple locations data to the server
+     *
+     * @param trackedLocations list of objects to be sent
+     * @return true if object was sent and received, false otherwise
+     */
+    public int sendLocations(List<TrackedLocation> trackedLocations){
+        String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+
+        if(trackedLocations != null){
+            List<ParseObject> sendList = new ArrayList<>();
+            for(TrackedLocation trackedLocation : trackedLocations){
+                ParseObject testObject = new ParseObject("LocationTracking");
+                testObject.put(USERID_KEY, mThisDeviceUUID);
+                testObject.put(LONGITUDE_KEY, trackedLocation.longitude);
+                testObject.put(LATITUDE_KEY, trackedLocation.latitude);
+                testObject.put(TIMESTAMP_KEY, trackedLocation.timestamp);
+                testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp));
+
+                sendList.add(testObject);
+
+                if(getObjectSizeInBytes(sendList) >= 128000){
+                    sendList.remove(sendList.size()-1);
+                    break;
+                }
+            }
+
+            try {
+                ParseObject.saveAll(sendList);
+                return sendList.size();
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+        return -1;
+    }
+
+    /** Send single location data to the server
      *
      * @param trackedLocation the object to be sent
      * @return true if object was sent and received, false otherwise
@@ -129,5 +170,17 @@ public class NetworkHandler {
             }
         }
         return false;
+    }
+
+    private long getObjectSizeInBytes(Object obj) {
+        try {
+            ByteArrayOutputStream b = new ByteArrayOutputStream();
+            ObjectOutputStream o = new ObjectOutputStream(b);
+            o.writeObject(obj);
+            return b.toByteArray().length;
+        } catch (IOException e){
+            e.printStackTrace();
+            return 0;
+        }
     }
 }
