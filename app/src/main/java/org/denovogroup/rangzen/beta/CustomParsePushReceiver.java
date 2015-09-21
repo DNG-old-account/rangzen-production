@@ -13,6 +13,8 @@ import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -38,46 +40,58 @@ public class CustomParsePushReceiver extends ParsePushBroadcastReceiver {
         try {
             JSONObject pushJson = new JSONObject(extras.getString("com.parse.Data"));
             String pushedContent = pushJson.getString("alert");
-            RangzenMessage receivedMessage = parseMessage(pushedContent);
-            if(receivedMessage != null){
+            List<RangzenMessage> receivedMessages = parseMessage(pushedContent);
+            if(receivedMessages != null){
                 MessageStore store = new MessageStore(context, StorageBase.ENCRYPTION_DEFAULT);
-                store.addMessage(receivedMessage.text, receivedMessage.priority, receivedMessage.mId);
+                for(RangzenMessage receivedMessage : receivedMessages) {
+                    store.addMessage(receivedMessage.text, receivedMessage.priority, receivedMessage.mId);
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    private RangzenMessage parseMessage(String pushedContent){
-        RangzenMessage rangzenMessage = null;
+    private List<RangzenMessage> parseMessage(String pushedContent){
+        List<RangzenMessage> rangzenMessageList = new ArrayList<>();
 
-        boolean hasMessage = pushedContent.contains(RANGZEN_MESSAGE_PERFIX) && pushedContent.contains(RANGZEN_MESSAGE_POSTFIX);
+        while(hasMessage(pushedContent)) {
 
-        int messageStart = pushedContent.indexOf(RANGZEN_MESSAGE_PERFIX)+RANGZEN_MESSAGE_PERFIX.length();
-        int messageEnd = pushedContent.indexOf(RANGZEN_MESSAGE_POSTFIX);
+            int messageStart = pushedContent.indexOf(RANGZEN_MESSAGE_PERFIX) + RANGZEN_MESSAGE_PERFIX.length();
+            int messageEnd = pushedContent.indexOf(RANGZEN_MESSAGE_POSTFIX);
 
-        if(hasMessage && messageEnd > messageStart){
-            try{
-                String message = pushedContent.substring(messageStart,messageEnd);
-                JSONObject jsonMessage = new JSONObject(message);
+            if (messageEnd > messageStart) {
+                try {
+                    String message = pushedContent.substring(messageStart, messageEnd);
+                    JSONObject jsonMessage = new JSONObject(message);
 
-                //text is mandatory for parsing, the rest can be auto assigned by the system
-                String text = jsonMessage.getString(MESSAGE_TEXT_KEY);
-                Double priority = jsonMessage.optDouble(MESSAGE_PRIORITY_KEY, 1d);
+                    //text is mandatory for parsing, the rest can be auto assigned by the system
+                    String text = jsonMessage.getString(MESSAGE_TEXT_KEY);
+                    Double priority = jsonMessage.optDouble(MESSAGE_PRIORITY_KEY, 1d);
 
-                Random random = new Random();
-                String mId = jsonMessage.optString(MESSAGE_ID_KEY, DEFAULT_MESSAGE_ID_PREFIX+System.currentTimeMillis()+random.nextInt(500));
+                    Random random = new Random();
+                    String mId = jsonMessage.optString(MESSAGE_ID_KEY, DEFAULT_MESSAGE_ID_PREFIX + System.currentTimeMillis() + random.nextInt(500));
 
-                rangzenMessage = new RangzenMessage.Builder()
-                        .mId(mId)
-                        .priority(priority)
-                        .text(text).build();
+                    RangzenMessage rangzenMessage = new RangzenMessage.Builder()
+                            .mId(mId)
+                            .priority(priority)
+                            .text(text).build();
 
-            } catch (JSONException e){
-                e.printStackTrace();
+                    rangzenMessageList.add(rangzenMessage);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                pushedContent = pushedContent.substring(pushedContent.indexOf(RANGZEN_MESSAGE_POSTFIX) + RANGZEN_MESSAGE_POSTFIX.length());
+            } else {
+                break;
             }
         }
 
-        return rangzenMessage;
+        return rangzenMessageList;
+    }
+
+    private boolean hasMessage(String pushedContent){
+        return pushedContent.contains(RANGZEN_MESSAGE_PERFIX) && pushedContent.contains(RANGZEN_MESSAGE_POSTFIX);
     }
 }
