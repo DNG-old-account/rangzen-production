@@ -408,6 +408,52 @@ public class MessageStore {
     }
 
     /**
+     * This method goes through every message in all of the bins and if contain
+     * the specified string, inserts them into an array list by trust score and
+     * then in the case of a tie, alphabetically.
+     *
+     * @param query The string to look for in the message
+     * @return a list of messages containing the set query.
+     * @throws NullPointerException if set query is null
+     */
+    public List<Message> getMessagesContaining(String query){
+
+        if(query == null ) throw new NullPointerException("Query string is null");
+
+        List<Message> result = new ArrayList<Message>();
+
+        for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
+            String binKey = getBinKey(bin);
+            Set<String> msgs = store.getSet(binKey);
+            if (msgs == null)
+                continue;
+
+            for (String m : msgs) {
+                if(m.toLowerCase().contains(query.toLowerCase())) {
+                    double priority = getMessagePriority(m, -1);
+                    result.add(new Message(priority, m));
+                }
+            }
+        }
+        Collections.sort(result, new Comparator<Message>() {
+
+            @Override
+            public int compare(Message lhs, Message rhs) {
+                Message left = (Message) lhs;
+                Message right = (Message) rhs;
+                if (left.getPriority() > right.getPriority()) {
+                    return -1;
+                } else if (left.getPriority() < right.getPriority()) {
+                    return 1;
+                } else {
+                    return left.getMessage().compareTo(right.getMessage());
+                }
+            }
+        });
+        return result;
+    }
+
+    /**
      * This method goes through every message in all of the bins and inserts
      * them into an array list by trust score and then in the case of a tie,
      * alphabetically.
