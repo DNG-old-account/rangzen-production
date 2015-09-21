@@ -1,5 +1,6 @@
 package org.denovogroup.rangzen.beta;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * Created by Liran on 9/21/2015.
@@ -30,7 +32,7 @@ public class CustomParsePushReceiver extends ParsePushBroadcastReceiver {
     private static final String MESSAGE_TEXT_KEY = "text";
     private static final String MESSAGE_PRIORITY_KEY = "priority";
     private static final String MESSAGE_ID_KEY = "messageId";
-    private static final String DEFAULT_MESSAGE_ID_PREFIX = "pushed_message_";
+    private static final String DEFAULT_MESSAGE_ID_PREFIX = "pushed_message";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -70,7 +72,8 @@ public class CustomParsePushReceiver extends ParsePushBroadcastReceiver {
                     Double priority = jsonMessage.optDouble(MESSAGE_PRIORITY_KEY, 1d);
 
                     Random random = new Random();
-                    String mId = jsonMessage.optString(MESSAGE_ID_KEY, DEFAULT_MESSAGE_ID_PREFIX + System.currentTimeMillis() + random.nextInt(500));
+                    String myUuid = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+                    String mId = jsonMessage.optString(MESSAGE_ID_KEY, DEFAULT_MESSAGE_ID_PREFIX+"_" + myUuid + "_" + System.currentTimeMillis() + random.nextInt(500));
 
                     RangzenMessage rangzenMessage = new RangzenMessage.Builder()
                             .mId(mId)
