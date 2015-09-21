@@ -30,11 +30,19 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
+
+import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.ui.Opener;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -128,7 +136,6 @@ public class BluetoothSpeaker {
         Log.e(TAG, "Can't receive incoming connections.");
       }
     }
-
     Log.d(TAG, "Finished creating BluetoothSpeaker.");
   }
 
@@ -261,7 +268,7 @@ public class BluetoothSpeaker {
   private void createListeningSocket() throws IOException {
       mServerSocket = mBluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(SDP_NAME, mThisDeviceUUID);
       Log.i(TAG, String.format("Listening (insecure RFCOMM) - name <%s>, UUID <%s>.",
-                               SDP_NAME, mThisDeviceUUID));
+              SDP_NAME, mThisDeviceUUID));
   }
 
     /**
@@ -342,7 +349,7 @@ public class BluetoothSpeaker {
     }
   }
 
-  /**
+    /**
    * A thread which attempts to connect to the given peer and return a Bluetooth
    * Socket to that peer through the success() method of the connection callback.
    */
@@ -407,4 +414,24 @@ public class BluetoothSpeaker {
       }
     }
   }
+
+    /** create and display a dialog prompting the user about the enabled
+     * state of the bluetooth service.
+     */
+    private void showNoBluetoothNotification(){
+        if(mContext == null) return;
+
+        int notificationId = R.string.dialog_no_bluetooth_message;
+
+        Intent notificationIntent = new Intent(mContext, Opener.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, notificationIntent, 0);
+
+        NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notification = new Notification.Builder(mContext).setContentTitle(mContext.getText(R.string.dialog_no_bluetooth_title))
+                .setContentText(mContext.getText(R.string.dialog_no_bluetooth_message))
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .build();
+        mNotificationManager.notify(notificationId, notification);
+    }
 }

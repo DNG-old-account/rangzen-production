@@ -26,6 +26,8 @@ import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.WifiStateReceiver;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -75,7 +77,6 @@ public class TrackingService extends Service implements LocationListener {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(LOG_TAG, "Tracking service started");
         notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         showNotification();
 
@@ -167,7 +168,9 @@ public class TrackingService extends Service implements LocationListener {
     private boolean flushCache(){
         if(!isFlushing){
             isFlushing = true;
+            List<TrackedLocation> sendlist = new ArrayList<>();
             LocationCacheHandler cacheHandler = LocationCacheHandler.getInstance(getApplicationContext());
+            Log.d(LOG_TAG,"size :"+cacheHandler.getLocationsCount());
             Cursor cursor = cacheHandler.getLocations();
             if(cursor != null){
                 cursor.moveToFirst();
@@ -177,16 +180,28 @@ public class TrackingService extends Service implements LocationListener {
                             cursor.getDouble(cursor.getColumnIndex(LocationCacheHandler.LONGITUDE_COL)),
                             cursor.getLong(cursor.getColumnIndex(LocationCacheHandler.TIMESTAMP_COL))
                     );
-                    if (sendToServer(trackedLocation)) {
-                        cacheHandler.removeLocation(trackedLocation);
-                        lastLocationSent = trackedLocation;
-                    }
+
+                    sendlist.add(trackedLocation);
                     cursor.moveToNext();
+
                 }
+
                 cursor.close();
-                isFlushing = false;
+
+                NetworkHandler dbHandler = NetworkHandler.getInstance(getApplicationContext());
+                if(NetworkHandler.isNetworkConnected() && dbHandler != null) {
+                    int sentCount = dbHandler.sendLocations(sendlist);
+
+                    if (sentCount > 0) {
+                        Log.d(LOG_TAG,"sent :"+sentCount);
+                        cacheHandler.removeLocations(sentCount);
+                        lastLocationSent = sendlist.get(sendlist.size() - 1);
+                        Log.d(LOG_TAG,"size after:"+cacheHandler.getLocationsCount());
+                    }
+                }
 
                 if(cacheHandler.getLocationsCount() <= 0) {
+                    isFlushing = false;
                     return true;
                 }
             }

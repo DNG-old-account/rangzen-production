@@ -95,7 +95,7 @@ public class MessageStore {
     /**
      * The min priority value.
      */
-    private static final double MIN_PRIORITY_VALUE = 0.0f;
+    private static final double MIN_PRIORITY_VALUE = 0.01f;
 
     /**
      * The max priority value.
@@ -107,14 +107,15 @@ public class MessageStore {
 
 
     /**
-     * Ensures that the given priority value is in range.
+     * Check that the given priority value is in range.
+     * @throws IllegalArgumentException if value is outside of range
      */
   /* package */
     static void checkPriority(double priority)
             throws IllegalArgumentException {
         if (priority < MIN_PRIORITY_VALUE || priority > MAX_PRIORITY_VALUE) {
             throw new IllegalArgumentException("Priority " + priority
-                    + " is outside valid range of ["+MIN_PRIORITY_VALUE+",+MAX"+MAX_PRIORITY_VALUE+"]");
+                    + " is outside valid range of ["+MIN_PRIORITY_VALUE+","+MAX_PRIORITY_VALUE+"]");
         }
     }
 
@@ -201,7 +202,11 @@ public class MessageStore {
      * exists, does not modify the store and returns false.
      */
   public boolean addMessage(String msg, double priority, String mId) {
-        checkPriority(priority);
+        try {
+            checkPriority(priority);
+        } catch (IllegalArgumentException e){
+            priority = (priority > MAX_PRIORITY_VALUE) ? MAX_PRIORITY_VALUE : MIN_PRIORITY_VALUE;
+        }
 
         // Check whether we have the message already (perhaps in another bin).
         // TODO(barath): Consider improving performance by selecting a different
@@ -259,10 +264,10 @@ public class MessageStore {
      * false otherwise.
      */
     public boolean updatePriority(String msg, double priority) {
+        //Check if priority is within allowed range and fix it to closest edge if outside of range.
         try {
             checkPriority(priority);
         } catch (IllegalArgumentException e){
-            e.printStackTrace();
             priority = (priority > MAX_PRIORITY_VALUE) ? MAX_PRIORITY_VALUE : MIN_PRIORITY_VALUE;
         }
 

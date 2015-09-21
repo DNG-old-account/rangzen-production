@@ -289,7 +289,7 @@ public class PeerManager {
       return false;
     } else {
       //BETA
-      if(context != null && NetworkHandler.getInstance(context).isNetworkConnected()){
+      if(context != null){
         try {
           String mPeerDeviceUUID = ""+ UUID.nameUUIDFromBytes(p.getNetwork().getBluetoothDevice().getAddress().getBytes());
           String[] ids = {mPeerDeviceUUID};

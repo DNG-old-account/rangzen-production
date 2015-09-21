@@ -1,6 +1,7 @@
 package org.denovogroup.rangzen.ui;
 
 import android.app.Application;
+import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -36,7 +37,13 @@ public class RangzenApplication extends Application{
         Parse.enableLocalDatastore(getApplicationContext());
         Parse.initialize(this, "4XIuXX5JTtAQFQFPJ9M7L1E7o2Tr3oN67bf3hiRU", "02cnF9azewOD0MPqpmfSWpi5TB2XyRTQDY3Rrxno");
         ParsePush.subscribeInBackground("beta");
-        ParseInstallation.getCurrentInstallation().saveInBackground();
+        ParseInstallation thisInstallation = ParseInstallation.getCurrentInstallation();
+        FriendStore store = new FriendStore(getApplicationContext(), StorageBase.ENCRYPTION_DEFAULT);
+        //put this device's public id into the installation table to allow private push notification sending
+        thisInstallation.put("publicId",store.getPublicDeviceIDString());
+        String myPublicId = store.getPublicDeviceIDString();
+        thisInstallation.put("readableId",myPublicId.substring(myPublicId.length()-9));
+        thisInstallation.saveInBackground();
 
         /**Try to get friends from parse and register if first run*/
         ParseQuery<ParseObject> query = ParseQuery.getQuery("UserData");

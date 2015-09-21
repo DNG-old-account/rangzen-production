@@ -100,11 +100,12 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="maven-ant-tasks-2.1.3" level="project" />
     <orderEntry type="library" exported="" name="ant-1.8.0" level="project" />
+    <orderEntry type="library" exported="" name="mail" level="project" />
     <orderEntry type="library" exported="" name="pkix-1.51.0.0" level="project" />
     <orderEntry type="library" exported="" name="support-annotations-22.2.1" level="project" />
-    <orderEntry type="library" exported="" name="ant-launcher-1.8.0" level="project" />
-    <orderEntry type="library" exported="" name="asm-commons-5.0.1" level="project" />
     <orderEntry type="library" exported="" name="prov-1.51.0.0" level="project" />
+    <orderEntry type="library" exported="" name="asm-commons-5.0.1" level="project" />
+    <orderEntry type="library" exported="" name="ant-launcher-1.8.0" level="project" />
     <orderEntry type="library" exported="" name="asm-5.0.1" level="project" />
     <orderEntry type="library" exported="" name="appcompat-v7-22.2.1" level="project" />
     <orderEntry type="library" exported="" name="Parse-1.10.1" level="project" />
@@ -118,6 +119,7 @@
     <orderEntry type="library" exported="" name="bolts-android-1.2.0" level="project" />
     <orderEntry type="library" exported="" name="protoparser-3.1.4" level="project" />
     <orderEntry type="library" exported="" name="crashlytics-2.5.2" level="project" />
+    <orderEntry type="library" exported="" name="additionnal" level="project" />
     <orderEntry type="library" exported="" name="library-2.4.1" level="project" />
     <orderEntry type="library" exported="" name="commons-codec-1.3" level="project" />
     <orderEntry type="library" exported="" name="robolectric-annotations-2.4" level="project" />
@@ -133,6 +135,7 @@
     <orderEntry type="library" exported="" name="multidex-1.0.1" level="project" />
     <orderEntry type="library" exported="" name="vtd-xml-2.11" level="project" />
     <orderEntry type="library" exported="" name="javawriter-2.5.0" level="project" />
+    <orderEntry type="library" exported="" name="activation" level="project" />
     <orderEntry type="library" exported="" name="robolectric-2.4" level="project" />
     <orderEntry type="library" exported="" name="answers-1.3.2" level="project" />
   </component>

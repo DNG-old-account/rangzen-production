@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 /**
  * Created by Liran on 8/31/2015.
@@ -113,7 +114,21 @@ public class LocationCacheHandler extends SQLiteOpenHelper{
                 //Log.d(LOG_TAG, "location removed from cache");
             }
         }
+    }
 
+    /** Removes a set amount of location from the cache
+     *
+     * @param count amount of items to be removed from the end of the cache
+     */
+    public void removeLocations(int count){
+        if(count > 0) {
+            String sqlCommand = "DELETE FROM " + TABLE_NAME + " WHERE "+TIMESTAMP_COL+" IN (SELECT "+TIMESTAMP_COL+" FROM "+TABLE_NAME+" ORDER BY "+TIMESTAMP_COL+" LIMIT " +count+");";
+            SQLiteDatabase db = getWritableDatabase();
+            if(db != null){
+                db.execSQL(sqlCommand);
+                //Log.d(LOG_TAG, "location removed from cache");
+            }
+        }
     }
 
     /** a helper class used to get all the locations in the cache

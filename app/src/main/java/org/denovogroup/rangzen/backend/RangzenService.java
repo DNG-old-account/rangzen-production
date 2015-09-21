@@ -45,6 +45,7 @@ import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.json.JSONObject;
+import org.denovogroup.rangzen.ui.RangzenApplication;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -252,7 +253,7 @@ public class RangzenService extends Service {
      * background tasks.
      */
     public void backgroundTasks() {
-        // Log.v(TAG, "Background Tasks Started");
+        Log.v(TAG, "Background Tasks Started");
 
         // TODO(lerner): Why not just use mPeerManager?
         PeerManager peerManager = PeerManager.getInstance(getApplicationContext());
@@ -383,9 +384,7 @@ public class RangzenService extends Service {
      */
     /* package */ void cleanupAfterExchange(String reportId) {
         //BETA
-        if(NetworkHandler.isNetworkConnected()) {
-            NetworkHandler.getInstance(getApplicationContext()).sendEventReport(ReportsMaker.getBacklogedReport(reportId));
-        }
+        NetworkHandler.getInstance(getApplicationContext()).sendEventReport(ReportsMaker.getBacklogedReport(reportId));
         ReportsMaker.removeReport(reportId);
         //BETA END
       setConnecting(false);
@@ -421,13 +420,6 @@ public class RangzenService extends Service {
         int friendOverlap = exchange.getCommonFriends();
         Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
         Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
-          //BETA
-          Map<String,Object> reportValues = new HashMap<String,Object>();
-          reportValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, newMessages.size());
-          reportValues.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, newMessages.size());
-          reportValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
-          ReportsMaker.editReport(reportId, reportValues);
-          //BETA END
         for (RangzenMessage message : newMessages) {
           Set<String> myFriends = mFriendStore.getAllFriends();
           double stored = mMessageStore.getPriority(message.text);
@@ -443,13 +435,12 @@ public class RangzenService extends Service {
               mMessageStore.updatePriority(message.text, newPriority);
             } else {
               mMessageStore.addMessage(message.text, newPriority, message.mId);
+                //mark this message as unread
+                ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
             }
           } catch (IllegalArgumentException e) {
               //BETA
               Map<String,Object> reportsValues = new HashMap<String,Object>();
-              reportsValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, newMessages.size());
-              reportsValues.put(ReportsMaker.EVENT_FAILED_KEY, newMessages.size());
-              reportsValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
               reportsValues.put(ReportsMaker.EVENT_ERRORS_KEY, String.format("Attempted to add/update message %s with priority (%f/%f)" +
                               ", %d friends, %d friends in common",
                       message.text, newPriority, message.priority,
@@ -462,6 +453,13 @@ public class RangzenService extends Service {
                                     myFriends.size(), friendOverlap));
           }
         }
+
+          //BETA
+          Map<String,Object> reportsValues = new HashMap<String,Object>();
+          reportsValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, newMessages.size());
+          reportsValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
+          ReportsMaker.editReport(reportId, reportsValues);
+          //BETA END
         RangzenService.this.cleanupAfterExchange(reportId);
       }
 
@@ -471,7 +469,6 @@ public class RangzenService extends Service {
           Map<String,Object> reportValues = new HashMap<String,Object>();
           if(exchange.getReceivedMessages() != null) {
               reportValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, exchange.getReceivedMessages().size());
-              reportValues.put(ReportsMaker.EVENT_FAILED_KEY, exchange.getReceivedMessages().size());
               reportValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
               reportValues.put(ReportsMaker.EVENT_ERRORS_KEY, reason);
               ReportsMaker.editReport(reportId, reportValues);
@@ -480,6 +477,58 @@ public class RangzenService extends Service {
         Log.e(TAG, "Exchange failed, reason: " + reason);
         RangzenService.this.cleanupAfterExchange(reportId);
       }
+
+        @Override
+        public void recover(Exchange exchange, String reason, String reportId) {
+            Log.e(TAG, "Exchange failed but data can be recovered, reason: " + reason);
+            List<RangzenMessage> newMessages = exchange.getReceivedMessages();
+            int friendOverlap = Math.max(exchange.getCommonFriends(), 0);
+            Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
+            Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
+            if(newMessages != null) {
+                for (RangzenMessage message : newMessages) {
+                    Set<String> myFriends = mFriendStore.getAllFriends();
+                    double stored = mMessageStore.getPriority(message.text);
+                    double remote = message.priority;
+                    double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
+                    try {
+                        if (mMessageStore.contains(message.text)) {
+                            //BETA
+                            double oldPriority = message.priority;
+                            JSONObject report = ReportsMaker.getMessagePriorityChangedBySystemReport(System.currentTimeMillis(),message.mId, oldPriority,newPriority,message.text);
+                            NetworkHandler.getInstance(getApplicationContext()).sendEventReport(report);
+                            //BETA END
+                            mMessageStore.updatePriority(message.text, newPriority);
+                        } else {
+                            mMessageStore.addMessage(message.text, newPriority, message.mId);
+                            //mark this message as unread
+                            ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
+                        }
+                    } catch (IllegalArgumentException e) {
+
+                        //BETA
+                        Map<String,Object> reportsValues = new HashMap<String,Object>();
+                        reportsValues.put(ReportsMaker.EVENT_ERRORS_KEY, String.format("Attempted to add/update message %s with priority (%f/%f)" +
+                                        ", %d friends, %d friends in common",
+                                message.text, newPriority, message.priority,
+                                myFriends.size(), friendOverlap));
+                        ReportsMaker.editReport(reportId, reportsValues);
+                        //BETA END
+                        Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
+                                        ", %d friends, %d friends in common",
+                                message.text, newPriority, message.priority,
+                                myFriends.size(), friendOverlap));
+                    }
+                }
+            }
+            //BETA
+            Map<String,Object> reportsValues = new HashMap<String,Object>();
+            reportsValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, newMessages.size());
+            reportsValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
+            ReportsMaker.editReport(reportId, reportsValues);
+            //BETA END
+            RangzenService.this.cleanupAfterExchange(reportId);
+        }
     };
 
     /**
