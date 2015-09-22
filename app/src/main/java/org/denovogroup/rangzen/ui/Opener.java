@@ -166,7 +166,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         getSupportActionBar().setHomeButtonEnabled(true);
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.LEFT);
 
-        if(savedInstanceState == null){
+        if(mFirstTime){
             //Start the read state tracker to tell what messages are not read yet
             ReadStateTracker.initTracker(getApplicationContext());
         }
