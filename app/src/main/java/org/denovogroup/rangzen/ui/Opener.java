@@ -49,6 +49,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -109,7 +110,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
         //Setup the search view
 
-        SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
+        MenuItem searchItem = menu.findItem(R.id.search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
         setSearhView(searchView);
 
         //put first message into the feed
@@ -117,6 +119,11 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                 .addMessage(
                         "This is the Rangzen message feed. Messages in the ether will appear here.",
                         1L);
+
+        //get any hashtag passed data from previous click events
+        Uri data = getIntent().getData();
+        getIntent().setData(null);
+        if(data != null) searchHashTagFromClick(data, searchItem);
         return true;
     }
 
@@ -555,5 +562,20 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                 return false;
             }
         });
+    }
+
+    /** Set the the Actionbar search view with the hashtag supplied in the provided Uri and run the
+     * default search method.
+     *
+     * @param data The Uri which contain the hashtag as the last part of the Uri
+     * @param menuItem The menu item hosting the searchView to use
+     */
+    private void searchHashTagFromClick(Uri data, MenuItem menuItem){
+
+        SearchView searchView = (SearchView) menuItem.getActionView();
+        menuItem.expandActionView();
+        String query = data.toString().substring(data.toString().indexOf("#"), data.toString().length()-1);
+        searchView.setQuery(query, true);
+        searchView.clearFocus();
     }
 }

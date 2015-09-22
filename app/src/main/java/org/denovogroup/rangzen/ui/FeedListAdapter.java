@@ -33,6 +33,11 @@ package org.denovogroup.rangzen.ui;
 
 import android.app.Activity;
 import android.content.Context;
+import android.text.Html;
+import android.text.SpannableStringBuilder;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -44,6 +49,7 @@ import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.StorageBase;
+import org.denovogroup.rangzen.backend.Utils;
 
 import java.text.DecimalFormat;
 import java.util.List;
@@ -154,7 +160,19 @@ public class FeedListAdapter extends BaseAdapter {
         } else {
             mViewHolder = (ViewHolder) convertView.getTag();
         }
-        mViewHolder.mHashtagView.setText(message.getMessage());
+
+        String hashtaggedMessage = message.getMessage();
+
+        List<String> hashtags = Utils.getHashtags(message.getMessage());
+        for(String hashtag : hashtags){
+            String textBefore = hashtaggedMessage.substring(0,hashtaggedMessage.indexOf(hashtag));
+            String textAfter = hashtaggedMessage.substring(hashtaggedMessage.indexOf(hashtag)+hashtag.length());
+            hashtaggedMessage = textBefore+"<a href=\"org.denovogroup.rangzen://hashtag/"+hashtag+"/\">"+hashtag+"</a>"+textAfter;
+        }
+
+        mViewHolder.mHashtagView.setText(Html.fromHtml(hashtaggedMessage));
+        mViewHolder.mHashtagView.setLinksClickable(true);
+        mViewHolder.mHashtagView.setMovementMethod(LinkMovementMethod.getInstance());
 
         mViewHolder.mUpvoteView.setText(Integer.toString((int) Math.round(100 * message.getPriority())));
 

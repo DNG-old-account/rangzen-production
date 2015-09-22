@@ -98,7 +98,7 @@ public class Utils {
             }
 
             if(hashtagEnd < hashtag.length()-1) {
-                hashtag = hashtag.substring(0, hashtagEnd+1);
+                hashtag = hashtag.substring(0, hashtagEnd);
             }
             hashtags.add(hashtag);
             text = text.substring(hashtagStart + hashtag.length());
