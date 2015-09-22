@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.ui;
 
 import com.google.zxing.common.BitMatrix;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -343,7 +344,7 @@ public class FragmentOrganizer extends Fragment {
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 ReadStateTracker.setReadState(getActivity().getApplicationContext(), message, false);
-
+                getActivity().setResult(Activity.RESULT_OK);
 				//BETA
 				JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(),mId,priority,message);
 				if(NetworkHandler.getInstance() != null){

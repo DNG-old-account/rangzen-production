@@ -71,4 +71,6 @@
     <string name="send">Send</string>
     <string name="sending_bug_report">Sending bug report</string>
 
+    <string name="search_title">Search</string>
+
 </resources>

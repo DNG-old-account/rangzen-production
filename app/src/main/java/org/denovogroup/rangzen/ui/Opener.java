@@ -50,7 +50,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
@@ -58,6 +60,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -69,6 +72,8 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.List;
 
 /**
  * This class is the manager of all of the fragments that are clickable in the
@@ -85,6 +90,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     private static boolean mHasStored = false;
     private static boolean mFirstTime = true;
     private static final String TAG = "Opener";
+    private AsyncTask<?,?,?> searchTask;
 
     // Create reciever object
     private BroadcastReceiver receiver = new MessageEventReceiver();
@@ -103,10 +109,22 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         MessageStore messageStore = new MessageStore(this,
                 StorageBase.ENCRYPTION_DEFAULT);
 
+        //Setup the search view
+
+        MenuItem searchItem = menu.findItem(R.id.search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+        setSearhView(searchView);
+
+        //put first message into the feed
         messageStore
                 .addMessage(
                         "This is the Rangzen message feed. Messages in the ether will appear here.",
                         1L,"demo");
+
+        //get any hashtag passed data from previous click events
+        Uri data = getIntent().getData();
+        getIntent().setData(null);
+        if(data != null) searchHashTagFromClick(data, searchItem);
         return true;
     }
 
@@ -311,6 +329,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                 Toast.makeText(this, "Invalid Friend Code", Toast.LENGTH_SHORT)
                         .show();
             }
+        } else if(requestCode == Message && resultCode == RESULT_OK){
+            notifyDataSetChanged(null);
         }
     }
 
@@ -386,7 +406,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     @Override
     protected void onResume() {
         super.onResume();
-        notifyDataSetChanged();
         registerReceiver(receiver, filter);
         Log.i(TAG, "Registered receiver");
 
@@ -429,18 +448,19 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
          */
         @Override
         public void onReceive(Context context, Intent intent) {
-            notifyDataSetChanged();
+            //notifyDataSetChanged(); TODO instead of refreshing the list make a notification in actionbar
         }
     }
 
     /**
      * Request currently displayed fragment to refresh its view if its utilizing the Refreshable interface
+     * @param items List of objects to be used by the refreshed adapter or null to invoke default list of items
      */
-    private void notifyDataSetChanged() {
+    private void notifyDataSetChanged(List<?> items) {
         Fragment fragment = getSupportFragmentManager().findFragmentById(
                 R.id.mainContent);
         if (fragment instanceof Refreshable) {
-            ((Refreshable) fragment).refreshView();
+            ((Refreshable) fragment).refreshView(items);
         }
     }
 
@@ -504,5 +524,71 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         builder.setMessage(R.string.dialog_no_wifi_message);
         builder.create();
         builder.show();
+    }
+
+    public void setSearhView(SearchView searchView){
+
+        //Define on close listener which support pre-honycomb devices as well with the app compat
+        searchView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {}
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                //reset the list to its normal state
+                notifyDataSetChanged(null);
+            }
+        });
+
+        //Define the search procedure
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                AsyncTask<String,Void,List<MessageStore.Message>> runQuery = new AsyncTask<String,Void,List<MessageStore.Message>>(){
+
+                    @Override
+                    protected List<MessageStore.Message> doInBackground(String... params) {
+                        MessageStore store = new MessageStore(Opener.this,StorageBase.ENCRYPTION_DEFAULT);
+                        return store.getMessagesContaining(params[0]);
+                    }
+
+                    @Override
+                    protected void onPostExecute(List<MessageStore.Message> messages) {
+                        super.onPostExecute(messages);
+
+                        if(messages != null){
+                            notifyDataSetChanged(messages);
+                        }
+                    }
+                };
+
+                if(searchTask != null){
+                    searchTask.cancel(true);
+                    searchTask = null;
+                }
+                runQuery.execute(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+    }
+
+    /** Set the the Actionbar search view with the hashtag supplied in the provided Uri and run the
+     * default search method.
+     *
+     * @param data The Uri which contain the hashtag as the last part of the Uri
+     * @param menuItem The menu item hosting the searchView to use
+     */
+    private void searchHashTagFromClick(Uri data, MenuItem menuItem){
+
+        SearchView searchView = (SearchView) menuItem.getActionView();
+        menuItem.expandActionView();
+        String query = data.toString().substring(data.toString().indexOf("#"), data.toString().length()-1);
+        searchView.setQuery(query, true);
+        searchView.clearFocus();
     }
 }
