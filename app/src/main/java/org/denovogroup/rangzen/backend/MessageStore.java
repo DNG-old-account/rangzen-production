@@ -524,5 +524,11 @@ public class MessageStore {
         public double getPriority() {
             return mPriority;
         }
+
+        /**this method is used for temporary displayed item update purposes and should not be used
+         * for actual stored data manipulation */
+        public void setPriority(double priority){
+            mPriority = priority;
+        }
     }
 }

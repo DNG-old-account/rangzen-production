@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.ui;
 
 import com.google.zxing.common.BitMatrix;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -331,7 +332,7 @@ public class FragmentOrganizer extends Fragment {
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 ReadStateTracker.setReadState(getActivity().getApplicationContext(), message, false);
-                getActivity().setResult(1);
+                getActivity().setResult(Activity.RESULT_OK);
                 getActivity().finish();
             }
 

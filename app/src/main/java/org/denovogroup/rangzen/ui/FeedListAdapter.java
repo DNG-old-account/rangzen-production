@@ -46,6 +46,7 @@ import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.StorageBase;
 
 import java.text.DecimalFormat;
+import java.util.List;
 
 public class FeedListAdapter extends BaseAdapter {
 
@@ -53,6 +54,7 @@ public class FeedListAdapter extends BaseAdapter {
     private Context mContext;
     /** Message store to be used to get the messages and trust score. */
     private MessageStore mMessageStore;
+    private List<MessageStore.Message> items;
 
     /**
      * Holds references to views so that findViewById() is not needed to be
@@ -72,11 +74,28 @@ public class FeedListAdapter extends BaseAdapter {
         this.mContext = context;
     }
 
+    /**
+     * Sets the feed text fields to be their values from messages from memory.
+     * This use the supplied list as an items source and populates recycled
+     * views.
+     *
+     * @param context
+     *            The context of the activity that spawned this class.
+     * @param items the list of items to be used by this adapter
+     */
+    public FeedListAdapter(Context context, List<MessageStore.Message> items) {
+        this.mContext = context;
+        this.items = items;
+    }
+
     @Override
     public int getCount() {
-        mMessageStore = new MessageStore((Activity) mContext,
-                StorageBase.ENCRYPTION_DEFAULT);
-        return mMessageStore.getMessageCount();
+        if(items != null){
+            return items.size();
+        } else {
+            mMessageStore = new MessageStore((Activity) mContext, StorageBase.ENCRYPTION_DEFAULT);
+            return mMessageStore.getMessageCount();
+        }
     }
 
     /**
@@ -108,9 +127,16 @@ public class FeedListAdapter extends BaseAdapter {
      */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        MessageStore messageStore = new MessageStore((Activity) mContext,
-                StorageBase.ENCRYPTION_DEFAULT);
-        MessageStore.Message message = messageStore.getKthMessage(position);
+
+        MessageStore.Message message;
+
+        if(items != null) {
+            message = items.get(position);
+        } else {
+            MessageStore messageStore = new MessageStore((Activity) mContext,
+                    StorageBase.ENCRYPTION_DEFAULT);
+            message = messageStore.getKthMessage(position);
+        }
         if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) mContext
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -135,6 +161,10 @@ public class FeedListAdapter extends BaseAdapter {
         mViewHolder.mNewView.setVisibility(ReadStateTracker.isRead(message.getMessage()) ? View.GONE : View.VISIBLE);
 
         return convertView;
+    }
+
+    public List<MessageStore.Message> getItems(){
+        return items;
     }
 
     /**
