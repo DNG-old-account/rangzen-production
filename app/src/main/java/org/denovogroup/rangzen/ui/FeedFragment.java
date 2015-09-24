@@ -1,7 +1,9 @@
 package org.denovogroup.rangzen.ui;
 
+import android.annotation.TargetApi;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -20,6 +22,7 @@ import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.backend.Utils;
+import org.denovogroup.rangzen.objects.RangzenMessage;
 
 import java.util.Collections;
 import java.util.List;
@@ -49,7 +52,7 @@ public class FeedFragment extends Fragment implements Refreshable{
       */
     private void setupListView(){
         setupListSwipeMenu();
-        resetListAdapter(null);
+        resetListAdapter(null,false);
     }
 
     /** Setting the Swipe menu which appears when an item is being swiped to the left
@@ -114,38 +117,11 @@ public class FeedFragment extends Fragment implements Refreshable{
                 boolean updateViewDelayed = false;
                 switch (swipeMenu.getMenuItem(index).getId()) {
                     case upvoteItemId:
-                        double oneAbove = 0;
-                        double twoAbove = 0;
-                        if (position > 0) {
-                            MessageStore.Message aboveMessage = (mFeedListAdaper.getItems() == null) ? store.getKthMessage(position - 1) : mFeedListAdaper.getItems().get(position-1);
-                            oneAbove = aboveMessage.getPriority();
-                            if (position > 1) {
-                                MessageStore.Message twoAboveMessage = (mFeedListAdaper.getItems() == null) ? store.getKthMessage(position - 2) : mFeedListAdaper.getItems().get(position-2);
-                                twoAbove = twoAboveMessage.getPriority();
-                            }
-                        }
-                        double addedPriority = Math.min(PRIORITY_INCREMENT,
-                                (Math.max(0, oneAbove - message.getPriority()) + (Math.max(0, twoAbove - oneAbove)) / 2));
-                        double newHigherPriority = message.getPriority() + ((addedPriority > 0) ? addedPriority : PRIORITY_INCREMENT);
-                        store.updatePriority(message.getMessage(), newHigherPriority);
+                        store.updatePriority(message.getMessage(), getNextPriority(true,message,position));
                         updateViewDelayed = true;
                         break;
                     case downvoteItemId:
-                        double oneBelow = 0;
-                        double twoBelow = 0;
-                        if (position < mFeedListAdaper.getCount() - 1) {
-                            MessageStore.Message belowMessage = (mFeedListAdaper.getItems() == null) ? store.getKthMessage(position + 1) : mFeedListAdaper.getItems().get(position + 1);
-                            oneBelow = belowMessage.getPriority();
-                            if (position < mFeedListAdaper.getCount() - 2) {
-                                MessageStore.Message twoBelowMessage = (mFeedListAdaper.getItems() == null) ? store.getKthMessage(position + 2) : mFeedListAdaper.getItems().get(position+2);
-                                twoBelow = twoBelowMessage.getPriority();
-                            }
-                        }
-                        double subtractedPriority = Math.min(PRIORITY_INCREMENT,
-                                (Math.max(0, message.getPriority() - oneBelow) + (Math.max(0, oneBelow - twoBelow)) / 2));
-                        double newLowerPriority = message.getPriority() - ((subtractedPriority > 0) ? subtractedPriority : PRIORITY_INCREMENT);
-
-                        store.updatePriority(message.getMessage(), newLowerPriority);
+                        store.updatePriority(message.getMessage(), getNextPriority(false,message,position));
                         updateViewDelayed = true;
                         break;
                     case deleteItemId:
@@ -159,7 +135,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                             updatedList.remove(position);
                         }
                         //refresh listview
-                        resetListAdapter(updatedList);
+                        resetListAdapter(updatedList,true);
                         break;
                     case retweetItemId:
                         store.updatePriority(message.getMessage(), 1d);
@@ -179,11 +155,11 @@ public class FeedFragment extends Fragment implements Refreshable{
                                 MessageStore store = new MessageStore(getActivity(), StorageBase.ENCRYPTION_DEFAULT);
                                 double oldPri = updatedList.get(position).getPriority();
                                 updatedList.get(position).setPriority(store.getPriority(updatedList.get(position).getMessage()));
-                                Log.d("liran", "updated " + updatedList.get(position).getMessage()+" from "+oldPri+" to "+updatedList.get(position).getPriority());
+                                Log.d("liran", "updated " + updatedList.get(position).getMessage() + " from " + oldPri + " to " + updatedList.get(position).getPriority());
                                 updatedList = sortDetachedList(updatedList);
                             }
                             //refresh the listView
-                            resetListAdapter(updatedList);
+                            resetListAdapter(updatedList,true);
                         }
                     }, 360);
                 }
@@ -198,18 +174,26 @@ public class FeedFragment extends Fragment implements Refreshable{
     /** set a feed list adapter to the list using the supplied list as source or using the default
      * items set if supplied list is null
      * @param items List of messages to be displayed by the attached listView or null to set
+     * @param keepApperance whether or not the view should retain its relative position before updating
      * default list of items to the adapter*/
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)//this line is required to overcome a bug in the documentation, the problematic call is actually available since API 1 not 21
+    public void resetListAdapter(List<MessageStore.Message> items, Boolean keepApperance) {
 
-    public void resetListAdapter(List<MessageStore.Message> items) {
         mFeedListAdaper = new FeedListAdapter(getActivity(), items);
         if (listView != null) {
+            int position = listView.getFirstVisiblePosition();
+            int offset = (listView.getChildAt(0) != null) ? listView.getChildAt(0).getTop() : 0;
+
             listView.setAdapter(mFeedListAdaper);
+            if(keepApperance && listView.getFirstVisiblePosition() > -1) {
+                listView.setSelectionFromTop(position,offset);
+            }
         }
     }
 
     @Override
     public void refreshView(List<?> items) {
-        resetListAdapter((List<MessageStore.Message>)items);
+        resetListAdapter((List<MessageStore.Message>) items, false);
     }
 
     /** Create a copy of the provided list and sort it based on the message priority
@@ -232,5 +216,83 @@ public class FeedFragment extends Fragment implements Refreshable{
         }
 
         return sortedList;
+    }
+
+    /** Calculate the next available priority in the currently displayed list
+     *
+     * @param up a booean value reprenting if the priority should go up or down
+     * @param message the message to have its priority checked
+     * @param position the position of the message item in the dataset
+     * @return
+     */
+    private double getNextPriority(boolean up, MessageStore.Message message, int position){
+
+        MessageStore store = new MessageStore(getActivity(),StorageBase.ENCRYPTION_DEFAULT);
+        MessageStore.Message currentlyEvaluatedMessage;
+        /** The message one priority slot away from the supplied message based on the direction of the update*/
+        MessageStore.Message m1 = null;
+        /** The message two priority slots away from the supplied message based on the direction of the update*/
+        MessageStore.Message m2 = null;
+        double newPriority;
+
+        if(up){
+            //upvote
+            int iteratedPos = position-1;
+            while (iteratedPos >= 0 && message.getPriority() < 1) {
+
+                currentlyEvaluatedMessage = (mFeedListAdaper.getItems() == null) ? store.getKthMessage(iteratedPos) : mFeedListAdaper.getItems().get(iteratedPos);
+
+                if(m1 == null){
+                    if(currentlyEvaluatedMessage.getPriority() >= message.getPriority()){
+                        m1 = currentlyEvaluatedMessage;
+                    }
+                } else if(m2 == null){
+                    if(currentlyEvaluatedMessage.getPriority() > m1.getPriority()) {
+                        m2 = currentlyEvaluatedMessage;
+                    }
+                } else{
+                    break;
+                }
+                iteratedPos--;
+            }
+
+            if(m2 != null) {
+                newPriority = (m2.getPriority()+m1.getPriority())/2;
+            } else if(m1 != null && m1.getPriority() < 1) {
+                newPriority = (m1.getPriority() + 1) / 2;
+            } else {
+                newPriority = 1;
+            }
+        } else{
+            //downvote
+            int iteratedPos = position+1;
+            while (iteratedPos < mFeedListAdaper.getCount() && message.getPriority() > 0.01d) {
+
+                currentlyEvaluatedMessage = (mFeedListAdaper.getItems() == null) ? store.getKthMessage(iteratedPos) : mFeedListAdaper.getItems().get(iteratedPos);
+
+                if(m1 == null){
+                    if(currentlyEvaluatedMessage.getPriority() <= message.getPriority()){
+                        m1 = currentlyEvaluatedMessage;
+                    }
+                } else if(m2 == null){
+                    if(currentlyEvaluatedMessage.getPriority() < m1.getPriority()) {
+                        m2 = currentlyEvaluatedMessage;
+                    }
+                } else{
+                    break;
+                }
+                iteratedPos++;
+            }
+
+            if(m2 != null) {
+                newPriority = (m2.getPriority()+m1.getPriority())/2;
+            } else if(m1 != null && m1.getPriority() > 0.01d) {
+                newPriority = (m1.getPriority() + 0.01d) / 2;
+            } else {
+                newPriority = 0.01d;
+            }
+        }
+
+        return newPriority;
     }
 }
