@@ -145,7 +145,8 @@ public class FeedFragment extends Fragment implements Refreshable{
                         //BETA
                         JSONObject report2 = ReportsMaker.getMessagePriorityChangedByUserReport(System.currentTimeMillis(), message.getMId(),message.getPriority(),newLowerPriority,message.getMessage());
                         NetworkHandler.getInstance(getActivity()).sendEventReport(report2);
-                        //BETA END                        store.updatePriority(message.getMessage(), newLowerPriority);
+                        //BETA END
+                        store.updatePriority(message.getMessage(), newLowerPriority);
                         updateViewDelayed = true;
                         break;
                     case deleteItemId:
@@ -154,7 +155,8 @@ public class FeedFragment extends Fragment implements Refreshable{
                         NetworkHandler.getInstance(getActivity()).sendEventReport(report3);
                         //BETA END
 
-                        //delete data from storage                        store.deleteMessage(message.getMessage());
+                        //delete data from storage
+                        store.deleteMessage(message.getMessage());
 
                         /*If data is currently being presenting as filtered search results, update
                           the currently displayed to retain consistent look */
