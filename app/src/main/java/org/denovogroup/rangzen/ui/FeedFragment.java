@@ -125,10 +125,8 @@ public class FeedFragment extends Fragment implements Refreshable{
                         updateViewDelayed = true;
                         break;
                     case deleteItemId:
-                        Log.d("liran","delete clicked");
                         //delete data from storage
                         boolean deleted = store.deleteMessage(message.getMessage());
-                        Log.d("liran","deleted: "+deleted);
 
                         /*If data is currently being presenting as filtered search results, update
                           the currently displayed to retain consistent look */
@@ -157,7 +155,6 @@ public class FeedFragment extends Fragment implements Refreshable{
                                 MessageStore store = new MessageStore(getActivity(), StorageBase.ENCRYPTION_DEFAULT);
                                 double oldPri = updatedList.get(position).getPriority();
                                 updatedList.get(position).setPriority(store.getPriority(updatedList.get(position).getMessage()));
-                                Log.d("liran", "updated " + updatedList.get(position).getMessage() + " from " + oldPri + " to " + updatedList.get(position).getPriority());
                                 updatedList = sortDetachedList(updatedList);
                             }
                             //refresh the listView

@@ -470,13 +470,11 @@ public class MessageStore {
 
         for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
             String binKey = getBinKey(bin);
-            Log.d("liran","bin:"+binKey+"--------------");
             Set<String> msgs = store.getSet(binKey);
             if (msgs == null)
                 continue;
 
             for (String m : msgs) {
-                Log.d("liran","m:"+m);
                 double priority = getMessagePriority(m, -1);
                 topk.add(new Message(priority, m));
             }
@@ -499,7 +497,6 @@ public class MessageStore {
         if (topk.size() <= k) {
             return null;
         }
-        Log.d("liran","end");
         return topk.get(k);
     }
 
