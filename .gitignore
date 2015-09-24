@@ -7,6 +7,6 @@
 /captures
 .keystore
 /app/*.apk
-/.app/app.iml
 *.jks
 .idea/codeStyleSettings.xml
+app/app.iml
