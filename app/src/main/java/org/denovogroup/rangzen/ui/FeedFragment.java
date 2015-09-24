@@ -60,6 +60,7 @@ public class FeedFragment extends Fragment implements Refreshable{
         final int upvoteItemId = 0;
         final int downvoteItemId = 1;
         final int deleteItemId = 2;
+        final int retweetItemId = 3;
 
         SwipeMenuCreator creator = new SwipeMenuCreator() {
 
@@ -94,6 +95,14 @@ public class FeedFragment extends Fragment implements Refreshable{
                 deleteItem.setIcon(R.drawable.ic_bin);
                 deleteItem.getIcon().setAlpha(60);
                 menu.addMenuItem(deleteItem);
+
+                SwipeMenuItem retweetItem = new SwipeMenuItem(getActivity());
+                retweetItem.setId(retweetItemId);
+                retweetItem.setBackground(new ColorDrawable(Color.parseColor("#49b4d3")));
+                retweetItem.setWidth(Utils.dpToPx(80, getActivity()));
+                retweetItem.setIcon(R.drawable.ic_retweet);
+                retweetItem.getIcon().setAlpha(80);
+                menu.addMenuItem(retweetItem);
             }
         };
 
@@ -151,6 +160,10 @@ public class FeedFragment extends Fragment implements Refreshable{
                         }
                         //refresh listview
                         resetListAdapter(updatedList);
+                        break;
+                    case retweetItemId:
+                        store.updatePriority(message.getMessage(), 1d);
+                        updateViewDelayed = true;
                         break;
                 }
 
