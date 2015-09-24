@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.backend;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -264,7 +265,7 @@ public class MessageStore {
      * @return True if the message was in the store (and its priority was changed),
      * false otherwise.
      */
-    public boolean updatePriority(String msg, double priority) {
+    public boolean updatePriority(String msg, double priority, String mId) {
         //Check if priority is within allowed range and fix it to closest edge if outside of range.
         try {
             checkPriority(priority);
@@ -280,7 +281,11 @@ public class MessageStore {
         if (!found) {
             return false;
         }
-        store.putDouble(msgPriorityKey, priority);
+
+        /*replace previous message with new version, thus letting the system
+         place the new version in the appropriate bin*/
+        deleteMessage(msg);
+        addMessage(msg,priority, mId);
         return true;
     }
 
@@ -307,7 +312,6 @@ public class MessageStore {
      * found, returns false.
      */
     public boolean deleteMessage(String msg) {
-
         // TODO(barath): Consider improving performance by selecting a different
         // key.
         String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
@@ -324,7 +328,6 @@ public class MessageStore {
         // Get the existing message set for the bin.
         Double priority = store.getDouble(msgPriorityKey, NOT_FOUND);
         if(priority == NOT_FOUND) return false;
-
         String binKey = getBinKeyForPriority(priority);
         Set<String> msgs = store.getSet(binKey);
 
@@ -368,6 +371,7 @@ public class MessageStore {
         for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
             String binKey = getBinKey(bin);
             Set<String> msgs = store.getSet(binKey);
+
             if (msgs == null)
                 continue;
 

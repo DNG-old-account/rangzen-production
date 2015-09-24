@@ -120,11 +120,11 @@ public class FeedFragment extends Fragment implements Refreshable{
                 boolean updateViewDelayed = false;
                 switch (swipeMenu.getMenuItem(index).getId()) {
                     case upvoteItemId:
-                        store.updatePriority(message.getMessage(), getNextPriority(true,message,position));
+                        store.updatePriority(message.getMessage(), getNextPriority(true,message,position), message.getMId());
                         updateViewDelayed = true;
                         break;
                     case downvoteItemId:
-                        store.updatePriority(message.getMessage(), getNextPriority(false,message,position));
+                        store.updatePriority(message.getMessage(), getNextPriority(false,message,position), message.getMId());
                         updateViewDelayed = true;
                         break;
                     case deleteItemId:
@@ -134,7 +134,8 @@ public class FeedFragment extends Fragment implements Refreshable{
                         //BETA END
 
                         //delete data from storage
-                        store.deleteMessage(message.getMessage());
+                        boolean deleted = store.deleteMessage(message.getMessage());
+
 
                         /*If data is currently being presenting as filtered search results, update
                           the currently displayed to retain consistent look */
@@ -151,7 +152,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                         NetworkHandler.getInstance().sendEventReport(report4);
                         //BETA
 
-                        store.updatePriority(message.getMessage(), 1d);
+                        store.updatePriority(message.getMessage(), 1d, message.getMId());
                         updateViewDelayed = true;
                         break;
                 }
@@ -168,7 +169,6 @@ public class FeedFragment extends Fragment implements Refreshable{
                                 MessageStore store = new MessageStore(getActivity(), StorageBase.ENCRYPTION_DEFAULT);
                                 double oldPri = updatedList.get(position).getPriority();
                                 updatedList.get(position).setPriority(store.getPriority(updatedList.get(position).getMessage()));
-                                Log.d("liran", "updated " + updatedList.get(position).getMessage() + " from " + oldPri + " to " + updatedList.get(position).getPriority());
                                 updatedList = sortDetachedList(updatedList);
                             }
                             //refresh the listView

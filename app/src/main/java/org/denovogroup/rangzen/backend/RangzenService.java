@@ -432,7 +432,7 @@ public class RangzenService extends Service {
                 JSONObject report = ReportsMaker.getMessagePriorityChangedBySystemReport(System.currentTimeMillis(),message.mId, oldPriority,newPriority,message.text);
                 NetworkHandler.getInstance(getApplicationContext()).sendEventReport(report);
                 //BETA END
-              mMessageStore.updatePriority(message.text, newPriority);
+              mMessageStore.updatePriority(message.text, newPriority, message.mId);
             } else {
               mMessageStore.addMessage(message.text, newPriority, message.mId);
                 //mark this message as unread
@@ -498,7 +498,7 @@ public class RangzenService extends Service {
                             JSONObject report = ReportsMaker.getMessagePriorityChangedBySystemReport(System.currentTimeMillis(),message.mId, oldPriority,newPriority,message.text);
                             NetworkHandler.getInstance(getApplicationContext()).sendEventReport(report);
                             //BETA END
-                            mMessageStore.updatePriority(message.text, newPriority);
+                            mMessageStore.updatePriority(message.text, newPriority, message.mId);
                         } else {
                             mMessageStore.addMessage(message.text, newPriority, message.mId);
                             //mark this message as unread
