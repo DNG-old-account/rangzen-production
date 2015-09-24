@@ -54,8 +54,10 @@ public class CustomParsePushReceiver extends ParsePushBroadcastReceiver {
         }
     }
 
-    private List<RangzenMessage> parseMessage(String pushedContent){
+    public static List<RangzenMessage> parseMessage(String pushedContent){
         List<RangzenMessage> rangzenMessageList = new ArrayList<>();
+
+        if(pushedContent == null) return rangzenMessageList;
 
         while(hasMessage(pushedContent)) {
 
@@ -94,7 +96,7 @@ public class CustomParsePushReceiver extends ParsePushBroadcastReceiver {
         return rangzenMessageList;
     }
 
-    private boolean hasMessage(String pushedContent){
+    private static boolean hasMessage(String pushedContent){
         return pushedContent.contains(RANGZEN_MESSAGE_PERFIX) && pushedContent.contains(RANGZEN_MESSAGE_POSTFIX);
     }
 }
