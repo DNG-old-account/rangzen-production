@@ -58,7 +58,6 @@ public class TrackingService extends Service implements LocationListener {
     private static TrackedLocation lastLocationSent;
     private static TrackedLocation lastLocationUpdate;
     private static boolean isFlushing = false;
-    private static NotificationManager notificationManager;
 
     public static WifiStateReceiver receiver;
 
@@ -70,15 +69,12 @@ public class TrackingService extends Service implements LocationListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        //Avoid returning START_STICKY so the service can be stopped by dismissing the notification
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        showNotification();
 
         receiver = new WifiStateReceiver(getApplicationContext());
 
@@ -104,20 +100,6 @@ public class TrackingService extends Service implements LocationListener {
         }, 0, UPDATE_TIME_INTERVAL);
     }
 
-    private void showNotification() {
-        Notification notification = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setTicker(getString(R.string.TrackingServiceStarting))
-                .setWhen(System.currentTimeMillis())
-                .setContentTitle(getString(R.string.TrackingServiceNotificationTitle))
-                .setContentText(getString(R.string.TrackingServiceNotification))
-                .build();
-
-        // Send the notification.
-        startForeground(NOTIFICATION_ID, notification);
-
-    }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -130,10 +112,8 @@ public class TrackingService extends Service implements LocationListener {
         }
 
         locationManager.removeUpdates(this);
-        stopForeground(true);
         Log.d(LOG_TAG, "Tracking service stopped");
 
-        notificationManager.cancel(NOTIFICATION_ID);
         locationUpdateTimer.cancel();
     }
 
