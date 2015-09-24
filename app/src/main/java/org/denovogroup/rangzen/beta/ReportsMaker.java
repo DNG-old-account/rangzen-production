@@ -3,6 +3,7 @@ package org.denovogroup.rangzen.beta;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.parse.ParseInstallation;
 

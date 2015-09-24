@@ -255,12 +255,7 @@ public class CryptographicExchange extends Exchange {
                       for (RangzenMessage msg : cm.messages) {
                           JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), msg.mId, msg.priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), "" + watch.getElapsedTime());
                           NetworkHandler.getInstance().sendEventReport(report);
-                          if (!msg.isMine()) {
-                              JSONObject report2 = ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), msg.mId, msg.priority, msg.text);
-                              NetworkHandler.getInstance().sendEventReport(report2);
-                          }
                       }
-
                   }
                   //BETA END
               }

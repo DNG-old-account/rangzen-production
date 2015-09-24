@@ -344,7 +344,6 @@ public class FragmentOrganizer extends Fragment {
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 ReadStateTracker.setReadState(getActivity().getApplicationContext(), message, false);
-                getActivity().setResult(Activity.RESULT_OK);
 				//BETA
 				JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(),mId,priority,message);
 				if(NetworkHandler.getInstance() != null){
@@ -352,7 +351,7 @@ public class FragmentOrganizer extends Fragment {
 				}
 				//BETA END
 
-                getActivity().setResult(1);
+                getActivity().setResult(Activity.RESULT_OK);
                 getActivity().finish();
             }
 

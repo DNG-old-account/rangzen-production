@@ -177,6 +177,11 @@ public class FeedFragment extends Fragment implements Refreshable{
                         resetListAdapter(updatedList);
                         break;
                     case retweetItemId:
+                        //BETA
+                        JSONObject report4 = ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), message.getMId(), message.getPriority(), message.getMessage());
+                        NetworkHandler.getInstance().sendEventReport(report4);
+                        //BETA
+
                         store.updatePriority(message.getMessage(), 1d);
                         updateViewDelayed = true;
                         break;
