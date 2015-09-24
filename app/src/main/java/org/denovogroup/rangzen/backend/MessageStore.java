@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.backend;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -270,7 +271,11 @@ public class MessageStore {
         if (!found) {
             return false;
         }
-        store.putDouble(msgPriorityKey, priority);
+
+        /*replace previous message with new version, thus letting the system
+         place the new version in the appropriate bin*/
+        deleteMessage(msg);
+        addMessage(msg,priority);
         return true;
     }
 
@@ -297,7 +302,6 @@ public class MessageStore {
      * found, returns false.
      */
     public boolean deleteMessage(String msg) {
-
         // TODO(barath): Consider improving performance by selecting a different
         // key.
         String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
@@ -314,7 +318,6 @@ public class MessageStore {
         // Get the existing message set for the bin.
         Double priority = store.getDouble(msgPriorityKey, NOT_FOUND);
         if(priority == NOT_FOUND) return false;
-
         String binKey = getBinKeyForPriority(priority);
         Set<String> msgs = store.getSet(binKey);
 
@@ -354,6 +357,7 @@ public class MessageStore {
         for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
             String binKey = getBinKey(bin);
             Set<String> msgs = store.getSet(binKey);
+
             if (msgs == null)
                 continue;
 
@@ -466,11 +470,13 @@ public class MessageStore {
 
         for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
             String binKey = getBinKey(bin);
+            Log.d("liran","bin:"+binKey+"--------------");
             Set<String> msgs = store.getSet(binKey);
             if (msgs == null)
                 continue;
 
             for (String m : msgs) {
+                Log.d("liran","m:"+m);
                 double priority = getMessagePriority(m, -1);
                 topk.add(new Message(priority, m));
             }
@@ -493,6 +499,7 @@ public class MessageStore {
         if (topk.size() <= k) {
             return null;
         }
+        Log.d("liran","end");
         return topk.get(k);
     }
 

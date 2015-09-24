@@ -125,8 +125,10 @@ public class FeedFragment extends Fragment implements Refreshable{
                         updateViewDelayed = true;
                         break;
                     case deleteItemId:
+                        Log.d("liran","delete clicked");
                         //delete data from storage
-                        store.deleteMessage(message.getMessage());
+                        boolean deleted = store.deleteMessage(message.getMessage());
+                        Log.d("liran","deleted: "+deleted);
 
                         /*If data is currently being presenting as filtered search results, update
                           the currently displayed to retain consistent look */
