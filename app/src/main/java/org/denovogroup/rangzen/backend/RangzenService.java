@@ -422,9 +422,16 @@ public class RangzenService extends Service {
           }
         }
 
-          if(hasNew && !isAppInForeground()){
-              showUnreadMessagesNotification();
+          if(hasNew){
+              if(isAppInForeground()) {
+                  Intent intent = new Intent();
+                  intent.setAction(MessageStore.NEW_MESSAGE);
+                  getApplicationContext().sendBroadcast(intent);
+              } else {
+                  showUnreadMessagesNotification();
+              }
           }
+
         RangzenService.this.cleanupAfterExchange();
       }
 
@@ -437,6 +444,7 @@ public class RangzenService extends Service {
         @Override
         public void recover(Exchange exchange, String reason) {
             Log.e(TAG, "Exchange failed but data can be recovered, reason: " + reason);
+            boolean hasNew = false;
             List<RangzenMessage> newMessages = exchange.getReceivedMessages();
             int friendOverlap = Math.max(exchange.getCommonFriends(), 0);
             Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
@@ -451,6 +459,7 @@ public class RangzenService extends Service {
                         if (mMessageStore.contains(message.text)) {
                             mMessageStore.updatePriority(message.text, newPriority);
                         } else {
+                            hasNew = true;
                             mMessageStore.addMessage(message.text, newPriority);
                             //mark this message as unread
                             ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
@@ -463,6 +472,17 @@ public class RangzenService extends Service {
                     }
                 }
             }
+
+            if(hasNew){
+                if(isAppInForeground()) {
+                    Intent intent = new Intent();
+                    intent.setAction(MessageStore.NEW_MESSAGE);
+                    getApplicationContext().sendBroadcast(intent);
+                } else {
+                    showUnreadMessagesNotification();
+                }
+            }
+
             RangzenService.this.cleanupAfterExchange();
         }
     };
