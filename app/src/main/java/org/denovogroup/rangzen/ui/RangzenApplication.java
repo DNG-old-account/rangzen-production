@@ -2,6 +2,7 @@ package org.denovogroup.rangzen.ui;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.StrictMode;
 import android.util.Log;
 import android.widget.Toast;
 

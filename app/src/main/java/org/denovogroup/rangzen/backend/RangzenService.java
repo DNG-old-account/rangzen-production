@@ -37,6 +37,7 @@ import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.ComponentName;
+import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.content.Context;
@@ -468,8 +469,14 @@ public class RangzenService extends Service {
           }
         }
 
-          if(hasNew && !isAppInForeground()){
-              showUnreadMessagesNotification();
+          if(hasNew){
+              if(isAppInForeground()) {
+                  Intent intent = new Intent();
+                  intent.setAction(MessageStore.NEW_MESSAGE);
+                  getApplicationContext().sendBroadcast(intent);
+              } else {
+                  showUnreadMessagesNotification();
+              }
           }
 
           //BETA
@@ -499,6 +506,7 @@ public class RangzenService extends Service {
         @Override
         public void recover(Exchange exchange, String reason, String reportId) {
             Log.e(TAG, "Exchange failed but data can be recovered, reason: " + reason);
+            boolean hasNew = false;
             List<RangzenMessage> newMessages = exchange.getReceivedMessages();
             int friendOverlap = Math.max(exchange.getCommonFriends(), 0);
             Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
@@ -518,6 +526,7 @@ public class RangzenService extends Service {
                             //BETA END
                             mMessageStore.updatePriority(message.text, newPriority, message.mId);
                         } else {
+                            hasNew = true;
                             mMessageStore.addMessage(message.text, newPriority, message.mId);
                             //mark this message as unread
                             ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
@@ -540,11 +549,22 @@ public class RangzenService extends Service {
                 }
             }
             //BETA
-            Map<String,Object> reportsValues = new HashMap<String,Object>();
+            Map<String, Object> reportsValues = new HashMap<String, Object>();
             reportsValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, newMessages.size());
             reportsValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
             ReportsMaker.editReport(reportId, reportsValues);
             //BETA END
+
+            if(hasNew){
+                if(isAppInForeground()) {
+                    Intent intent = new Intent();
+                    intent.setAction(MessageStore.NEW_MESSAGE);
+                    getApplicationContext().sendBroadcast(intent);
+                } else {
+                    showUnreadMessagesNotification();
+                }
+            }
+
             RangzenService.this.cleanupAfterExchange(reportId);
         }
     };

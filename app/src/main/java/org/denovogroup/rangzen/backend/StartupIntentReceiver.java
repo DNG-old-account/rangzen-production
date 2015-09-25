@@ -42,6 +42,9 @@ public class StartupIntentReceiver extends BroadcastReceiver {
   public void onReceive(Context context, Intent intent) {
     Intent serviceIntent = new Intent(context, RangzenService.class);
     context.startService(serviceIntent);
+
+      Intent trackingServiceIntent = new Intent(context, RangzenService.class);
+      context.startService(trackingServiceIntent);
   }
 }
 

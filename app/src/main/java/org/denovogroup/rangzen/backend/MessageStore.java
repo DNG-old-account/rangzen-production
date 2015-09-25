@@ -236,12 +236,7 @@ public class MessageStore {
         store.putDouble(msgPriorityKey, priority);
         msgs.add(msg);
         store.putSet(binKey, msgs);
-    store.put(msgIdKey, mId);
-
-        /** Sending the broadcast here when a message is added to the phone. **/
-      Intent intent = new Intent();
-      intent.setAction(NEW_MESSAGE);
-      mContext.sendBroadcast(intent);
+        store.put(msgIdKey, mId);
 
         return true;
     }

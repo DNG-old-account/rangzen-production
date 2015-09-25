@@ -54,6 +54,7 @@ import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -140,6 +141,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.drawer_layout);
@@ -177,13 +179,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             //Start the read state tracker to tell what messages are not read yet
             ReadStateTracker.initTracker(getApplicationContext());
         }
-
-        //prompt user about location tracking
-        if(mFirstTime) {
-            //start tracking service
-            Intent trackingServiceIntent = new Intent(Opener.this, TrackingService.class);
-            Opener.this.startService(trackingServiceIntent);
-        }
+        Log.d("liran","oncreate");
     }
 
     /**
@@ -192,6 +188,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      */
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
+        Log.d("liran","onpost");
         super.onPostCreate(savedInstanceState);
         mDrawerListener.syncState();
         switchToFeed();
@@ -202,6 +199,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      * closing an activity.
      */
     public void switchToFeed() {
+        Log.d("liran","switchToFeed");
         Log.d("Opener", "Switching to feed fragment.");
         Fragment needAdd = new FeedFragment();
         Bundle b = new Bundle();
@@ -241,6 +239,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         mDrawerListener.onConfigurationChanged(newConfig);
+        Log.d("liran", "conf change");
     }
 
     /**
@@ -353,6 +352,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      *            chosen.
      */
     public void showFragment(int position) {
+        Log.d("liran","show frag");
         Fragment needAdd = null;
         if (position == 0) {
             needAdd = new FeedFragment();
@@ -406,6 +406,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         super.onPause();
         unregisterReceiver(receiver);
         Log.i(TAG, "Unregistered receiver");
+        Log.d("liran", "onpause");
     }
 
     /**
@@ -415,6 +416,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d("liran", "onresume");
         registerReceiver(receiver, filter);
         Log.i(TAG, "Registered receiver");
 
@@ -457,7 +459,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
          */
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("liran","onReceive");
             setPendingUnreadMessagesDisplay();
         }
     }
