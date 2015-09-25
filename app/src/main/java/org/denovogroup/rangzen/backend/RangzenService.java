@@ -30,8 +30,13 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
+import android.content.ComponentName;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.content.Context;
@@ -43,9 +48,11 @@ import android.os.IBinder;
 
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
+import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.json.JSONObject;
 import org.denovogroup.rangzen.ui.RangzenApplication;
+import org.denovogroup.rangzen.ui.Opener;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -130,6 +137,8 @@ public class RangzenService extends Service {
 
     /** Android Log Tag. */
     private final static String TAG = "RangzenService";
+
+    private static final int NOTIFICATION_ID = R.string.unread_notification_title;
 
     /**
      * Called whenever the service is requested to start. If the service is
@@ -255,6 +264,9 @@ public class RangzenService extends Service {
     public void backgroundTasks() {
         Log.v(TAG, "Background Tasks Started");
 
+        if(isAppInForeground()){
+            cancelUnreadMessagesNotification();
+        }
         // TODO(lerner): Why not just use mPeerManager?
         PeerManager peerManager = PeerManager.getInstance(getApplicationContext());
         peerManager.tasks();
@@ -416,12 +428,13 @@ public class RangzenService extends Service {
     /* package */ ExchangeCallback mExchangeCallback = new ExchangeCallback() {
       @Override
       public void success(Exchange exchange, String reportId) {
+          boolean hasNew = false;
         List<RangzenMessage> newMessages = exchange.getReceivedMessages();
         int friendOverlap = exchange.getCommonFriends();
         Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
         Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
-        for (RangzenMessage message : newMessages) {
           Set<String> myFriends = mFriendStore.getAllFriends();
+        for (RangzenMessage message : newMessages) {
           double stored = mMessageStore.getPriority(message.text);
           double remote = message.priority;
           double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
@@ -434,7 +447,8 @@ public class RangzenService extends Service {
                 //BETA END
               mMessageStore.updatePriority(message.text, newPriority, message.mId);
             } else {
-              mMessageStore.addMessage(message.text, newPriority, message.mId);
+                hasNew = true;
+                mMessageStore.addMessage(message.text, newPriority, message.mId);
                 //mark this message as unread
                 ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
             }
@@ -453,6 +467,10 @@ public class RangzenService extends Service {
                                     myFriends.size(), friendOverlap));
           }
         }
+
+          if(hasNew && !isAppInForeground()){
+              showUnreadMessagesNotification();
+          }
 
           //BETA
           Map<String,Object> reportsValues = new HashMap<String,Object>();
@@ -605,5 +623,42 @@ public class RangzenService extends Service {
     public IBinder onBind(Intent intent) {
         // This service is not meant to be used through binding.
         return null;
+    }
+
+    /** This method check how many unread messages there are and display a notification
+     * visible from the recent task pull down menu. this method should be called only
+     * be called when the app itself is either closed or in the background.
+     */
+    private void showUnreadMessagesNotification() {
+        Intent intent = new Intent(this, Opener.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this , 0, intent,PendingIntent.FLAG_CANCEL_CURRENT);
+
+        Notification.Builder builder = new Notification.Builder(getApplicationContext());
+        builder.setContentIntent(pendingIntent);
+        builder.setContentTitle(getString(R.string.unread_notification_title));
+        builder.setContentText(ReadStateTracker.getUnreadCount(this) + " " + getString(R.string.unread_notification_content));
+        builder.setSmallIcon(R.drawable.ic_launcher);
+        builder.setAutoCancel(true);
+        builder.setTicker(getText(R.string.unread_notification_content));
+        builder.setDefaults(Notification.DEFAULT_SOUND);
+
+        NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        nManager.notify(NOTIFICATION_ID, builder.build());
+    }
+
+    public void cancelUnreadMessagesNotification(){
+        NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        nManager.cancel(NOTIFICATION_ID);
+    }
+
+    /** Check if the app have a living instance in the foreground
+     *
+     * @return true if the app is active and in the foreground, false otherwise
+     */
+    public boolean isAppInForeground() {
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
+        ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
+        return componentInfo.getPackageName().contains("org.denovogroup.rangzen");
     }
 }

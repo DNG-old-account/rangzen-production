@@ -331,19 +331,14 @@ public class FragmentOrganizer extends Fragment {
              */
             @Override
             public void onClick(View v) {
-                String message = ((TextView) getActivity().findViewById(
-                        R.id.editText1)).getText().toString();
-
-                if(message.isEmpty()) return;
-
                 MessageStore messageStore = new MessageStore(getActivity(),
                         StorageBase.ENCRYPTION_DEFAULT);
                 float priority = 1.0f;
+                String message = ((TextView) getActivity().findViewById(R.id.editText1)).getText().toString();
 				String mId = UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes())+"_"+System.currentTimeMillis();
                 messageStore.addMessage(message, priority, mId);
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
-                ReadStateTracker.setReadState(getActivity().getApplicationContext(), message, false);
 				//BETA
 				JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(),mId,priority,message);
 				if(NetworkHandler.getInstance() != null){

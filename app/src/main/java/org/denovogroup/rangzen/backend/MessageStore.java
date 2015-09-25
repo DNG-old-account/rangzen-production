@@ -239,9 +239,10 @@ public class MessageStore {
     store.put(msgIdKey, mId);
 
         /** Sending the broadcast here when a message is added to the phone. **/
-        Intent intent = new Intent();
-        intent.setAction(NEW_MESSAGE);
-        mContext.sendBroadcast(intent);
+      Intent intent = new Intent();
+      intent.setAction(NEW_MESSAGE);
+      mContext.sendBroadcast(intent);
+
         return true;
     }
 
@@ -284,6 +285,7 @@ public class MessageStore {
 
         /*replace previous message with new version, thus letting the system
          place the new version in the appropriate bin*/
+        //TODO I susspect these two may be causing ConcurrentModificationException
         deleteMessage(msg);
         addMessage(msg,priority, mId);
         return true;

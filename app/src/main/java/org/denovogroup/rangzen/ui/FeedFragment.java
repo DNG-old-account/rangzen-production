@@ -46,6 +46,15 @@ public class FeedFragment extends Fragment implements Refreshable{
         listView = (SwipeMenuListView) view.findViewById(R.id.list);
         setupListView();
 
+        view.findViewById(R.id.new_post_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(getActivity().getClass() == Opener.class){
+                    ((Opener) getActivity()).showFragment(1);
+                }
+            }
+        });
+
         return view;
     }
 

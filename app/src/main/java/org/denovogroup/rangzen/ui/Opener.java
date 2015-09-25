@@ -90,7 +90,9 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     private static boolean mHasStored = false;
     private static boolean mFirstTime = true;
     private static final String TAG = "Opener";
+    private static final int MAX_NEW_MESSAGES_DISPLAY = 99;
     private AsyncTask<?,?,?> searchTask;
+    private MenuItem pendingNewMessagesMenuItem;
 
     // Create reciever object
     private BroadcastReceiver receiver = new MessageEventReceiver();
@@ -105,6 +107,10 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
+
+        pendingNewMessagesMenuItem = menu.findItem(R.id.new_post);
+
+        setPendingUnreadMessagesDisplay();
 
         MessageStore messageStore = new MessageStore(this,
                 StorageBase.ENCRYPTION_DEFAULT);
@@ -220,7 +226,10 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             return true;
         }
         if (item.getItemId() == R.id.new_post) {
-            showFragment(1);
+            notifyDataSetChanged(null);
+            //mark all the messages as read
+            ReadStateTracker.markAllAsRead(this);
+            setPendingUnreadMessagesDisplay();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -448,7 +457,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
          */
         @Override
         public void onReceive(Context context, Intent intent) {
-            //notifyDataSetChanged(); TODO instead of refreshing the list make a notification in actionbar
+            Log.d("liran","onReceive");
+            setPendingUnreadMessagesDisplay();
         }
     }
 
@@ -531,7 +541,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         //Define on close listener which support pre-honycomb devices as well with the app compat
         searchView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
-            public void onViewAttachedToWindow(View v) {}
+            public void onViewAttachedToWindow(View v) {
+            }
 
             @Override
             public void onViewDetachedFromWindow(View v) {
@@ -544,11 +555,11 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                AsyncTask<String,Void,List<MessageStore.Message>> runQuery = new AsyncTask<String,Void,List<MessageStore.Message>>(){
+                AsyncTask<String, Void, List<MessageStore.Message>> runQuery = new AsyncTask<String, Void, List<MessageStore.Message>>() {
 
                     @Override
                     protected List<MessageStore.Message> doInBackground(String... params) {
-                        MessageStore store = new MessageStore(Opener.this,StorageBase.ENCRYPTION_DEFAULT);
+                        MessageStore store = new MessageStore(Opener.this, StorageBase.ENCRYPTION_DEFAULT);
                         return store.getMessagesContaining(params[0]);
                     }
 
@@ -556,13 +567,13 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                     protected void onPostExecute(List<MessageStore.Message> messages) {
                         super.onPostExecute(messages);
 
-                        if(messages != null){
+                        if (messages != null) {
                             notifyDataSetChanged(messages);
                         }
                     }
                 };
 
-                if(searchTask != null){
+                if (searchTask != null) {
                     searchTask.cancel(true);
                     searchTask = null;
                 }
@@ -590,5 +601,21 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         String query = data.toString().substring(data.toString().indexOf("#"), data.toString().length()-1);
         searchView.setQuery(query, true);
         searchView.clearFocus();
+    }
+
+    /** set a notification at the actionbar letting the user know new unread messages are waiting,
+     */
+    private void setPendingUnreadMessagesDisplay(){
+        int unreadCount = ReadStateTracker.getUnreadCount(Opener.this);
+        if(pendingNewMessagesMenuItem != null){
+            if(unreadCount > 0) {
+                String countString = (unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? Integer.toString(unreadCount) : "+"+MAX_NEW_MESSAGES_DISPLAY;
+                pendingNewMessagesMenuItem.setTitle(countString + " " + getString(R.string.new_post));
+                pendingNewMessagesMenuItem.setVisible(true);
+            } else {
+                pendingNewMessagesMenuItem.setVisible(false);
+            }
+
+        }
     }
 }

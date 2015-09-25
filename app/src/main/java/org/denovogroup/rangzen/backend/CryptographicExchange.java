@@ -55,6 +55,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -213,7 +214,6 @@ public class CryptographicExchange extends Exchange {
       List<RangzenMessage> messagesPool = getMessages();
       //notify the recipient how many items we expect to send him.
       RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messagesPool.size()),1d, null);
-
       if(!lengthValueWrite(out, exchangeInfoMessage)){
           success = false;
       } else {
@@ -290,38 +290,55 @@ public class CryptographicExchange extends Exchange {
       if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
 
       //Define the get single message task
-      class ReceiveSingleMessage implements Callable<String>{
+      class ReceiveSingleMessage implements Callable<ClientMessage> {
 
           @Override
-          public String call() throws Exception {
-              mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
+          public ClientMessage call() throws Exception {
+              ClientMessage mCurrentReceived;
+              mCurrentReceived = lengthValueRead(in, ClientMessage.class);
 
-              if (mRemoteClientMessage == null) {
-                  return "Remote client message not received.";
+              if (mCurrentReceived == null) {
+                  throw new Exception("Remote client message not received.");
               }
 
-              if (mRemoteClientMessage.messages == null) {
-                  return "Remote client messages field was null";
+              if (mCurrentReceived.messages == null) {
+                  throw new Exception("Remote client messages field was null");
               }
-              //Add everything passed in the wrapper to the pool
-              mMessagesReceived.addAll(mRemoteClientMessage.messages);
-              return null;
+              return mCurrentReceived;
           }
       }
 
       //read from the stream until either times out or get all the messages
       ExecutorService executor = Executors.newSingleThreadExecutor();
       while(mMessagesReceived.size() < messageCount) {
+          Future<ClientMessage> task = executor.submit(new ReceiveSingleMessage());
           try {
               //BETA
               watch.start();
-              String exception = executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
-              // BETA
-              watch.stop();
-              if (exception != null && !exception.isEmpty()) {
-                  executor.shutdown();
+              mRemoteClientMessage = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
+              //Add everything passed in the wrapper to the pool
+              mMessagesReceived.addAll(mRemoteClientMessage.messages);
 
-                  //BETA
+              //BETA
+              Map<String,Object> edits = new HashMap();
+              int succesful = 0;
+              try {
+                  succesful = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_SUCCESSFUL_KEY);
+              } catch (JSONException e) {
+                  e.printStackTrace();
+              }
+              edits.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, succesful+1);
+              ReportsMaker.editReport(getReportId(), edits);
+
+              //BETA END
+          } catch (ExecutionException ex){
+              task.cancel(true);
+              executor.shutdown();
+              if (mMessagesReceived.isEmpty()) {
+                  setExchangeStatus(Status.ERROR);
+              } else {
+                  setExchangeStatus(Status.ERROR_RECOVERABLE);
+				//BETA
                   Map<String,Object> edits = new HashMap();
                   int failed = 0;
                   try {
@@ -333,40 +350,48 @@ public class CryptographicExchange extends Exchange {
                   ReportsMaker.editReport(getReportId(), edits);
                   //BETA END
 
-                  if (mMessagesReceived.isEmpty()) {
-                      setExchangeStatus(Status.ERROR);
-                  } else {
-                      setExchangeStatus(Status.ERROR_RECOVERABLE);
-                  }
-                  setErrorMessage(exception);
-                  throw new IOException(exception);
-              } else {
-                  //BETA
-                  Map<String,Object> edits = new HashMap();
-                  int succesful = 0;
-                  try {
-                      succesful = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_SUCCESSFUL_KEY);
-                  } catch (JSONException e) {
-                      e.printStackTrace();
-                  }
-                  edits.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, succesful+1);
-                  ReportsMaker.editReport(getReportId(), edits);
-
+                  // BETA
+                  watch.stop();
                   JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
                   if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
-                  //BETA END
               }
-          } catch (InterruptedException |ExecutionException | TimeoutException e) {
+              setErrorMessage(ex.getMessage());
+              throw new IOException(ex.getMessage());
+          } catch (InterruptedException | TimeoutException e) {
+              task.cancel(true);
               executor.shutdown();
+
               if (mMessagesReceived.isEmpty()) {
                   setExchangeStatus(Status.ERROR);
               } else {
                   setExchangeStatus(Status.ERROR_RECOVERABLE);
+                  //BETA
+                  Map<String,Object> edits = new HashMap();
+                  int failed = 0;
+                  try {
+                      failed = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_FAILED_KEY);
+                  } catch (JSONException e3) {
+                      e3.printStackTrace();
+                  }
+                  edits.put(ReportsMaker.EVENT_FAILED_KEY, failed+1);
+                  ReportsMaker.editReport(getReportId(), edits);
+                  //BETA END
+
+                  // BETA
+                  watch.stop();
+                  JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
+                  if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
               }
               setErrorMessage("Message receiving timed out");
               throw new IOException ("Message receiving timed out");
           }
       }
+
+      // BETA
+      watch.stop();
+      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
+      if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
+
       executor.shutdown();
   }
 
