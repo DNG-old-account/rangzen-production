@@ -274,6 +274,7 @@ public class MessageStore {
 
         /*replace previous message with new version, thus letting the system
          place the new version in the appropriate bin*/
+        //TODO I susspect these two may be causing ConcurrentModificationException
         deleteMessage(msg);
         addMessage(msg,priority);
         return true;

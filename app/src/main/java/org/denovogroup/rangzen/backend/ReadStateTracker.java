@@ -2,6 +2,7 @@ package org.denovogroup.rangzen.backend;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import java.util.HashMap;
 
@@ -36,20 +37,20 @@ public class ReadStateTracker {
         SharedPreferences preferences = context.getSharedPreferences(SAVED_UNREAD_LIST, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
 
+        if(unreadMessages == null){
+            initTracker(context);
+        }
+
         if(isRead) {
-            if (preferences.contains(message)) {
-                editor.remove(message);
-            }
-            if(unreadMessages != null && unreadMessages.containsKey(message)){
+            editor.remove(message);
+            if(unreadMessages.containsKey(message)){
                 unreadMessages.remove(message);
             }
         } else {
             editor.putBoolean(message, false);
-            if(unreadMessages != null){
-                unreadMessages.put(message, false);
-            }
+            unreadMessages.put(message, false);
         }
-        editor.commit();
+        editor.apply();
     }
 
     /** check if the supplied message is read or not.
@@ -78,5 +79,26 @@ public class ReadStateTracker {
         if(unreadMessages != null){
             unreadMessages.clear();
         }
+    }
+
+    /** return how many items are currently marked as unread
+     * @param context
+     * @return the number of items marked as unread
+     */
+    public static int getUnreadCount(Context context){
+
+        if(unreadMessages == null){
+            initTracker(context);
+        }
+
+        return unreadMessages.size();
+    }
+
+    public static HashMap<String,Boolean> getAllUnreadMessages(Context context){
+        if(unreadMessages == null){
+            initTracker(context);
+        }
+
+        return (HashMap<String, Boolean>) unreadMessages.clone();
     }
 }

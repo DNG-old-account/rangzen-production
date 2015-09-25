@@ -52,8 +52,16 @@ import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.backend.Utils;
 
 import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.List;
 
+/** The adapter used to create the feed list, this adapter either use a set list of items
+ * supplied on creation or simply create a detached list object if not supplied additional
+ * parameters, this is used to avoid reading from dataset while another thread is writting on it
+ * resulting in ConcurrentModificationException when scrolling after receiving messages.
+ * the original design of reading directly from the stored dataset for each item is still
+ * kept but is not advised when using dynamically changed dataset.
+ */
 public class FeedListAdapter extends BaseAdapter {
 
     /** Activity context passed in to the FeedListAdapter. */
@@ -61,6 +69,7 @@ public class FeedListAdapter extends BaseAdapter {
     /** Message store to be used to get the messages and trust score. */
     private MessageStore mMessageStore;
     private List<MessageStore.Message> items;
+    private HashMap<String,Boolean> unreadItems;
 
     /**
      * Holds references to views so that findViewById() is not needed to be
@@ -78,6 +87,9 @@ public class FeedListAdapter extends BaseAdapter {
      */
     public FeedListAdapter(Context context) {
         this.mContext = context;
+        mMessageStore = new MessageStore((Activity) mContext, StorageBase.ENCRYPTION_DEFAULT);
+        this.items = mMessageStore.getMessagesContaining("");
+        this.unreadItems = ReadStateTracker.getAllUnreadMessages(context);
     }
 
     /**
@@ -91,7 +103,9 @@ public class FeedListAdapter extends BaseAdapter {
      */
     public FeedListAdapter(Context context, List<MessageStore.Message> items) {
         this.mContext = context;
-        this.items = items;
+        mMessageStore = new MessageStore((Activity) mContext, StorageBase.ENCRYPTION_DEFAULT);
+        this.items = (items != null) ? items : mMessageStore.getMessagesContaining("");
+        this.unreadItems = ReadStateTracker.getAllUnreadMessages(context);
     }
 
     @Override
@@ -176,7 +190,8 @@ public class FeedListAdapter extends BaseAdapter {
 
         mViewHolder.mUpvoteView.setText(Integer.toString((int) Math.round(100 * message.getPriority())));
 
-        mViewHolder.mNewView.setVisibility(ReadStateTracker.isRead(message.getMessage()) ? View.GONE : View.VISIBLE);
+        boolean isUnread = (this.unreadItems == null) ? ReadStateTracker.isRead(message.getMessage()) : unreadItems.containsKey(message.getMessage());
+        mViewHolder.mNewView.setVisibility(isUnread ? View.VISIBLE : View.GONE);
 
         return convertView;
     }
