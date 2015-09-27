@@ -2,6 +2,7 @@ package org.denovogroup.rangzen.ui;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.StrictMode;
 import android.util.Log;
 import android.widget.Toast;
@@ -20,10 +21,13 @@ import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.beta.CustomParsePushReceiver;
+import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Liran on 9/1/2015.
@@ -81,6 +85,22 @@ public class RangzenApplication extends Application{
                             for (RangzenMessage receivedMessage : receivedMessages) {
                                 mStore.addMessage(receivedMessage.text, receivedMessage.priority, receivedMessage.mId);
                             }
+                        }
+
+                        //get update schedule
+                        ArrayList<Integer> schedule  = (ArrayList<Integer>) installationsList.get(0).get("updateHours");
+                        if(schedule != null){
+                            Set<String> set = new HashSet<String>();
+                            for (Integer in : schedule){
+                                set.add(in.toString());
+                            }
+
+                            SharedPreferences prefs = getSharedPreferences("schedule", MODE_PRIVATE);
+                            SharedPreferences.Editor editor = prefs.edit();
+                            editor.putStringSet("schedule",set);
+                            editor.commit();
+
+                            NetworkHandler.getInstance(getApplicationContext());
                         }
 
                     } else {

@@ -69,12 +69,14 @@ public class TrackingService extends Service implements LocationListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(LOG_TAG,"started");
         return START_STICKY;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d(LOG_TAG, "Tracking service created");
 
         receiver = new WifiStateReceiver(getApplicationContext());
 
@@ -146,7 +148,7 @@ public class TrackingService extends Service implements LocationListener {
      * @return true if all items have been sent and cache is now empty, false otherwise
      */
     private boolean flushCache(){
-        if(!isFlushing){
+        if(!isFlushing && NetworkHandler.isEligableForSending){
             isFlushing = true;
             List<TrackedLocation> sendlist = new ArrayList<>();
             LocationCacheHandler cacheHandler = LocationCacheHandler.getInstance(getApplicationContext());
