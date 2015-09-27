@@ -215,7 +215,7 @@ public class MessageStore {
         // key.
         String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
 
-    String msgIdKey = MESSAGE_ID_KEY + msg;
+        String msgIdKey = MESSAGE_ID_KEY + msg;
 
         // A value less than all priorities in the store.
         final double MIN_PRIORITY = -1.0f;
@@ -280,9 +280,8 @@ public class MessageStore {
 
         /*replace previous message with new version, thus letting the system
          place the new version in the appropriate bin*/
-        //TODO I susspect these two may be causing ConcurrentModificationException
         deleteMessage(msg);
-        addMessage(msg,priority, mId);
+        addMessage(msg, priority, mId);
         return true;
     }
 
@@ -334,7 +333,6 @@ public class MessageStore {
         store.removeData(msgPriorityKey);
         msgs.remove(msg);
         store.putSet(binKey, msgs);
-
         return true;
     }
 
@@ -533,7 +531,7 @@ public class MessageStore {
     public Message(double priority, String message, String id) {
             mPriority = priority;
             mMessage = message;
-      mId = id;
+            mId = id;
         }
 
         public String getMessage() {

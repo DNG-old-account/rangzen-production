@@ -409,11 +409,12 @@ public class RangzenService extends Service {
       } catch (IOException e) {
         Log.w(TAG, "Couldn't close bt socket: " + e);
       }
-      try { 
+      try {
         if (mBluetoothSpeaker.mSocket != null) {
           mBluetoothSpeaker.mSocket.close();
         }
       } catch (IOException e) {
+          Log.d(TAG, "attempt failed");
         Log.w(TAG, "Couldn't close bt socket in BTSpeaker: " + e);
       }
       mSocket = null;
@@ -446,7 +447,7 @@ public class RangzenService extends Service {
                 JSONObject report = ReportsMaker.getMessagePriorityChangedBySystemReport(System.currentTimeMillis(),message.mId, oldPriority,newPriority,message.text);
                 NetworkHandler.getInstance(getApplicationContext()).sendEventReport(report);
                 //BETA END
-              mMessageStore.updatePriority(message.text, newPriority, message.mId);
+                mMessageStore.updatePriority(message.text, newPriority, message.mId);
             } else {
                 hasNew = true;
                 mMessageStore.addMessage(message.text, newPriority, message.mId);

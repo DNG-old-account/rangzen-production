@@ -143,8 +143,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                         //BETA END
 
                         //delete data from storage
-                        boolean deleted = store.deleteMessage(message.getMessage());
-
+                        store.deleteMessage(message.getMessage());
 
                         /*If data is currently being presenting as filtered search results, update
                           the currently displayed to retain consistent look */
@@ -224,6 +223,7 @@ public class FeedFragment extends Fragment implements Refreshable{
      * @return a sorted clone of the source list, sorted by priority
      */
     private List<MessageStore.Message> sortDetachedList(List<MessageStore.Message> list){
+
         List<MessageStore.Message> sortedList = list;
         for(MessageStore.Message m : list){
             while(sortedList.indexOf(m) > 0 && sortedList.get(sortedList.indexOf(m)-1).getPriority() < m.getPriority()) {

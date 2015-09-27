@@ -199,11 +199,7 @@ public class NetworkHandler {
                         ParseObject.saveAllInBackground(list, new SaveCallback() {
                             @Override
                             public void done(ParseException e) {
-                                try {
-                                    ParseObject.unpinAll(list);
-                                } catch (ParseException e1) {
-                                    e1.printStackTrace();
-                                }
+                                ParseObject.unpinAllInBackground(list);
                             }
                         });
                     }
