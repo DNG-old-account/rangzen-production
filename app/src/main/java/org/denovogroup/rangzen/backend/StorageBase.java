@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.backend;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Base64;
+import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -111,7 +112,7 @@ public class StorageBase {
         editor.putString(key, value);
 
         // TODO(barath): Consider whether we should use .commit() instead of apply().
-        editor.apply();
+        editor.commit();
     }
 
     /**
@@ -142,7 +143,7 @@ public class StorageBase {
         editor.putStringSet(key, values);
 
         // TODO(barath): Consider whether we should use .commit() instead of apply().
-        editor.apply();
+        editor.commit();
     }
 
     /**
@@ -156,7 +157,7 @@ public class StorageBase {
         editor.putFloat(key, value);
 
         // TODO(barath): Consider whether we should use .commit() instead of apply().
-        editor.apply();
+        editor.commit();
     }
 
     /**
@@ -172,7 +173,7 @@ public class StorageBase {
         editor.remove(key);
 
         // TODO(barath): Consider whether we should use .commit() instead of apply().
-        editor.apply();
+        editor.commit();
     }
 
     /**
@@ -188,7 +189,7 @@ public class StorageBase {
         editor.putLong(key, Double.doubleToLongBits(value));
 
         // TODO(barath): Consider whether we should use .commit() instead of apply().
-        editor.apply();
+        editor.commit();
     }
 
     /**
@@ -202,7 +203,7 @@ public class StorageBase {
         editor.putInt(key, value);
 
         // TODO(barath): Consider whether we should use .commit() instead of apply().
-        editor.apply();
+        editor.commit();
     }
 
     /**
@@ -216,7 +217,7 @@ public class StorageBase {
         editor.putLong(key, value);
 
         // TODO(barath): Consider whether we should use .commit() instead of apply().
-        editor.apply();
+        editor.commit();
     }
 
     /**
