@@ -416,8 +416,4 @@ public class ReportsMaker {
         editor.clear();
         editor.commit();
     }
-
-    public static void updatePerformanceStatistic(){
-
-    }
 }

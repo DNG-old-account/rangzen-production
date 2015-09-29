@@ -15,6 +15,7 @@ import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.SaveCallback;
+import com.parse.SendCallback;
 
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.locationtracking.TrackedLocation;
@@ -72,7 +73,7 @@ public class NetworkHandler {
         return instance;
     }
 
-    public static NetworkHandler getInstance(Context ctx){
+    public static NetworkHandler getInstance(final Context ctx){
         if(instance == null){
             instance = new NetworkHandler();
         }
@@ -81,15 +82,23 @@ public class NetworkHandler {
             updateScheduleTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    if (updateSchedule != null && updateSchedule.length > 0) {
+                    if ((updateSchedule != null && updateSchedule.length > 0 && updateSchedule[0] > -1)) {
                         Calendar c = Calendar.getInstance();
                         c.setTimeInMillis(System.currentTimeMillis());
+                        isEligableForSending = false;
+
                         for (int i : updateSchedule) {
                             if (i == c.get(Calendar.HOUR_OF_DAY)) {
                                 isEligableForSending = true;
                                 break;
                             }
                         }
+
+                        if (isEligableForSending && NetworkHandler.getInstance() != null && context != null) {
+                            NetworkHandler.getInstance().sendUiStatisticReport(ReportsMaker.getUiStatisticReport(context));
+                        }
+                    } else if (context != null) {
+                        getUpdateSchedule(context);
                     }
                 }
             }, 0, 60 * 1000);
@@ -132,7 +141,9 @@ public class NetworkHandler {
 
                 sendList.add(testObject);
 
-                if(getObjectSizeInBytes(sendList) >= 128000){
+                long sizeInBytes = getObjectSizeInBytes(sendList);
+
+                if(sizeInBytes >= 128000){
                     sendList.remove(sendList.size()-1);
                     break;
                 }
@@ -198,6 +209,57 @@ public class NetworkHandler {
                     testObject.saveInBackground();
                 } else {
                     testObject.pinInBackground(testObject.getClassName());
+                }
+                return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    /** send a ui event report to the server, even though input is JSONObject you should use
+     * ReportsMaker class to create a properly formatted report before using this method.
+     * this method will also clear the current data from the ui report after succesful sending
+     *
+     * @param report json object retreived from ReportsMaker class
+     * @return true if the report was sent and received, false otherwise
+     */
+    public boolean sendUiStatisticReport(JSONObject report){
+
+        final long availableReportTimestamp = report.optLong(ReportsMaker.TIMESTAMP_KEY, 0);
+
+        Calendar c1 = Calendar.getInstance();
+        c1.setTimeInMillis(availableReportTimestamp);
+
+        Calendar c2 = Calendar.getInstance();
+
+        if(report != null && isEligableForSending && c1.get(Calendar.DAY_OF_MONTH) != c2.get(Calendar.DAY_OF_MONTH)){
+            try {
+                //Convert to parse object
+                ParseObject testObject = new ParseObject(report.getString(ReportsMaker.EVENT_TAG_KEY));
+                Iterator<?> keys = report.keys();
+                while(keys.hasNext()) {
+                    String key = (String)keys.next();
+                    if(report.get(key) != null){
+                        if(report.get(key) instanceof Object[]){
+                            try {
+                                String[] str = (String[]) report.get(key);
+                                testObject.put(key, Arrays.asList(str));
+                            } catch (ClassCastException e){}
+                        } else {
+                            testObject.put(key, report.get(key));
+                        }
+                    }
+                }
+                //this will make sure the report is saved into local cache until sent to parse
+                if(NetworkHandler.getInstance() != null && NetworkHandler.getInstance().isNetworkConnected() && isEligableForSending && context != null){
+                    testObject.saveInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            ReportsMaker.clearUiStatistic(context);
+                        }
+                    });
                 }
                 return true;
             } catch (JSONException e) {

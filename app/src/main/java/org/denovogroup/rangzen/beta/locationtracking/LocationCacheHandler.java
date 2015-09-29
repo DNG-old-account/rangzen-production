@@ -83,7 +83,8 @@ public class LocationCacheHandler extends SQLiteOpenHelper{
      * @param trackedLocation to be cached
      */
     public void insertLocation(TrackedLocation trackedLocation){
-        if(trackedLocation != null){
+        if(trackedLocation != null && !hasLocation(trackedLocation)){
+            Log.d("liran","inserting");
             ContentValues content = new ContentValues();
             content.put(LATITUDE_COL, trackedLocation.latitude);
             content.put(LONGITUDE_COL, trackedLocation.longitude);
@@ -95,6 +96,31 @@ public class LocationCacheHandler extends SQLiteOpenHelper{
                 //Log.d(LOG_TAG, "saved to cache");
             }
         }
+    }
+
+    /** Look for a location in the cache based on its timestamp
+     *
+     * @param trackedLocation to be cached
+     */
+    public boolean hasLocation(TrackedLocation trackedLocation){
+        if(trackedLocation != null){
+            ContentValues content = new ContentValues();
+            content.put(LATITUDE_COL, trackedLocation.latitude);
+            content.put(LONGITUDE_COL, trackedLocation.longitude);
+            content.put(TIMESTAMP_COL, trackedLocation.timestamp);
+
+            SQLiteDatabase db = getWritableDatabase();
+            if(db != null){
+                String sqlQuery = "SELECT * FROM "+TABLE_NAME+" WHERE "+TIMESTAMP_COL+" = "+trackedLocation.timestamp+";";
+                Cursor cursor = db.rawQuery(sqlQuery, null);
+                int rowCount = cursor.getCount();
+                cursor.close();
+
+                return rowCount > 0;
+            }
+        }
+
+        return false;
     }
 
     /** Removes a single location from the cache based on the timestamp value

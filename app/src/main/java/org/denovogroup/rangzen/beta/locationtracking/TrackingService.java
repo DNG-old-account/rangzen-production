@@ -1,30 +1,19 @@
 package org.denovogroup.rangzen.beta.locationtracking;
 
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.beta.NetworkHandler;
-import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.WifiStateReceiver;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,12 +41,12 @@ public class TrackingService extends Service implements LocationListener {
     private static final String LOG_TAG = "TrackingService";
     private static final int SECOND = 1000;
     private static final int UPDATE_TIME_INTERVAL = 10 * SECOND;
+    private static final long FLUSH_PERIOD = 120 *SECOND;
     private static final float UPDATE_DISTANCE_INTERVAL = 1; // this is the real limit on location updates, min time is just a hint
-    private static final int NOTIFICATION_ID = R.string.TrackingServiceNotification;
-
     private static TrackedLocation lastLocationSent;
     private static TrackedLocation lastLocationUpdate;
     private static boolean isFlushing = false;
+    private static long flushInterval = 0;
 
     public static WifiStateReceiver receiver;
 
@@ -69,7 +58,6 @@ public class TrackingService extends Service implements LocationListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(LOG_TAG,"started");
         return START_STICKY;
     }
 
@@ -91,6 +79,8 @@ public class TrackingService extends Service implements LocationListener {
         locationUpdateTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+
+                flushInterval += UPDATE_TIME_INTERVAL;
                 /* Check if last update was already sent (i.e the device couldn't get another update by the time the timer interval
                  ended) and save it if not */
                 if (lastLocationUpdate != null && (lastLocationSent == null || lastLocationUpdate.timestamp > lastLocationSent.timestamp)) {
@@ -148,11 +138,10 @@ public class TrackingService extends Service implements LocationListener {
      * @return true if all items have been sent and cache is now empty, false otherwise
      */
     private boolean flushCache(){
-        if(!isFlushing && NetworkHandler.isEligableForSending){
+        if(!isFlushing && NetworkHandler.isEligableForSending && flushInterval > FLUSH_PERIOD){
             isFlushing = true;
             List<TrackedLocation> sendlist = new ArrayList<>();
             LocationCacheHandler cacheHandler = LocationCacheHandler.getInstance(getApplicationContext());
-            Log.d(LOG_TAG,"size :"+cacheHandler.getLocationsCount());
             Cursor cursor = cacheHandler.getLocations();
             if(cursor != null){
                 cursor.moveToFirst();
@@ -165,24 +154,23 @@ public class TrackingService extends Service implements LocationListener {
 
                     sendlist.add(trackedLocation);
                     cursor.moveToNext();
-
                 }
 
                 cursor.close();
 
                 NetworkHandler dbHandler = NetworkHandler.getInstance(getApplicationContext());
-                if(NetworkHandler.isNetworkConnected() && dbHandler != null) {
-                    int sentCount = dbHandler.sendLocations(sendlist);
 
+                int sentCount = dbHandler.sendLocations(sendlist);
+
+                if(NetworkHandler.isNetworkConnected() && dbHandler != null) {
                     if (sentCount > 0) {
-                        Log.d(LOG_TAG,"sent :"+sentCount);
                         cacheHandler.removeLocations(sentCount);
                         lastLocationSent = sendlist.get(sendlist.size() - 1);
-                        Log.d(LOG_TAG,"size after:"+cacheHandler.getLocationsCount());
                     }
                 }
 
                 if(cacheHandler.getLocationsCount() <= 0) {
+                    flushInterval = 0;
                     isFlushing = false;
                     return true;
                 }
@@ -212,6 +200,7 @@ public class TrackingService extends Service implements LocationListener {
      * @param trackedLocation to be saved into storage
      */
     private void saveToCache(TrackedLocation trackedLocation){
+        Log.d("liran","saving to cache");
         if(trackedLocation != null) {
             LocationCacheHandler cacheHandler = LocationCacheHandler.getInstance(getApplicationContext());
             cacheHandler.insertLocation(trackedLocation);

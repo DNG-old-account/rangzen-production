@@ -68,6 +68,7 @@ import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.StorageBase;
+import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.json.JSONObject;
@@ -344,6 +345,8 @@ public class FragmentOrganizer extends Fragment {
 				if(NetworkHandler.getInstance() != null){
 					NetworkHandler.getInstance().sendEventReport(report);
 				}
+
+                ReportsMaker.updateUiStatistic(getActivity(),System.currentTimeMillis(),0, Utils.getHashtags(message).size(),0,0,0,0,0);
 				//BETA END
 
                 getActivity().setResult(Activity.RESULT_OK);

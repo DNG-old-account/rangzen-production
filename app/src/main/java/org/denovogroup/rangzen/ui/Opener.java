@@ -32,6 +32,7 @@
 package org.denovogroup.rangzen.ui;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.Utils;
@@ -126,7 +127,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         messageStore
                 .addMessage(
                         "This is the Rangzen message feed. Messages in the ether will appear here.",
-                        1L,"demo");
+                        1L, "demo");
 
         //get any hashtag passed data from previous click events
         Uri data = getIntent().getData();
@@ -348,7 +349,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      *            chosen.
      */
     public void showFragment(int position) {
-        Log.d("liran","show frag");
         Fragment needAdd = null;
         if (position == 0) {
             needAdd = new FeedFragment();
@@ -554,6 +554,9 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
                     @Override
                     protected List<MessageStore.Message> doInBackground(String... params) {
+                        if(!params[0].isEmpty()) {
+                            ReportsMaker.updateUiStatistic(Opener.this, System.currentTimeMillis(), 1, 0, 0, 0, 0, 0, 0);
+                        }
                         MessageStore store = new MessageStore(Opener.this, StorageBase.ENCRYPTION_DEFAULT);
                         return store.getMessagesContaining(params[0]);
                     }
