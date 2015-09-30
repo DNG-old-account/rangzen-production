@@ -43,7 +43,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.baoyz.swipemenulistview.SwipeMenuLayout;
+import com.baoyz.swipemenulistview.SwipeMenuListView;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
@@ -146,7 +150,7 @@ public class FeedListAdapter extends BaseAdapter {
      *            The parent of convertView.
      */
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, final ViewGroup parent) {
 
         MessageStore.Message message;
 
@@ -169,6 +173,8 @@ public class FeedListAdapter extends BaseAdapter {
                     .findViewById(R.id.hashtagView);
             mViewHolder.mNewView = convertView
                     .findViewById(R.id.unread_indicator);
+            mViewHolder.mExpandView = (ImageView) convertView
+                    .findViewById(R.id.expand);
 
             convertView.setTag(mViewHolder);
         } else {
@@ -192,6 +198,17 @@ public class FeedListAdapter extends BaseAdapter {
 
         boolean isUnread = (this.unreadItems == null) ? ReadStateTracker.isRead(message.getMessage()) : unreadItems.containsKey(message.getMessage());
         mViewHolder.mNewView.setVisibility(isUnread ? View.VISIBLE : View.GONE);
+
+        mViewHolder.mExpandView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (((SwipeMenuLayout) parent.getChildAt(position)).isOpen()) {
+                    ((SwipeMenuListView) parent).smoothCloseMenu();
+                } else {
+                    ((SwipeMenuListView) parent).smoothOpenMenu(position);
+                }
+            }
+        });
 
         return convertView;
     }
@@ -217,5 +234,10 @@ public class FeedListAdapter extends BaseAdapter {
          * The view object that holds the new message indicator for this current row item.
          */
         private View mNewView;
+
+        /**
+         * The view object that holds the button to expose the swipe menu
+         */
+        private ImageView mExpandView;
     }
 }

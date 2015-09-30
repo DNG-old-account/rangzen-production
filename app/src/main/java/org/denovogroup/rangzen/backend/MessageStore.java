@@ -431,7 +431,7 @@ public class MessageStore {
             for (String m : msgs) {
                 if(m.toLowerCase().contains(query.toLowerCase())) {
                     double priority = getMessagePriority(m, -1);
-                    result.add(new Message(priority, m));
+                    if(priority >= MIN_PRIORITY_VALUE) result.add(new Message(priority, m));
                 }
             }
         }

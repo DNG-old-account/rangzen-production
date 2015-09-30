@@ -109,22 +109,10 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
         pendingNewMessagesMenuItem = menu.findItem(R.id.new_post);
 
-        setPendingUnreadMessagesDisplay();
-
-        MessageStore messageStore = new MessageStore(this,
-                StorageBase.ENCRYPTION_DEFAULT);
-
         //Setup the search view
-
         MenuItem searchItem = menu.findItem(R.id.search);
         SearchView searchView = (SearchView) searchItem.getActionView();
         setSearhView(searchView);
-
-        //put first message into the feed
-        messageStore
-                .addMessage(
-                        "This is the Rangzen message feed. Messages in the ether will appear here.",
-                        1L);
 
         //get any hashtag passed data from previous click events
         Uri data = getIntent().getData();
@@ -175,6 +163,12 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         if(mFirstTime){
             //Start the read state tracker to tell what messages are not read yet
             ReadStateTracker.initTracker(getApplicationContext());
+
+            //put first message into the feed
+            MessageStore messageStore = new MessageStore(this,StorageBase.ENCRYPTION_DEFAULT);
+            messageStore.addMessage(
+                    "This is the Rangzen message feed. Messages in the ether will appear here.",
+                    1L);
         }
     }
 
