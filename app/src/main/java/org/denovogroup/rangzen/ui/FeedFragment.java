@@ -1,6 +1,13 @@
 package org.denovogroup.rangzen.ui;
 
 import android.annotation.TargetApi;
+import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -20,6 +27,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
+import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.NetworkHandler;
@@ -49,7 +57,7 @@ public class FeedFragment extends Fragment implements Refreshable{
         view.findViewById(R.id.new_post_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(getActivity().getClass() == Opener.class){
+                if (getActivity().getClass() == Opener.class) {
                     ((Opener) getActivity()).showFragment(1);
                 }
             }

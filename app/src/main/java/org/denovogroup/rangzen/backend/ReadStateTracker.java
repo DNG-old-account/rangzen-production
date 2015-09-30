@@ -50,7 +50,7 @@ public class ReadStateTracker {
             editor.putBoolean(message, false);
             unreadMessages.put(message, false);
         }
-        editor.apply();
+        editor.commit();
     }
 
     /** check if the supplied message is read or not.

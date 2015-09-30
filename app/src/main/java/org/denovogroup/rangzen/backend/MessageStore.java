@@ -444,7 +444,7 @@ public class MessageStore {
             for (String m : msgs) {
                 if(m.toLowerCase().contains(query.toLowerCase())) {
                     double priority = getMessagePriority(m, -1);
-                    result.add(new Message(priority, m, getMessageId(m)));
+                    if(priority >= MIN_PRIORITY_VALUE) result.add(new Message(priority, m, getMessageId(m)));
                 }
             }
         }
@@ -485,8 +485,8 @@ public class MessageStore {
 
             for (String m : msgs) {
                 double priority = getMessagePriority(m, -1);
-        String mId = getMessageId(m);
-        topk.add(new Message(priority, m, mId));
+                String mId = getMessageId(m);
+                topk.add(new Message(priority, m, mId));
             }
         }
         Collections.sort(topk, new Comparator<Message>() {
