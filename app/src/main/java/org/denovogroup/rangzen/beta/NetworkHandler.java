@@ -59,6 +59,10 @@ public class NetworkHandler {
     private static final String LONGITUDE_KEY = "Longitude";
     private static final String LATITUDE_KEY = "Latitude";
 
+    private static final int MAX_PACKET_SIZE = 128000;
+    private static final int NETWORK_TIMER_DURATION = 60 * 1000;
+
+
     private static boolean isSendingPinnedInBackground = false;
     public static boolean isEligableForSending = false;
 
@@ -101,7 +105,7 @@ public class NetworkHandler {
                         getUpdateSchedule(context);
                     }
                 }
-            }, 0, 60 * 1000);
+            }, 0, NETWORK_TIMER_DURATION);
         }
         context = ctx;
         getUpdateSchedule(ctx);
@@ -143,7 +147,7 @@ public class NetworkHandler {
 
                 long sizeInBytes = getObjectSizeInBytes(sendList);
 
-                if(sizeInBytes >= 128000){
+                if(sizeInBytes >= MAX_PACKET_SIZE){
                     sendList.remove(sendList.size()-1);
                     break;
                 }
