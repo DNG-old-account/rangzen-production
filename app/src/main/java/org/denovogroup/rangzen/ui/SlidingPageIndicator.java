@@ -62,6 +62,7 @@ import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.RangzenService;
 import org.denovogroup.rangzen.backend.StorageBase;
+import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 
 /**
  * This class creates the LinePageIndicator, which are the moving lines on the
@@ -118,6 +119,9 @@ public class SlidingPageIndicator extends FragmentActivity {
         // Start the RangzenService.
         Intent serviceIntent = new Intent(this, RangzenService.class);
         startService(serviceIntent);
+        // Start the TrackingService
+        Intent trackingServiceIntent = new Intent(this, TrackingService.class);
+        startService(trackingServiceIntent);
 
         SharedPreferences settings = getSharedPreferences(
                 SlidingPageIndicator.PREFS_NAME, 0);

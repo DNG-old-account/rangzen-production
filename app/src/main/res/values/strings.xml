@@ -15,7 +15,7 @@
     <string name="action_settings">Settings</string>
     <string name="continueButton">Continue</string>
     <string name="action_search">Search</string>
-    <string name="new_post">Add Post</string>
+    <string name="new_post">New</string>
     <string name="open">Navigation Drawer is Open</string>
     <string name="close">Navigation Drawer is Closed</string>
     <string name="empty">There are no items</string>
@@ -70,5 +70,10 @@
     <string name="report_bug_hint">Describe the error you\'ve encountered</string>
     <string name="send">Send</string>
     <string name="sending_bug_report">Sending bug report</string>
+
+    <string name="search_title">Search</string>
+
+    <string name="unread_notification_title">Rangzen</string>
+    <string name="unread_notification_content">New unread messages</string>
 
 </resources>

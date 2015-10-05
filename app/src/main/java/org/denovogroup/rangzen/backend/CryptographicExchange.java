@@ -55,6 +55,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -212,7 +213,7 @@ public class CryptographicExchange extends Exchange {
       boolean success = true;
       List<RangzenMessage> messagesPool = getMessages();
       //notify the recipient how many items we expect to send him.
-      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messagesPool.size()),1d, null);
+      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messagesPool.size()),1d, "notifyReceiver");
 
       if(!lengthValueWrite(out, exchangeInfoMessage)){
           success = false;
@@ -225,20 +226,10 @@ public class CryptographicExchange extends Exchange {
                       .build();
               if (!lengthValueWrite(out, cm)) {
                   success = false;
-
-                  //BETA
-                  Map<String,Object> edits = new HashMap();
-                  int failed = 0;
-                  try {
-                      failed = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_FAILED_KEY);
-                  } catch (JSONException e) {
-                      e.printStackTrace();
-                  }
-                  edits.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, failed+1);
-                  ReportsMaker.editReport(getReportId(), edits);
-                  //BETA END
-              } else {
-                  //BETA
+              }
+              //BETA
+              watch.stop();
+              if(success){
                   Map<String,Object> edits = new HashMap();
                   int succesful = 0;
                   try {
@@ -248,29 +239,35 @@ public class CryptographicExchange extends Exchange {
                   }
                   edits.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, succesful+1);
                   ReportsMaker.editReport(getReportId(), edits);
+              } else {
 
-                  watch.stop();
-                  if (NetworkHandler.getInstance() != null) {
-                      String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-                      for (RangzenMessage msg : cm.messages) {
-                          JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), msg.mId, msg.priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), "" + watch.getElapsedTime());
-                          NetworkHandler.getInstance().sendEventReport(report);
-                          if (!msg.isMine()) {
-                              JSONObject report2 = ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), msg.mId, msg.priority, msg.text);
-                              NetworkHandler.getInstance().sendEventReport(report2);
-                          }
-                      }
-
+                  Map<String,Object> edits = new HashMap();
+                  int failed = 0;
+                  try {
+                      failed = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_FAILED_KEY);
+                  } catch (JSONException e) {
+                      e.printStackTrace();
                   }
-                  //BETA END
+                  edits.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, failed+1);
+                  ReportsMaker.editReport(getReportId(), edits);
               }
+
+              if (NetworkHandler.getInstance() != null) {
+                  String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
+                  for (RangzenMessage msg : cm.messages) {
+                      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), msg.mId, msg.priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), "" + watch.getElapsedTime());
+                      NetworkHandler.getInstance().sendEventReport(report);
+                  }
+              }
+              //BETA END
           }
       }
-    if (!success) {
-      setExchangeStatus(Status.ERROR);
-      setErrorMessage("Length/value write of client message failed.");
-      throw new IOException("Length/value write of client message failed, but exception is hidden (see Exchange.java)");
-    }
+
+      if (!success) {
+          setExchangeStatus(Status.ERROR);
+          setErrorMessage("Length/value write of client message failed.");
+          throw new IOException("Length/value write of client message failed, but exception is hidden (see Exchange.java)");
+      }
   }
 
   /**
@@ -287,7 +284,7 @@ public class CryptographicExchange extends Exchange {
               messageCount = Integer.parseInt(exchangeInfo.text);
           } catch (Exception e){}
       }
-    //BETA
+      //BETA
       StopWatch watch = new StopWatch();
       String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
 
@@ -323,21 +320,11 @@ public class CryptographicExchange extends Exchange {
               String exception = executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
               // BETA
               watch.stop();
+              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
+              if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
+              //BETA END
               if (exception != null && !exception.isEmpty()) {
                   executor.shutdown();
-
-                  //BETA
-                  Map<String,Object> edits = new HashMap();
-                  int failed = 0;
-                  try {
-                      failed = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_FAILED_KEY);
-                  } catch (JSONException e) {
-                      e.printStackTrace();
-                  }
-                  edits.put(ReportsMaker.EVENT_FAILED_KEY, failed+1);
-                  ReportsMaker.editReport(getReportId(), edits);
-                  //BETA END
-
                   if (mMessagesReceived.isEmpty()) {
                       setExchangeStatus(Status.ERROR);
                   } else {
@@ -345,21 +332,6 @@ public class CryptographicExchange extends Exchange {
                   }
                   setErrorMessage(exception);
                   throw new IOException(exception);
-              } else {
-                  //BETA
-                  Map<String,Object> edits = new HashMap();
-                  int succesful = 0;
-                  try {
-                      succesful = (Integer) ReportsMaker.getBacklogedReport(getReportId()).get(ReportsMaker.EVENT_SUCCESSFUL_KEY);
-                  } catch (JSONException e) {
-                      e.printStackTrace();
-                  }
-                  edits.put(ReportsMaker.EVENT_SUCCESSFUL_KEY, succesful+1);
-                  ReportsMaker.editReport(getReportId(), edits);
-
-                  JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
-                  if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
-                  //BETA END
               }
           } catch (InterruptedException |ExecutionException | TimeoutException e) {
               executor.shutdown();

@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.backend;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -202,6 +203,7 @@ public class MessageStore {
      * exists, does not modify the store and returns false.
      */
   public boolean addMessage(String msg, double priority, String mId) {
+        //Check if priority is within allowed range and fix it to closest edge if outside of range.
         try {
             checkPriority(priority);
         } catch (IllegalArgumentException e){
@@ -213,7 +215,7 @@ public class MessageStore {
         // key.
         String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
 
-    String msgIdKey = MESSAGE_ID_KEY + msg;
+        String msgIdKey = MESSAGE_ID_KEY + msg;
 
         // A value less than all priorities in the store.
         final double MIN_PRIORITY = -1.0f;
@@ -234,12 +236,8 @@ public class MessageStore {
         store.putDouble(msgPriorityKey, priority);
         msgs.add(msg);
         store.putSet(binKey, msgs);
-    store.put(msgIdKey, mId);
+        store.put(msgIdKey, mId);
 
-        /** Sending the broadcast here when a message is added to the phone. **/
-        Intent intent = new Intent();
-        intent.setAction(NEW_MESSAGE);
-        mContext.sendBroadcast(intent);
         return true;
     }
 
@@ -263,7 +261,7 @@ public class MessageStore {
      * @return True if the message was in the store (and its priority was changed),
      * false otherwise.
      */
-    public boolean updatePriority(String msg, double priority) {
+    public boolean updatePriority(String msg, double priority, String mId) {
         //Check if priority is within allowed range and fix it to closest edge if outside of range.
         try {
             checkPriority(priority);
@@ -279,7 +277,11 @@ public class MessageStore {
         if (!found) {
             return false;
         }
-        store.putDouble(msgPriorityKey, priority);
+
+        /*replace previous message with new version, thus letting the system
+         place the new version in the appropriate bin*/
+        deleteMessage(msg);
+        addMessage(msg, priority, mId);
         return true;
     }
 
@@ -306,7 +308,6 @@ public class MessageStore {
      * found, returns false.
      */
     public boolean deleteMessage(String msg) {
-
         // TODO(barath): Consider improving performance by selecting a different
         // key.
         String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
@@ -323,7 +324,6 @@ public class MessageStore {
         // Get the existing message set for the bin.
         Double priority = store.getDouble(msgPriorityKey, NOT_FOUND);
         if(priority == NOT_FOUND) return false;
-
         String binKey = getBinKeyForPriority(priority);
         Set<String> msgs = store.getSet(binKey);
 
@@ -333,7 +333,6 @@ public class MessageStore {
         store.removeData(msgPriorityKey);
         msgs.remove(msg);
         store.putSet(binKey, msgs);
-
         return true;
     }
 
@@ -367,6 +366,7 @@ public class MessageStore {
         for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
             String binKey = getBinKey(bin);
             Set<String> msgs = store.getSet(binKey);
+
             if (msgs == null)
                 continue;
 
@@ -421,6 +421,52 @@ public class MessageStore {
     }
 
     /**
+     * This method goes through every message in all of the bins and if contain
+     * the specified string, inserts them into an array list by trust score and
+     * then in the case of a tie, alphabetically.
+     *
+     * @param query The string to look for in the message
+     * @return a list of messages containing the set query.
+     * @throws NullPointerException if set query is null
+     */
+    public List<Message> getMessagesContaining(String query){
+
+        if(query == null ) throw new NullPointerException("Query string is null");
+
+        List<Message> result = new ArrayList<Message>();
+
+        for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
+            String binKey = getBinKey(bin);
+            Set<String> msgs = store.getSet(binKey);
+            if (msgs == null)
+                continue;
+
+            for (String m : msgs) {
+                if(m.toLowerCase().contains(query.toLowerCase())) {
+                    double priority = getMessagePriority(m, -1);
+                    if(priority >= MIN_PRIORITY_VALUE) result.add(new Message(priority, m, getMessageId(m)));
+                }
+            }
+        }
+        Collections.sort(result, new Comparator<Message>() {
+
+            @Override
+            public int compare(Message lhs, Message rhs) {
+                Message left = (Message) lhs;
+                Message right = (Message) rhs;
+                if (left.getPriority() > right.getPriority()) {
+                    return -1;
+                } else if (left.getPriority() < right.getPriority()) {
+                    return 1;
+                } else {
+                    return left.getMessage().compareTo(right.getMessage());
+                }
+            }
+        });
+        return result;
+    }
+
+    /**
      * This method goes through every message in all of the bins and inserts
      * them into an array list by trust score and then in the case of a tie,
      * alphabetically.
@@ -439,8 +485,8 @@ public class MessageStore {
 
             for (String m : msgs) {
                 double priority = getMessagePriority(m, -1);
-        String mId = getMessageId(m);
-        topk.add(new Message(priority, m, mId));
+                String mId = getMessageId(m);
+                topk.add(new Message(priority, m, mId));
             }
         }
         Collections.sort(topk, new Comparator<Message>() {
@@ -485,7 +531,7 @@ public class MessageStore {
     public Message(double priority, String message, String id) {
             mPriority = priority;
             mMessage = message;
-      mId = id;
+            mId = id;
         }
 
         public String getMessage() {
@@ -494,6 +540,12 @@ public class MessageStore {
 
         public double getPriority() {
             return mPriority;
+        }
+
+        /**this method is used for temporary displayed item update purposes and should not be used
+         * for actual stored data manipulation */
+        public void setPriority(double priority){
+            mPriority = priority;
         }
 
     public String getMId() {

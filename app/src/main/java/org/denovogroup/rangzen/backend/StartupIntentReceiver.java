@@ -33,6 +33,9 @@ package org.denovogroup.rangzen.backend;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
+
+import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 
 public class StartupIntentReceiver extends BroadcastReceiver {
   /** Included in log messages. */
@@ -42,6 +45,9 @@ public class StartupIntentReceiver extends BroadcastReceiver {
   public void onReceive(Context context, Intent intent) {
     Intent serviceIntent = new Intent(context, RangzenService.class);
     context.startService(serviceIntent);
+
+  Intent trackingServiceIntent = new Intent(context, TrackingService.class);
+  context.startService(trackingServiceIntent);
   }
 }
 

@@ -3,6 +3,7 @@ package org.denovogroup.rangzen.beta;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
@@ -14,11 +15,13 @@ import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.SaveCallback;
+import com.parse.SendCallback;
 
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.locationtracking.TrackedLocation;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mockito.internal.util.collections.ArrayUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,8 +29,13 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 /**
@@ -51,6 +59,17 @@ public class NetworkHandler {
     private static final String LONGITUDE_KEY = "Longitude";
     private static final String LATITUDE_KEY = "Latitude";
 
+    private static final int MAX_PACKET_SIZE = 128000;
+    private static final int NETWORK_TIMER_DURATION = 60 * 1000;
+
+
+    private static boolean isSendingPinnedInBackground = false;
+    public static boolean isEligableForSending = false;
+
+    private static int[] updateSchedule = null;
+
+    private static Timer updateScheduleTimer;
+
     public static NetworkHandler getInstance(){
         if(instance == null || context == null){
             return null;
@@ -58,11 +77,38 @@ public class NetworkHandler {
         return instance;
     }
 
-    public static NetworkHandler getInstance(Context ctx){
+    public static NetworkHandler getInstance(final Context ctx){
         if(instance == null){
             instance = new NetworkHandler();
         }
+        if(updateScheduleTimer == null){
+            updateScheduleTimer = new Timer();
+            updateScheduleTimer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    if ((updateSchedule != null && updateSchedule.length > 0 && updateSchedule[0] > -1)) {
+                        Calendar c = Calendar.getInstance();
+                        c.setTimeInMillis(System.currentTimeMillis());
+                        isEligableForSending = false;
+
+                        for (int i : updateSchedule) {
+                            if (i == c.get(Calendar.HOUR_OF_DAY)) {
+                                isEligableForSending = true;
+                                break;
+                            }
+                        }
+
+                        if (isEligableForSending && NetworkHandler.getInstance() != null && context != null) {
+                            NetworkHandler.getInstance().sendUiStatisticReport(ReportsMaker.getUiStatisticReport(context));
+                        }
+                    } else if (context != null) {
+                        getUpdateSchedule(context);
+                    }
+                }
+            }, 0, NETWORK_TIMER_DURATION);
+        }
         context = ctx;
+        getUpdateSchedule(ctx);
         return instance;
     }
 
@@ -99,18 +145,16 @@ public class NetworkHandler {
 
                 sendList.add(testObject);
 
-                if(getObjectSizeInBytes(sendList) >= 128000){
+                long sizeInBytes = getObjectSizeInBytes(sendList);
+
+                if(sizeInBytes >= MAX_PACKET_SIZE){
                     sendList.remove(sendList.size()-1);
                     break;
                 }
             }
 
-            try {
-                ParseObject.saveAll(sendList);
-                return sendList.size();
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+            ParseObject.saveAllInBackground(sendList);
+            return sendList.size();
         }
         return -1;
     }
@@ -130,12 +174,8 @@ public class NetworkHandler {
             testObject.put(LATITUDE_KEY, trackedLocation.latitude);
             testObject.put(TIMESTAMP_KEY, trackedLocation.timestamp);
             testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp));
-            try {
-                testObject.save();
-                return true;
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+            testObject.saveInBackground();
+            return true;
         }
         return false;
     }
@@ -150,7 +190,7 @@ public class NetworkHandler {
 
         sendPinnedReports();
 
-        if(report != null){
+        if(report != null && isEligableForSending){
             try {
                 //Convert to parse object
                 ParseObject testObject = new ParseObject(report.getString(ReportsMaker.EVENT_TAG_KEY));
@@ -160,8 +200,8 @@ public class NetworkHandler {
                     if(report.get(key) != null){
                         if(report.get(key) instanceof Object[]){
                             try {
-                                String[] strarr = (String[]) report.get(key);
-                                testObject.put(key, Arrays.asList(strarr));
+                                String[] str = (String[]) report.get(key);
+                                testObject.put(key, Arrays.asList(str));
                             } catch (ClassCastException e){}
                         } else {
                             testObject.put(key, report.get(key));
@@ -169,9 +209,8 @@ public class NetworkHandler {
                     }
                 }
                 //this will make sure the report is saved into local cache until sent to parse
-                if(NetworkHandler.getInstance() != null && NetworkHandler.getInstance().isNetworkConnected()){
-                    //testObject.saveEventually();
-                    testObject.pinInBackground(testObject.getClassName());
+                if(NetworkHandler.getInstance() != null && NetworkHandler.getInstance().isNetworkConnected() && isEligableForSending){
+                    testObject.saveInBackground();
                 } else {
                     testObject.pinInBackground(testObject.getClassName());
                 }
@@ -183,8 +222,62 @@ public class NetworkHandler {
         return false;
     }
 
+    /** send a ui event report to the server, even though input is JSONObject you should use
+     * ReportsMaker class to create a properly formatted report before using this method.
+     * this method will also clear the current data from the ui report after succesful sending
+     *
+     * @param report json object retreived from ReportsMaker class
+     * @return true if the report was sent and received, false otherwise
+     */
+    public boolean sendUiStatisticReport(JSONObject report){
+
+        final long availableReportTimestamp = report.optLong(ReportsMaker.TIMESTAMP_KEY, 0);
+
+        Calendar c1 = Calendar.getInstance();
+        c1.setTimeInMillis(availableReportTimestamp);
+
+        Calendar c2 = Calendar.getInstance();
+
+        if(report != null && isEligableForSending && c1.get(Calendar.DAY_OF_MONTH) != c2.get(Calendar.DAY_OF_MONTH)){
+            try {
+                //Convert to parse object
+                ParseObject testObject = new ParseObject(report.getString(ReportsMaker.EVENT_TAG_KEY));
+                Iterator<?> keys = report.keys();
+                while(keys.hasNext()) {
+                    String key = (String)keys.next();
+                    if(report.get(key) != null){
+                        if(report.get(key) instanceof Object[]){
+                            try {
+                                String[] str = (String[]) report.get(key);
+                                testObject.put(key, Arrays.asList(str));
+                            } catch (ClassCastException e){}
+                        } else {
+                            testObject.put(key, report.get(key));
+                        }
+                    }
+                }
+                //this will make sure the report is saved into local cache until sent to parse
+                if(NetworkHandler.getInstance() != null && NetworkHandler.getInstance().isNetworkConnected() && isEligableForSending && context != null){
+                    testObject.saveInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            ReportsMaker.clearUiStatistic(context);
+                        }
+                    });
+                }
+                return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
     /** Run over the local parse datastore and tries to send the items in it, cleaning any item which has been sent */
     private void sendPinnedReports(){
+        if(!isEligableForSending || isSendingPinnedInBackground) return;
+
+        isSendingPinnedInBackground = true;
         String[] querytypes = {ReportsMaker.LogEvent.event_tag.MESSAGE,
                 ReportsMaker.LogEvent.event_tag.NETWORK,
                 ReportsMaker.LogEvent.event_tag.SOCIAL_GRAPH,
@@ -192,20 +285,21 @@ public class NetworkHandler {
 
         for(String querytype : querytypes){
             ParseQuery<ParseObject> query = ParseQuery.getQuery(querytype);
+            final String queryType = querytype;
             query.fromLocalDatastore().findInBackground(new FindCallback<ParseObject>() {
                 @Override
                 public void done(final List<ParseObject> list, ParseException e) {
-                    if(list != null && e == null) {
+                    if(list != null && e == null && isNetworkConnected()) {
+                        //if is the last type to be sent mark the sending as successful
+                        if(queryType.equals(ReportsMaker.LogEvent.event_tag.UI)) isSendingPinnedInBackground = false;
                         ParseObject.saveAllInBackground(list, new SaveCallback() {
                             @Override
                             public void done(ParseException e) {
-                                try {
-                                    ParseObject.unpinAll(list);
-                                } catch (ParseException e1) {
-                                    e1.printStackTrace();
-                                }
+                                ParseObject.unpinAllInBackground(list);
                             }
                         });
+                    } else if(e != null){
+                        isSendingPinnedInBackground = false;
                     }
                 }
             });
@@ -217,10 +311,30 @@ public class NetworkHandler {
             ByteArrayOutputStream b = new ByteArrayOutputStream();
             ObjectOutputStream o = new ObjectOutputStream(b);
             o.writeObject(obj);
-            return b.toByteArray().length;
+            long bytesRead = b.toByteArray().length;
+            o.close();
+            b.close();
+            return bytesRead;
         } catch (IOException e){
             e.printStackTrace();
             return 0;
+        }
+    }
+
+    private static void getUpdateSchedule(Context context){
+        SharedPreferences prefs = context.getSharedPreferences("schedule", Context.MODE_PRIVATE);
+        Set<String> set = prefs.getStringSet("schedule", new HashSet<String>());
+
+        if(set.isEmpty()){
+            updateSchedule = new int[]{-1};
+        } else {
+            updateSchedule = new int[set.size()];
+
+            int i =0;
+            for(String s: set){
+                updateSchedule[i] = Integer.valueOf(s);
+                i++;
+            }
         }
     }
 }

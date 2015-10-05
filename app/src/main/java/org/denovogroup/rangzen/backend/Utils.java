@@ -4,9 +4,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.util.Log;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 /**
@@ -67,5 +70,39 @@ public class Utils {
     public static boolean isWifiEnabled(Context context) {
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         return (wifiManager != null && wifiManager.isWifiEnabled());
+    }
+
+    /** Check for hashtags in the supplied text and return an array
+     * with the hashtags available in the text
+     *
+     * @param text the string containing hashtags
+     * @return Hashtags found in the list (including the # sign)
+     */
+    public static List<String> getHashtags(String text){
+        List<String> hashtags = new ArrayList<>();
+
+        while(text.contains("#")){
+
+            String hashtag;
+            int hashtagStart = text.indexOf("#");
+            hashtag = text.substring(hashtagStart);
+            int hashtagEnd = hashtag.length();
+
+            charloop:
+            for(int i=0; i< hashtag.length(); i++){
+                char c = hashtag.charAt(i);
+                if((c == ' ') || (c == '\n')){
+                    hashtagEnd = i;
+                    break charloop;
+                }
+            }
+
+            if(hashtagEnd < hashtag.length()-1) {
+                hashtag = hashtag.substring(0, hashtagEnd);
+            }
+            hashtags.add(hashtag);
+            text = text.substring(hashtagStart + hashtag.length());
+        }
+        return hashtags;
     }
 }

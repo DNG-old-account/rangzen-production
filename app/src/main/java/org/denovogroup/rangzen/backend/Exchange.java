@@ -60,6 +60,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -298,7 +299,7 @@ public class Exchange implements Runnable {
       intersection.retainAll(theirFriends);
       commonFriends = intersection.size();
       Log.i(TAG, "Received " + theirFriends.size() + " friends. Overlap with my " +
-          myFriends.size() + " friends is " + commonFriends);
+              myFriends.size() + " friends is " + commonFriends);
     } else if (mFriendsReceived == null) {
       Log.e(TAG, "Friends received is null: " + mFriendsReceived);
       setExchangeStatus(Status.ERROR);
@@ -327,13 +328,13 @@ public class Exchange implements Runnable {
       if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
 
       //Define the get single message task
-      class ReceiveSingleMessage implements Callable<String> {
+      class ReceiveSingleMessage implements Callable<List<RangzenMessage>> {
 
           @Override
-          public String call() throws Exception {
-              CleartextMessages mCurrentReceived = lengthValueRead(in, CleartextMessages.class);
-              mMessagesReceived.addAll(mCurrentReceived.messages);
-              return null;
+          public List<RangzenMessage> call() throws Exception {
+              CleartextMessages mCurrentReceived;
+              mCurrentReceived = lengthValueRead(in, CleartextMessages.class);
+              return mCurrentReceived.messages;
           }
       }
 
@@ -343,9 +344,10 @@ public class Exchange implements Runnable {
       //read from the stream until either times out or get all the messages
       ExecutorService executor = Executors.newSingleThreadExecutor();
       while(mMessagesReceived.size() < messageCount) {
+          Future<List<RangzenMessage>> task = executor.submit(new ReceiveSingleMessage());
           try {
-              watch.start();
-              executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
+              watch.start();              List<RangzenMessage> res = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
+              mMessagesReceived.addAll(res);
               watch.stop();
               JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()),""+watch.getElapsedTime());
               if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
@@ -354,6 +356,7 @@ public class Exchange implements Runnable {
               JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()),""+watch.getElapsedTime());
               if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
               e.printStackTrace();
+              task.cancel(true);
               break;
           }
       }

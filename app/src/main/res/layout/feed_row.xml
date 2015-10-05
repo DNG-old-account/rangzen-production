@@ -14,7 +14,7 @@
 
     <LinearLayout
         android:id="@+id/message_holder"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_toLeftOf="@id/unread_indicator"
         android:layout_weight="1"
         android:layout_height="wrap_content"
@@ -34,10 +34,10 @@
 
         <LinearLayout
             android:id="@+id/hashtagHolder"
-            android:layout_width="wrap_content"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingEnd="20dp"
             android:paddingStart="15dp" >
 
             <TextView
@@ -45,11 +45,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
-                android:maxWidth="320dp"
-                android:minWidth="250dp"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:textColor="@android:color/black" />
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/expand"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:paddingStart="13dp"
+            android:src="@drawable/ic_expand"
+            android:alpha="0.2"/>
+
     </LinearLayout>
 
 </RelativeLayout>

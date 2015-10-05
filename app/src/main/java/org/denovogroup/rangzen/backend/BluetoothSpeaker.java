@@ -42,6 +42,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.ui.Opener;
 
 import java.io.IOException;
@@ -285,12 +286,14 @@ public class BluetoothSpeaker {
     mSocket = mServerSocket.accept();
     Log.i(TAG, "Accepted socket from " + mSocket.getRemoteDevice());
     Log.i(TAG, "Accepted socket connected? " + mSocket.isConnected());
+
+      String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(), System.currentTimeMillis(), 0, 0, 0, null));
     mExchange = new CryptographicExchange(mSocket.getInputStream(),
                              mSocket.getOutputStream(),
                              false,
                              new FriendStore(mContext, StorageBase.ENCRYPTION_DEFAULT),
                              new MessageStore(mContext, StorageBase.ENCRYPTION_DEFAULT),
-                             mContext.mExchangeCallback, "", ""+UUID.nameUUIDFromBytes(mSocket.getRemoteDevice().getAddress().getBytes()));
+                             mContext.mExchangeCallback, reportid, ""+UUID.nameUUIDFromBytes(mSocket.getRemoteDevice().getAddress().getBytes()));
     //mExchange.execute((Boolean) null);
     // Start the exchange.
     (new Thread(mExchange)).start();
