@@ -284,9 +284,7 @@ public class MessageStore {
     public boolean contains(String msg) {
         // A value less than all priorities in the store.
         final double MIN_PRIORITY = -1.0f;
-
         String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
-
         return !(store.getDouble(msgPriorityKey, NOT_FOUND) < MIN_PRIORITY);
     }
 
@@ -431,7 +429,9 @@ public class MessageStore {
             for (String m : msgs) {
                 if(m.toLowerCase().contains(query.toLowerCase())) {
                     double priority = getMessagePriority(m, -1);
-                    if(priority >= MIN_PRIORITY_VALUE) result.add(new Message(priority, m));
+                    if(priority >= MIN_PRIORITY_VALUE){
+                        result.add(new Message(priority, m));
+                    }
                 }
             }
         }
