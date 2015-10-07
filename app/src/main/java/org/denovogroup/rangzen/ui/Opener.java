@@ -576,6 +576,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                onQueryTextSubmit(newText);
                 return false;
             }
         });

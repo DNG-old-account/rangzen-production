@@ -38,12 +38,16 @@ import android.bluetooth.BluetoothAdapter;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -336,18 +340,21 @@ public class FragmentOrganizer extends Fragment {
                         StorageBase.ENCRYPTION_DEFAULT);
                 float priority = 1.0f;
                 String message = ((TextView) getActivity().findViewById(R.id.editText1)).getText().toString();
-				String mId = UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes())+"_"+System.currentTimeMillis();
-                messageStore.addMessage(message, priority, mId);
+                String mId = UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes()) + "_" + System.currentTimeMillis();
+                boolean alreadyExists = !messageStore.addMessage(message, priority, mId);
+                if (alreadyExists) {
+                    messageStore.updatePriority(message, priority, mId);
+                }
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
-				//BETA
-				JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(),mId,priority,message);
-				if(NetworkHandler.getInstance() != null){
-					NetworkHandler.getInstance().sendEventReport(report);
-				}
+                //BETA
+                JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(), mId, priority, message);
+                if (NetworkHandler.getInstance() != null) {
+                    NetworkHandler.getInstance().sendEventReport(report);
+                }
 
-                ReportsMaker.updateUiStatistic(getActivity(),System.currentTimeMillis(),0, Utils.getHashtags(message).size(),0,0,0,0,0);
-				//BETA END
+                ReportsMaker.updateUiStatistic(getActivity(), System.currentTimeMillis(),0, Utils.getHashtags(message).size(), 0, 0, 0, 0, 0);
+                //BETA END
 
                 getActivity().setResult(Activity.RESULT_OK);
                 getActivity().finish();
@@ -371,7 +378,7 @@ public class FragmentOrganizer extends Fragment {
                 characterCount.setText(String.valueOf(140 - textBox.getText()
                         .length()));
 
-                if(isTextValid(s.toString())){
+                if (isTextValid(s.toString())) {
                     send.setEnabled(true);
                     send.setAlpha(1);
                 } else {
@@ -505,7 +512,7 @@ public class FragmentOrganizer extends Fragment {
 		tv.setTextSize(55);
 		mCurrentRelativeLayout.addView(tv);
 		RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
-				RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
 				RelativeLayout.LayoutParams.WRAP_CONTENT);
 		layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
 		layoutParams.setMargins(0, (int) getPixels(marginFromTop), 0, 0); // (L,
@@ -533,97 +540,25 @@ public class FragmentOrganizer extends Fragment {
 
     /**Open a dialog to send a bug report to dedicated server*/
     public void reportBug() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(R.string.report_bug);
-
-        final EditText input = new EditText(getActivity());
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        input.setHint(R.string.report_bug_hint);
-        input.setMinEms(2);
-        builder.setView(input);
-        builder.setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if(!input.getText().toString().isEmpty()) {
-                    sendMail(input.getText().toString());
-                    input.clearFocus();
-                }
-                dialog.dismiss();
-            }
-        });
-        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
-        builder.show();
-        input.requestFocus();
-        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+        openEmailSendingForm();
     }
 
-    private void sendMail(String messageBody) {
-        Session session = createSessionObject();
+    private void openEmailSendingForm(){
+        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "rangzen_dev@denovogroup.org", null));
+        String userData = "";
 
         try {
-            Message message = createMessage(messageBody, session);
-            new SendMailTask().execute(message);
-        } catch (AddressException e) {
-            e.printStackTrace();
-        } catch (MessagingException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private Session createSessionObject() {
-        Properties properties = new Properties();
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.starttls.enable", "true");
-        properties.put("mail.smtp.host", "smtp.gmail.com");
-        properties.put("mail.smtp.port", "587");
-
-        return Session.getInstance(properties, new javax.mail.Authenticator() {
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication("username", "password");
-            }
-        });
-    }
-
-    private Message createMessage(String messageBody, Session session) throws MessagingException, UnsupportedEncodingException {
-        Message message = new MimeMessage(session);
-        message.setFrom(new InternetAddress("rangzen_user@denovogroup.com", "Rangzen User"));
-        String recipient = "support@denovogroup.com";
-        message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient, recipient));
-        message.setSubject("Bug report by user");
-        message.setText(messageBody);
-        return message;
-    }
-
-    private class SendMailTask extends AsyncTask<Message, Void, Void> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            Toast.makeText(getActivity(),R.string.sending_bug_report, Toast.LENGTH_SHORT).show();
+            PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+            userData += "Application: Ranzgen v"+info.versionName+" ("+info.versionCode+")\n";
+        } catch(PackageManager.NameNotFoundException e) {
         }
 
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-        }
+        userData += "OS version: "+android.os.Build.VERSION.SDK_INT+"\n";
+        userData += "Device: "+android.os.Build.DEVICE+"\n";
+        userData += "Model: "+android.os.Build.MODEL + " ("+ android.os.Build.PRODUCT + ")\n";
 
-        @Override
-        protected Void doInBackground(Message... messages) {
-            try {
-                Transport.send(messages[0]);
-            } catch (MessagingException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback:");
+        intent.putExtra(Intent.EXTRA_TEXT, userData);
+        startActivity(Intent.createChooser(intent, "Send mail using..."));
     }
 }

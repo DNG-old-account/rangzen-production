@@ -33,6 +33,7 @@ package org.denovogroup.rangzen.backend;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Base64;
+import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -41,6 +42,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.StreamCorruptedException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -163,7 +165,7 @@ public class StorageBase {
      * Remove the data associated with the given key from the
      * Rangzen generic store.
      *
-     * @param key   The key under which to store the data.
+     * @param key   The key under which the data is stored.
      */
     public void removeData(String key) {
         // TODO(barath): Change this storage approach once we are encrypting.
@@ -254,7 +256,14 @@ public class StorageBase {
      */
     public Set<String> getSet(String key) {
         // TODO(barath): Change this retrieval approach once we are encrypting.
-        return store.getStringSet(key, null);
+        Set<String> stringSet = store.getStringSet(key, null);
+        /* This is required in order to return an editable version of the set (it is forbidden
+           to edit the set returned from the shared preferences directly) */
+        if(stringSet != null) {
+            Set<String> cloneSet = new HashSet<String>(stringSet);
+            return cloneSet;
+        }
+        return null;
     }
 
     /**
