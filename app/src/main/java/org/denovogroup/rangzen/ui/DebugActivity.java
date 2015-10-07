@@ -3,10 +3,13 @@ package org.denovogroup.rangzen.ui;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
@@ -14,6 +17,7 @@ import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.Peer;
 import org.denovogroup.rangzen.backend.PeerManager;
 import org.denovogroup.rangzen.backend.StorageBase;
+import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 
 import java.util.List;
@@ -28,6 +32,9 @@ import java.util.TimerTask;
  */
 public class DebugActivity extends ActionBarActivity {
 
+    public static final String PREF_FILE = "debug_prefs";
+    public static final String IS_UNRESTRICTED_KEY = "IsUnrestricted";
+
     private static final int ID_LENGTH = 8;
 
     private TextView appVersionTv;
@@ -35,6 +42,7 @@ public class DebugActivity extends ActionBarActivity {
     private TextView myFriendsTv;
     private TextView connectionsTv;
     private Timer connectionsTimer;
+    private CheckBox unrestrictedNetwork;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +56,23 @@ public class DebugActivity extends ActionBarActivity {
         myIdTv = (TextView) findViewById(R.id.user_id);
         myFriendsTv = (TextView) findViewById(R.id.friends_id);
         connectionsTv = (TextView) findViewById(R.id.connections);
+        unrestrictedNetwork = (CheckBox) findViewById(R.id.unrestrictedNetwork);
+
+        boolean isUnrestricted  = getSharedPreferences(PREF_FILE, MODE_PRIVATE).getBoolean(IS_UNRESTRICTED_KEY, false);
+        unrestrictedNetwork.setChecked(isUnrestricted);
+
+        unrestrictedNetwork.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                SharedPreferences prefs = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean(IS_UNRESTRICTED_KEY, isChecked);
+                editor.commit();
+
+                NetworkHandler.getInstance(DebugActivity.this);
+            }
+        });
+
 
         String version = "0.0";
         try {
