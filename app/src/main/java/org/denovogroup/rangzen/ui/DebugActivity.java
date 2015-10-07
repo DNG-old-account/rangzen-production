@@ -1,6 +1,7 @@
 package org.denovogroup.rangzen.ui;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,6 +21,7 @@ import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Timer;
@@ -34,14 +36,17 @@ public class DebugActivity extends ActionBarActivity {
 
     public static final String PREF_FILE = "debug_prefs";
     public static final String IS_UNRESTRICTED_KEY = "IsUnrestricted";
+    public static final String TRACK_LOCATION_KEY = "TrackLocation";
 
     private static final int ID_LENGTH = 8;
 
     private TextView appVersionTv;
     private TextView myIdTv;
     private TextView myFriendsTv;
+    private TextView updateHoursTv;
     private TextView connectionsTv;
     private Timer connectionsTimer;
+    private CheckBox trackLocation;
     private CheckBox unrestrictedNetwork;
 
     @Override
@@ -56,11 +61,34 @@ public class DebugActivity extends ActionBarActivity {
         myIdTv = (TextView) findViewById(R.id.user_id);
         myFriendsTv = (TextView) findViewById(R.id.friends_id);
         connectionsTv = (TextView) findViewById(R.id.connections);
+        updateHoursTv = (TextView) findViewById(R.id.hours);
+        trackLocation = (CheckBox) findViewById(R.id.trackLocation);
         unrestrictedNetwork = (CheckBox) findViewById(R.id.unrestrictedNetwork);
+
+        boolean isTracking = getSharedPreferences(PREF_FILE, MODE_PRIVATE).getBoolean(TRACK_LOCATION_KEY, true);
+        trackLocation.setChecked(isTracking);
+        trackLocation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                SharedPreferences prefs = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean(TRACK_LOCATION_KEY, isChecked);
+                editor.commit();
+
+                if(isChecked){
+                    //start tracking service
+                    Intent trackingServiceIntent = new Intent(DebugActivity.this, TrackingService.class);
+                    DebugActivity.this.startService(trackingServiceIntent);
+                } else {
+                    //turn off tracking service if running
+                    Intent trackingServiceIntent = new Intent(DebugActivity.this, TrackingService.class);
+                    DebugActivity.this.stopService(trackingServiceIntent);
+                }
+            }
+        });
 
         boolean isUnrestricted  = getSharedPreferences(PREF_FILE, MODE_PRIVATE).getBoolean(IS_UNRESTRICTED_KEY, false);
         unrestrictedNetwork.setChecked(isUnrestricted);
-
         unrestrictedNetwork.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -76,7 +104,7 @@ public class DebugActivity extends ActionBarActivity {
 
         String version = "0.0";
         try {
-            version = getPackageManager().getPackageInfo(getPackageName(),0).versionName;
+            version = getPackageManager().getPackageInfo(getPackageName(),0).versionName +" ("+getPackageManager().getPackageInfo(getPackageName(),0).versionCode+")";
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -94,29 +122,7 @@ public class DebugActivity extends ActionBarActivity {
         }
 
         connectionsTv.setText(connections);
-    }
-
-    public void showServiceDialog(View view) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("During the beta Rangzen will need to monitor your location at all time, please keep the tracking service running until the end of the beta")
-                .setTitle("Disclaimer");
-        builder.setCancelable(false);
-        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                //start tracking service
-                Intent trackingServiceIntent = new Intent(DebugActivity.this, TrackingService.class);
-                DebugActivity.this.startService(trackingServiceIntent);
-            }
-        });
-        builder.setNegativeButton("Dont track", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                //turn off tracking service if running
-                Intent trackingServiceIntent = new Intent(DebugActivity.this, TrackingService.class);
-                DebugActivity.this.stopService(trackingServiceIntent);
-            }
-        });
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        updateHoursTv.setText(""+getUpdateHours());
     }
 
     public String getMyId() {
@@ -130,8 +136,13 @@ public class DebugActivity extends ActionBarActivity {
         String friends = "";
         FriendStore store = new FriendStore(this, StorageBase.ENCRYPTION_DEFAULT);
         Set<String> friendsSet = store.getAllFriends();
-        for(String str : friendsSet){
-            friends += str.substring(str.length()-1-ID_LENGTH)+"\n";
+
+        if(friendsSet.isEmpty()) {
+            friends = "You dont have any friends yet :(";
+        } else {
+            for (String str : friendsSet) {
+                friends += str.substring(str.length() - 1 - ID_LENGTH) + "\n";
+            }
         }
 
         return friends;
@@ -147,7 +158,9 @@ public class DebugActivity extends ActionBarActivity {
                 List<Peer> peers = PeerManager.getInstance(DebugActivity.this).getPeers();
                 String connections = "";
 
-                if(peers != null){
+                if(peers == null || peers.isEmpty()) {
+                    connections = "No connected peers yet";
+                } else {
                     for(Peer peer : peers){
                         connections += peer.toString()+"\n";
                     }
@@ -157,10 +170,28 @@ public class DebugActivity extends ActionBarActivity {
                     @Override
                     public void run() {
                         connectionsTv.setText(finalConnections);
+                        updateHoursTv.setText(""+getUpdateHours());
                     }
                 });
             }
         }, 1000,1000);
+    }
+
+    public String getUpdateHours() {
+        String updateSchedule;
+        SharedPreferences prefs = this.getSharedPreferences("schedule", Context.MODE_PRIVATE);
+        Set<String> set = prefs.getStringSet("schedule", new HashSet<String>());
+
+        if(set.isEmpty()){
+            updateSchedule = "Never";
+        } else {
+            updateSchedule = "";
+            for(String s: set){
+                updateSchedule += s+",";
+            }
+        }
+
+        return updateSchedule;
     }
 
     @Override

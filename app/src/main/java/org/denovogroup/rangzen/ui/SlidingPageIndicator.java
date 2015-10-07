@@ -120,8 +120,11 @@ public class SlidingPageIndicator extends FragmentActivity {
         Intent serviceIntent = new Intent(this, RangzenService.class);
         startService(serviceIntent);
         // Start the TrackingService
-        Intent trackingServiceIntent = new Intent(this, TrackingService.class);
-        startService(trackingServiceIntent);
+        SharedPreferences pref = getSharedPreferences(DebugActivity.PREF_FILE, MODE_PRIVATE);
+        if(pref.getBoolean(DebugActivity.TRACK_LOCATION_KEY, true)) {
+            Intent trackingServiceIntent = new Intent(this, TrackingService.class);
+            startService(trackingServiceIntent);
+        }
 
         SharedPreferences settings = getSharedPreferences(
                 SlidingPageIndicator.PREFS_NAME, 0);

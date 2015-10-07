@@ -66,7 +66,7 @@
     <string name="turn_on">Turn on</string>
     <string name="dialog_no_wifi_title">WiFi is off</string>
     <string name="dialog_no_wifi_message">It seems like WiFi direct is disabled, Rangzen cannot run properly without enabling WiFi.</string>
-    <string name="report_bug">Report a bug</string>
+    <string name="report_bug">Feedback</string>
     <string name="report_bug_hint">Describe the error you\'ve encountered</string>
     <string name="send">Send</string>
     <string name="sending_bug_report">Sending bug report</string>
