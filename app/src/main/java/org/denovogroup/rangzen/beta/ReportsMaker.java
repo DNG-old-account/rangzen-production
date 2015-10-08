@@ -323,7 +323,7 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getConnectedDeviceReport(long start, long finish, int exchangedCount, int successful, int failed, String errors){
+    public static JSONObject getConnectedDeviceReport(long start, long finish, int successful, int failed, String errors){
         try {
             String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
@@ -332,7 +332,7 @@ public class ReportsMaker {
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Network.CONNECTED_DEVICE);
             testObject.put(EVENT_CONNECTION_START_KEY, start);
             testObject.put(EVENT_CONNECTION_FINISH_KEY, finish);
-            testObject.put(EVENT_EXCHANGED_KEY, exchangedCount);
+            testObject.put(EVENT_EXCHANGED_KEY, successful+failed);
             testObject.put(EVENT_SUCCESSFUL_KEY, successful);
             testObject.put(EVENT_FAILED_KEY, failed);
             testObject.put(EVENT_ERRORS_KEY, (errors!= null) ? errors : "");

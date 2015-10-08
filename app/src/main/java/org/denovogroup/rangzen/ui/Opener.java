@@ -532,6 +532,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         searchView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
+                ReportsMaker.updateUiStatistic(Opener.this, System.currentTimeMillis(), 1, 0, 0, 0, 0, 0, 0);
             }
 
             @Override
@@ -549,9 +550,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
                     @Override
                     protected List<MessageStore.Message> doInBackground(String... params) {
-                        if(!params[0].isEmpty()) {
-                            ReportsMaker.updateUiStatistic(Opener.this, System.currentTimeMillis(), 1, 0, 0, 0, 0, 0, 0);
-                        }
                         MessageStore store = new MessageStore(Opener.this, StorageBase.ENCRYPTION_DEFAULT);
                         return store.getMessagesContaining(params[0]);
                     }

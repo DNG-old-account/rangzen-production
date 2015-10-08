@@ -137,12 +137,26 @@ public class FeedFragment extends Fragment implements Refreshable{
                 boolean updateViewDelayed = false;
                 switch (swipeMenu.getMenuItem(index).getId()) {
                     case upvoteItemId:
+                        //BETA
+                        double oldLowPriority = message.getPriority();
+
                         store.updatePriority(message.getMessage(), getNextPriority(true,message,position), message.getMId());
                         updateViewDelayed = true;
+                        //BETA
+                        JSONObject report = ReportsMaker.getMessagePriorityChangedByUserReport(System.currentTimeMillis(), message.getMId(), oldLowPriority, message.getPriority(), message.getMessage());
+                        NetworkHandler.getInstance(getActivity()).sendEventReport(report);
+                        //BETA END
                         break;
                     case downvoteItemId:
-                        store.updatePriority(message.getMessage(), getNextPriority(false,message,position), message.getMId());
+                        //BETA
+                        double oldHighPriority = message.getPriority();
+
+                        store.updatePriority(message.getMessage(), getNextPriority(false, message, position), message.getMId());
                         updateViewDelayed = true;
+                        //BETA
+                        JSONObject report2 = ReportsMaker.getMessagePriorityChangedByUserReport(System.currentTimeMillis(), message.getMId(), oldHighPriority, message.getPriority(), message.getMessage());
+                        NetworkHandler.getInstance(getActivity()).sendEventReport(report2);
+                        //BETA END
                         break;
                     case deleteItemId:
                         //BETA

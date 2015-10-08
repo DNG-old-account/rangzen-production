@@ -353,7 +353,7 @@ public class FragmentOrganizer extends Fragment {
                     NetworkHandler.getInstance().sendEventReport(report);
                 }
 
-                ReportsMaker.updateUiStatistic(getActivity(), System.currentTimeMillis(),0, Utils.getHashtags(message).size(), 0, 0, 0, 0, 0);
+                ReportsMaker.updateUiStatistic(getActivity(), System.currentTimeMillis(),0, Utils.getHashtags(message).size(), 0, 0, 1, 0, 0);
                 //BETA END
 
                 getActivity().setResult(Activity.RESULT_OK);

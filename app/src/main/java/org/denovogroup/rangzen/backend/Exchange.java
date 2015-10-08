@@ -276,10 +276,6 @@ public class Exchange implements Runnable {
               JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, messageFromStore.getMId(), messageFromStore.getPriority(), Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), "" + watch.getElapsedTime());
               if (NetworkHandler.getInstance() != null)
                   NetworkHandler.getInstance().sendEventReport(report);
-              if (!messageFromStore.isMine())
-                  report = ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), messageFromStore.getMId(), messageFromStore.getPriority(), messageFromStore.getMessage());
-              if (NetworkHandler.getInstance() != null)
-                  NetworkHandler.getInstance().sendEventReport(report);
               //BETA END
           }
       }

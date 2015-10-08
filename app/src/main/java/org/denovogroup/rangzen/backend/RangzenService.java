@@ -51,6 +51,7 @@ import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.denovogroup.rangzen.ui.RangzenApplication;
 import org.denovogroup.rangzen.ui.Opener;
@@ -329,7 +330,7 @@ public class RangzenService extends Service {
       // The peer connection callback (defined elsewhere in the class) takes
       // the connect bluetooth socket and uses it to create a new Exchange.
         //BETA
-        String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(),System.currentTimeMillis(),0,0,0,null));
+        String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(),System.currentTimeMillis(),0,0,null));
       mBluetoothSpeaker.connect(peer, mPeerConnectionCallback, reportid);
     }
 
@@ -453,6 +454,7 @@ public class RangzenService extends Service {
                 mMessageStore.addMessage(message.text, newPriority, message.mId);
                 //mark this message as unread
                 ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
+                ReportsMaker.updateUiStatistic(getApplicationContext(), System.currentTimeMillis(), 0, Utils.getHashtags(message.text).size(), 0, 0, 0, 0, 0);
             }
           } catch (IllegalArgumentException e) {
               //BETA
@@ -531,7 +533,9 @@ public class RangzenService extends Service {
                             mMessageStore.addMessage(message.text, newPriority, message.mId);
                             //mark this message as unread
                             ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
+                            ReportsMaker.updateUiStatistic(getApplicationContext(), System.currentTimeMillis(), 0, Utils.getHashtags(message.text).size(), 0, 0, 0, 0, 0);
                         }
+
                     } catch (IllegalArgumentException e) {
 
                         //BETA
@@ -553,6 +557,9 @@ public class RangzenService extends Service {
             Map<String, Object> reportsValues = new HashMap<String, Object>();
             reportsValues.put(ReportsMaker.EVENT_EXCHANGED_KEY, newMessages.size());
             reportsValues.put(ReportsMaker.EVENT_CONNECTION_FINISH_KEY, System.currentTimeMillis());
+            try {
+                reportsValues.put(ReportsMaker.EVENT_ERRORS_KEY, "Exchange timed out but was able to recover. "+ReportsMaker.getBacklogedReport(reportId).get(ReportsMaker.EVENT_ERRORS_KEY));
+            } catch (JSONException e){}
             ReportsMaker.editReport(reportId, reportsValues);
             //BETA END
 
