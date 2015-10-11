@@ -46,7 +46,7 @@ public class CustomParsePushReceiver extends ParsePushBroadcastReceiver {
             if(receivedMessages != null){
                 MessageStore store = new MessageStore(context, StorageBase.ENCRYPTION_DEFAULT);
                 for(RangzenMessage receivedMessage : receivedMessages) {
-                    store.addMessage(receivedMessage.text, receivedMessage.priority, receivedMessage.mId);
+                    store.addMessage(receivedMessage.text, receivedMessage.priority, true, receivedMessage.mId);
                 }
             }
         } catch (JSONException e) {

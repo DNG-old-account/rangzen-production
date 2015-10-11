@@ -443,15 +443,17 @@ public class RangzenService extends Service {
           double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
           try {
             if (mMessageStore.contains(message.text)) {
-                //BETA
+				//update existing message priority unless its marked as removed by user
+                if(stored != MessageStore.REMOVED){                //BETA
                 double oldPriority = message.priority;
                 JSONObject report = ReportsMaker.getMessagePriorityChangedBySystemReport(System.currentTimeMillis(),message.mId, oldPriority,newPriority,message.text);
                 NetworkHandler.getInstance(getApplicationContext()).sendEventReport(report);
                 //BETA END
-                mMessageStore.updatePriority(message.text, newPriority, message.mId);
+                mMessageStore.updatePriority(message.text, newPriority, true,message.mId);
+				}
             } else {
                 hasNew = true;
-                mMessageStore.addMessage(message.text, newPriority, message.mId);
+                mMessageStore.addMessage(message.text, newPriority, true, message.mId);
                 //mark this message as unread
                 ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
                 ReportsMaker.updateUiStatistic(getApplicationContext(), System.currentTimeMillis(), 0, Utils.getHashtags(message.text).size(), 0, 0, 0, 0, 0);
@@ -522,15 +524,18 @@ public class RangzenService extends Service {
                     double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
                     try {
                         if (mMessageStore.contains(message.text)) {
-                            //BETA
+
+							//update existing message priority unless its marked as removed by user
+                            if(stored != MessageStore.REMOVED){                            //BETA
                             double oldPriority = message.priority;
                             JSONObject report = ReportsMaker.getMessagePriorityChangedBySystemReport(System.currentTimeMillis(),message.mId, oldPriority,newPriority,message.text);
                             NetworkHandler.getInstance(getApplicationContext()).sendEventReport(report);
                             //BETA END
-                            mMessageStore.updatePriority(message.text, newPriority, message.mId);
+                            mMessageStore.updatePriority(message.text, newPriority, true, message.mId);
+							}
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(message.text, newPriority, message.mId);
+                            mMessageStore.addMessage(message.text, newPriority, true, message.mId);
                             //mark this message as unread
                             ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
                             ReportsMaker.updateUiStatistic(getApplicationContext(), System.currentTimeMillis(), 0, Utils.getHashtags(message.text).size(), 0, 0, 0, 0, 0);

@@ -35,7 +35,6 @@ import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.json.JSONObject;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 
-import java.util.Collections;
 import java.util.List;
 
 public class FeedFragment extends Fragment implements Refreshable{
@@ -91,24 +90,24 @@ public class FeedFragment extends Fragment implements Refreshable{
             public void create(SwipeMenu menu) {
                 SwipeMenuItem upvoteItem = new SwipeMenuItem(getActivity());
                 upvoteItem.setId(upvoteItemId);
-                upvoteItem.setBackground(new ColorDrawable(Color.parseColor("#b7b7b7")));
+                upvoteItem.setBackground(new ColorDrawable(getResources().getColor(R.color.purple)));
                 upvoteItem.setWidth(Utils.dpToPx(80, getActivity()));
                 upvoteItem.setIcon(R.drawable.ic_thumb_up);
                 upvoteItem.getIcon().setAlpha(65);
                 upvoteItem.setTitle(R.string.Upvote);
                 upvoteItem.setTitleSize(14);
-                upvoteItem.setTitleColor(Color.GRAY);
+                upvoteItem.setTitleColor(Color.parseColor("#96FFFFFF"));
                 menu.addMenuItem(upvoteItem);
 
                 SwipeMenuItem downvoteItem = new SwipeMenuItem(getActivity());
                 downvoteItem.setId(downvoteItemId);
-                downvoteItem.setBackground(new ColorDrawable(Color.parseColor("#b7b7b7")));
+                downvoteItem.setBackground(new ColorDrawable(getResources().getColor(R.color.purple)));
                 downvoteItem.setWidth(Utils.dpToPx(80, getActivity()));
                 downvoteItem.setIcon(R.drawable.ic_thumb_down);
                 downvoteItem.getIcon().setAlpha(60);
                 downvoteItem.setTitle(R.string.Downvote);
                 downvoteItem.setTitleSize(14);
-                downvoteItem.setTitleColor(Color.GRAY);
+                downvoteItem.setTitleColor(Color.parseColor("#96FFFFFF"));
                 menu.addMenuItem(downvoteItem);
 
                 SwipeMenuItem deleteItem = new SwipeMenuItem(getActivity());
@@ -137,10 +136,24 @@ public class FeedFragment extends Fragment implements Refreshable{
                 boolean updateViewDelayed = false;
                 switch (swipeMenu.getMenuItem(index).getId()) {
                     case upvoteItemId:
-                        //BETA
+						//BETA
                         double oldLowPriority = message.getPriority();
+                        /*TODO implement the following
+                        double nextUpPriority;
+                        if(mFeedListAdaper.getItems() != null) {
+                            nextUpPriority = (position > 0 && mFeedListAdaper.getItems().get(position - 1).getPriority() == message.getPriority()) ? message.getPriority() : getNextPriority(true, message, position);
+                        } else {
+                            nextUpPriority = (position > 0 && store.getKthMessage(position - 1).getPriority() == message.getPriority()) ? message.getPriority() : getNextPriority(true, message, position);
+                        }
 
-                        store.updatePriority(message.getMessage(), getNextPriority(true,message,position), message.getMId());
+                        if(nextUpPriority == message.getPriority()){
+                            //change order within same priority group
+                            store.updatePositionInBin(message.getMessage(), true);
+                        } else {
+                            //change priority
+                            store.updatePriority(message.getMessage(), nextUpPriority);
+                        }*/
+                        store.updatePriority(message.getMessage(), getNextPriority(true, message, position), true, message.getMId());
                         updateViewDelayed = true;
                         //BETA
                         JSONObject report = ReportsMaker.getMessagePriorityChangedByUserReport(System.currentTimeMillis(), message.getMId(), oldLowPriority, message.getPriority(), message.getMessage());
@@ -148,10 +161,24 @@ public class FeedFragment extends Fragment implements Refreshable{
                         //BETA END
                         break;
                     case downvoteItemId:
-                        //BETA
+						//BETA
                         double oldHighPriority = message.getPriority();
+                        /*TODO implement the following
+                        double nextDownPriority;
+                        if(mFeedListAdaper.getItems() != null) {
+                            nextDownPriority = (position < mFeedListAdaper.getCount() - 2 && mFeedListAdaper.getItems().get(position + 1).getPriority() == message.getPriority()) ? message.getPriority() : getNextPriority(false, message, position);
+                        } else {
+                            nextDownPriority = (position < store.getMessageCount() - 2 && store.getKthMessage(position + 1).getPriority() == message.getPriority()) ? message.getPriority() : getNextPriority(false, message, position);
+                        }
 
-                        store.updatePriority(message.getMessage(), getNextPriority(false, message, position), message.getMId());
+                        if(nextDownPriority == message.getPriority()){
+                            //change order within same priority group
+                            store.updatePositionInBin(message.getMessage(), true);
+                        } else {
+                            //change priority
+                            store.updatePriority(message.getMessage(), nextDownPriority);
+                        }*/
+                        store.updatePriority(message.getMessage(), getNextPriority(false, message, position), true, message.getMId());
                         updateViewDelayed = true;
                         //BETA
                         JSONObject report2 = ReportsMaker.getMessagePriorityChangedByUserReport(System.currentTimeMillis(), message.getMId(), oldHighPriority, message.getPriority(), message.getMessage());
@@ -165,7 +192,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                         //BETA END
 
                         //delete data from storage
-                        store.deleteMessage(message.getMessage());
+                        store.removeMessage(message.getMessage(), message.getMId());
 
                         /*If data is currently being presenting as filtered search results, update
                           the currently displayed to retain consistent look */
@@ -182,7 +209,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                         NetworkHandler.getInstance().sendEventReport(report4);
                         //BETA
 
-                        store.updatePriority(message.getMessage(), 1d, message.getMId());
+                        store.updatePriority(message.getMessage(), 1d, true, message.getMId());
                         updateViewDelayed = true;
                         break;
                 }
@@ -264,7 +291,7 @@ public class FeedFragment extends Fragment implements Refreshable{
 
     /** Calculate the next available priority in the currently displayed list
      *
-     * @param up a booean value reprenting if the priority should go up or down
+     * @param up a booean value representing if the priority should go up or down
      * @param message the message to have its priority checked
      * @param position the position of the message item in the dataset
      * @return

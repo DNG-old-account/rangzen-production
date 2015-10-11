@@ -83,7 +83,7 @@ public class RangzenApplication extends Application{
                         if (receivedMessages != null) {
                             MessageStore mStore = new MessageStore(getApplicationContext(), StorageBase.ENCRYPTION_DEFAULT);
                             for (RangzenMessage receivedMessage : receivedMessages) {
-                                mStore.addMessage(receivedMessage.text, receivedMessage.priority, receivedMessage.mId);
+                                mStore.addMessage(receivedMessage.text, receivedMessage.priority, true, receivedMessage.mId);
                             }
                         }
 
