@@ -32,6 +32,7 @@
 package org.denovogroup.rangzen.ui;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 import org.denovogroup.rangzen.backend.ReadStateTracker;
@@ -117,10 +118,14 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         SearchView searchView = (SearchView) searchItem.getActionView();
         setSearhView(searchView);
 
+        //create an instance of NetworkHandler singleton to allow quick transmission of data.
+        NetworkHandler.getInstance(this);
+
         //get any hashtag passed data from previous click events
         Uri data = getIntent().getData();
         getIntent().setData(null);
         if(data != null) searchHashTagFromClick(data, searchItem);
+
         return true;
     }
 

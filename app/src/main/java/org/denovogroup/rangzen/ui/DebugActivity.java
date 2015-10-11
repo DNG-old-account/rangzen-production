@@ -1,17 +1,21 @@
 package org.denovogroup.rangzen.ui;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.view.View;
+import android.util.Log;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+
+import com.parse.FindCallback;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.SaveCallback;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.FriendStore;
@@ -19,8 +23,11 @@ import org.denovogroup.rangzen.backend.Peer;
 import org.denovogroup.rangzen.backend.PeerManager;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
+import org.denovogroup.rangzen.beta.locationtracking.LocationCacheHandler;
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,9 +52,16 @@ public class DebugActivity extends ActionBarActivity {
     private TextView myFriendsTv;
     private TextView updateHoursTv;
     private TextView connectionsTv;
-    private Timer connectionsTimer;
+    private TextView pendingUpdatesTv;
+    private Timer refreshTimer;
     private CheckBox trackLocation;
     private CheckBox unrestrictedNetwork;
+
+    private int pending_locations = 0;
+    private int pending_messages = 0;
+    private int pending_network = 0;
+    private int pending_graph = 0;
+    private int pending_ui = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +76,7 @@ public class DebugActivity extends ActionBarActivity {
         myFriendsTv = (TextView) findViewById(R.id.friends_id);
         connectionsTv = (TextView) findViewById(R.id.connections);
         updateHoursTv = (TextView) findViewById(R.id.hours);
+        pendingUpdatesTv = (TextView) findViewById(R.id.updates);
         trackLocation = (CheckBox) findViewById(R.id.trackLocation);
         unrestrictedNetwork = (CheckBox) findViewById(R.id.unrestrictedNetwork);
 
@@ -151,30 +166,34 @@ public class DebugActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        connectionsTimer = new Timer();
-        connectionsTimer.scheduleAtFixedRate(new TimerTask() {
+        refreshTimer = new Timer();
+        refreshTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 List<Peer> peers = PeerManager.getInstance(DebugActivity.this).getPeers();
                 String connections = "";
 
-                if(peers == null || peers.isEmpty()) {
+                if (peers == null || peers.isEmpty()) {
                     connections = "No connected peers yet";
                 } else {
-                    for(Peer peer : peers){
-                        connections += peer.toString()+"\n";
+                    for (Peer peer : peers) {
+                        connections += peer.toString() + "\n";
                     }
                 }
                 final String finalConnections = connections;
+
+                final String pendingUpdates = getPendingUpdates();
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         connectionsTv.setText(finalConnections);
-                        updateHoursTv.setText(""+getUpdateHours());
+                        updateHoursTv.setText("" + getUpdateHours());
+                        pendingUpdatesTv.setText(pendingUpdates);
                     }
                 });
             }
-        }, 1000,1000);
+        }, 1000, 1000);
     }
 
     public String getUpdateHours() {
@@ -194,9 +213,56 @@ public class DebugActivity extends ActionBarActivity {
         return updateSchedule;
     }
 
+    public String getPendingUpdates() {
+
+        String result = "";
+
+        pending_locations = LocationCacheHandler.getInstance(this).getLocationsCount();
+        if(pending_locations > 0) result += "Locations: "+pending_locations+"\n";
+
+        pending_messages = 0;
+        pending_network = 0;
+        pending_graph = 0;
+        pending_ui = 0;
+
+        final String[] querytypes = {ReportsMaker.LogEvent.event_tag.MESSAGE,
+                ReportsMaker.LogEvent.event_tag.NETWORK,
+                ReportsMaker.LogEvent.event_tag.SOCIAL_GRAPH,
+                ReportsMaker.LogEvent.event_tag.UI};
+
+        for(String querytype : querytypes){
+            ParseQuery<ParseObject> query = ParseQuery.getQuery(querytype);
+            final String queryType = querytype;
+            try {
+                List<ParseObject> list = query.fromLocalDatastore().find();
+                if(list != null) {
+                    if(queryType.equals(ReportsMaker.LogEvent.event_tag.MESSAGE)){
+                        pending_messages = list.size();
+                        if(pending_messages > 0) result += "Messages: "+pending_messages+"\n";
+                    } else if(queryType.equals(ReportsMaker.LogEvent.event_tag.NETWORK)) {
+                        pending_network = list.size();
+                        if(pending_network > 0) result += "Network: "+pending_network+"\n";
+                    } else if(queryType.equals(ReportsMaker.LogEvent.event_tag.SOCIAL_GRAPH)) {
+                        pending_graph = list.size();
+                        if(pending_graph > 0) result += "Social graph: "+pending_graph+"\n";
+                    } else if(queryType.equals(ReportsMaker.LogEvent.event_tag.UI)) {
+                        pending_ui = list.size();
+                        if(pending_ui > 0) result += "UI: "+pending_ui+"\n";
+                    }
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        result = "Total: "+(pending_graph+pending_messages+pending_network+pending_locations+pending_ui)+"\n"+result;
+
+        return result;
+    }
+
     @Override
     protected void onPause(){
         super.onPause();
-        connectionsTimer.cancel();
+        refreshTimer.cancel();
     }
 }

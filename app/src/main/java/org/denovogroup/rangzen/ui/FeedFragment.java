@@ -206,7 +206,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                     case retweetItemId:
                         //BETA
                         JSONObject report4 = ReportsMaker.getMessageReweetedReport(System.currentTimeMillis(), message.getMId(), message.getPriority(), message.getMessage());
-                        NetworkHandler.getInstance().sendEventReport(report4);
+                        NetworkHandler.getInstance(getActivity()).sendEventReport(report4);
                         //BETA
 
                         store.updatePriority(message.getMessage(), 1d, true, message.getMId());

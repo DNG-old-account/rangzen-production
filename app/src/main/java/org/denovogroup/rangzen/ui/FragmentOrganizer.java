@@ -349,10 +349,7 @@ public class FragmentOrganizer extends Fragment {
                         Toast.LENGTH_SHORT).show();
                 //BETA
                 JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(), mId, priority, message);
-                if (NetworkHandler.getInstance() != null) {
-                    NetworkHandler.getInstance().sendEventReport(report);
-                }
-
+                NetworkHandler.getInstance(getActivity()).sendEventReport(report);
                 ReportsMaker.updateUiStatistic(getActivity(), System.currentTimeMillis(),0, Utils.getHashtags(message).size(), 0, 0, 1, 0, 0);
                 //BETA END
 

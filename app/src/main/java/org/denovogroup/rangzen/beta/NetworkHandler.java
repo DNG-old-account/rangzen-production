@@ -201,7 +201,7 @@ public class NetworkHandler {
 
         sendPinnedReports();
 
-        if(report != null && isEligableForSending){
+        if(report != null){
             try {
                 //Convert to parse object
                 ParseObject testObject = new ParseObject(report.getString(ReportsMaker.EVENT_TAG_KEY));

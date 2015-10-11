@@ -200,7 +200,6 @@ public class TrackingService extends Service implements LocationListener {
      * @param trackedLocation to be saved into storage
      */
     private void saveToCache(TrackedLocation trackedLocation){
-        Log.d("liran","saving to cache");
         if(trackedLocation != null) {
             LocationCacheHandler cacheHandler = LocationCacheHandler.getInstance(getApplicationContext());
             cacheHandler.insertLocation(trackedLocation);

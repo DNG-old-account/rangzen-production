@@ -1,6 +1,7 @@
 package org.denovogroup.rangzen.ui;
 
 import android.app.Application;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.StrictMode;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by Liran on 9/1/2015.
@@ -48,6 +50,7 @@ public class RangzenApplication extends Application{
         ParseInstallation thisInstallation = ParseInstallation.getCurrentInstallation();
         FriendStore store = new FriendStore(getApplicationContext(), StorageBase.ENCRYPTION_DEFAULT);
         //put this device's public id into the installation table to allow private push notification sending
+        thisInstallation.put("UUID",""+UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes()));
         thisInstallation.put("publicId",store.getPublicDeviceIDString());
         String myPublicId = store.getPublicDeviceIDString();
         thisInstallation.put("readableId",myPublicId.substring(myPublicId.length()-9));
@@ -111,6 +114,7 @@ public class RangzenApplication extends Application{
                         FriendStore store = new FriendStore(getApplicationContext(), StorageBase.ENCRYPTION_DEFAULT);
                         ParseObject userdata = new ParseObject("UserData");
                         userdata.put("installationId", ParseInstallation.getCurrentInstallation().getInstallationId());
+                        userdata.put("UUID", ""+UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes()));
                         userdata.put("publicId", store.getPublicDeviceIDString());
                         userdata.saveInBackground();
                     }
