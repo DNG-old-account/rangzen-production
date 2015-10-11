@@ -332,9 +332,9 @@ public class FragmentOrganizer extends Fragment {
                 String message = ((TextView) getActivity().findViewById(
                         R.id.editText1)).getText().toString();
                 float priority = 1.0f;
-                boolean alreadyExists = !messageStore.addMessage(message, priority);
+                boolean alreadyExists = !messageStore.addMessage(message, priority, true);
                 if(alreadyExists){
-                    messageStore.updatePriority(message,priority);
+                    messageStore.updatePriority(message,priority, true);
                 }
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();

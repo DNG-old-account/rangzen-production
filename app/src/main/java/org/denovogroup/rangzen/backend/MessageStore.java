@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeMap;
 
 /**
@@ -100,6 +101,9 @@ public class MessageStore {
      */
     private static final double MAX_PRIORITY_VALUE = 1.0f;
 
+    // The default value that indicates not removed item.
+    public static final double REMOVED = -0.5f;
+
     // The default value that indicates not found.
     public static final double NOT_FOUND = -2.0f;
 
@@ -144,7 +148,6 @@ public class MessageStore {
      * @return The bin number.
      */
     private static int getBinForPriority(double priority) {
-        checkPriority(priority);
 
         int bin = (int) (priority / INCREMENT);
         if (bin >= NUM_BINS) {
@@ -163,8 +166,6 @@ public class MessageStore {
      * @return A String to use as a key for the given bin.
      */
     private static String getBinKeyForPriority(double priority) {
-        checkPriority(priority);
-
         int bin = getBinForPriority(priority);
         return getBinKey(bin);
     }
@@ -192,13 +193,14 @@ public class MessageStore {
      * @param msg      The message to add.
      * @param priority The priority to associate with the message. The priority must
      *                 be [0,1].
+     * @param enforceLimits weather or not the priority should obey the min/max values.
      * @return Returns true if the message was added. If the message already
      * exists, does not modify the store and returns false.
      */
-    public boolean addMessage(String msg, double priority) {
+    public boolean addMessage(String msg, double priority, boolean enforceLimits) {
         //Check if priority is within allowed range and fix it to closest edge if outside of range.
         try {
-            checkPriority(priority);
+            if(enforceLimits) checkPriority(priority);
         } catch (IllegalArgumentException e){
             priority = (priority > MAX_PRIORITY_VALUE) ? MAX_PRIORITY_VALUE : MIN_PRIORITY_VALUE;
         }
@@ -248,13 +250,14 @@ public class MessageStore {
      *
      * @param msg      The message whose priority should be changed.
      * @param priority The new priority to set.
+     * @param enforceLimits weather or not the new priority should obey the min/max values.
      * @return True if the message was in the store (and its priority was changed),
      * false otherwise.
      */
-    public boolean updatePriority(String msg, double priority) {
+    public boolean updatePriority(String msg, double priority, boolean enforceLimits) {
         //Check if priority is within allowed range and fix it to closest edge if outside of range.
         try {
-            checkPriority(priority);
+            if(enforceLimits) checkPriority(priority);
         } catch (IllegalArgumentException e){
             priority = (priority > MAX_PRIORITY_VALUE) ? MAX_PRIORITY_VALUE : MIN_PRIORITY_VALUE;
         }
@@ -271,7 +274,56 @@ public class MessageStore {
         /*replace previous message with new version, thus letting the system
          place the new version in the appropriate bin*/
         deleteMessage(msg);
-        addMessage(msg,priority);
+        addMessage(msg, priority, enforceLimits);
+        return true;
+    }
+
+    /** move the specified message with the specified priority one slot within its bin.
+     * thus allowing for shift in position of items with similar priorities.
+     *
+     * @param msg      The message whose position should be changed.
+     * @param moveUp direction of movement where true is for up and false for down
+     * @return True if the message was in the store, false otherwise.
+     */
+    public Boolean updatePositionInBin(String msg, boolean moveUp){
+        //TODO this cannot work with current Set usage, need some other ordering mechanism or change underlying data structure
+        // TODO(barath): Consider improving performance by selecting a different key.
+        String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
+
+        // A value less than all priorities in the store.
+        final double MIN_PRIORITY = -1.0f;
+
+        //look for the message to be removed
+        boolean found = !(store.getDouble(msgPriorityKey, NOT_FOUND) < MIN_PRIORITY);
+        if (!found) {
+            return false;
+        }
+
+        // Get the existing message set for the bin.
+        Double priority = store.getDouble(msgPriorityKey, NOT_FOUND);
+        if(priority == NOT_FOUND) return false;
+        String binKey = getBinKeyForPriority(priority);
+        Set<String> msgs = store.getSet(binKey);
+
+        if (msgs == null) return false;
+
+        // shift the message inside its set.
+        List<String> sortedSet = new ArrayList<>();
+        sortedSet.addAll(msgs);
+
+        int currentIndex = sortedSet.indexOf(msg);
+        int newIndex = (moveUp) ? currentIndex-1 : currentIndex+1;
+
+        if(newIndex < 0 || newIndex >= sortedSet.size()) return false;
+
+        String newPositionMessage = sortedSet.get(newIndex);
+
+        sortedSet.set(newIndex, msg);
+        sortedSet.set(currentIndex, newPositionMessage);
+        msgs.clear();
+        msgs.addAll(sortedSet);
+
+        store.putSet(binKey, msgs);
         return true;
     }
 
@@ -289,7 +341,19 @@ public class MessageStore {
     }
 
     /**
-     * Removes the given message from the store.
+     * Remove the given message from the store, the message data is retained with priority of
+     * REMOVED constant.
+     *
+     * @param msg The message to remove.
+     * @return Returns true if the message was removed. If the message was not
+     * found, returns false.
+     */
+    public boolean removeMessage(String msg){
+        return updatePriority(msg, REMOVED, false);
+    }
+
+    /**
+     * Delete the given message from the store. this also remove the data from storage
      *
      * @param msg The message to remove.
      * @return Returns true if the message was removed. If the message was not

@@ -168,7 +168,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             MessageStore messageStore = new MessageStore(this,StorageBase.ENCRYPTION_DEFAULT);
             messageStore.addMessage(
                     "This is the Rangzen message feed. Messages in the ether will appear here.",
-                    1L);
+                    1L, true);
         }
     }
 

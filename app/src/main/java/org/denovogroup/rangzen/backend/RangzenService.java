@@ -407,10 +407,11 @@ public class RangzenService extends Service {
           double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
           try {
             if (mMessageStore.contains(message.text)) {
-                mMessageStore.updatePriority(message.text, newPriority);
+                //update existing message priority unless its marked as removed by user
+                if(stored != MessageStore.REMOVED) mMessageStore.updatePriority(message.text, newPriority, true);
             } else {
                 hasNew = true;
-                mMessageStore.addMessage(message.text, newPriority);
+                mMessageStore.addMessage(message.text, newPriority, true);
                 //mark this message as unread
                 ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
             }
@@ -457,10 +458,11 @@ public class RangzenService extends Service {
                     double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
                     try {
                         if (mMessageStore.contains(message.text)) {
-                            mMessageStore.updatePriority(message.text, newPriority);
+                            //update existing message priority unless its marked as removed by user
+                            if(stored != MessageStore.REMOVED) mMessageStore.updatePriority(message.text, newPriority, true);
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(message.text, newPriority);
+                            mMessageStore.addMessage(message.text, newPriority, true);
                             //mark this message as unread
                             ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
                         }
