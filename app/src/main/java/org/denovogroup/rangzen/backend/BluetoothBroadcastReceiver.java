@@ -134,6 +134,10 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
           case BluetoothAdapter.STATE_OFF:
               showNoBluetoothNotification(context);
               break;
+          case BluetoothAdapter.STATE_TURNING_ON:
+          case BluetoothAdapter.STATE_ON:
+              dismissNoBluetoothNotification(context);
+              break;
       }
 
   }
@@ -156,6 +160,15 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
                 .setContentIntent(pendingIntent)
                 .build();
         mNotificationManager.notify(notificationId, notification);
+    }
+
+    /** dismiss the no bluetooth notification if showing
+     */
+    private void dismissNoBluetoothNotification(Context context){
+        int notificationId = R.string.dialog_no_bluetooth_message;
+
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancel(notificationId);
     }
 
   /**
