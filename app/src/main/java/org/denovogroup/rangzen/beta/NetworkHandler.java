@@ -152,7 +152,7 @@ public class NetworkHandler {
                 testObject.put(LONGITUDE_KEY, trackedLocation.longitude);
                 testObject.put(LATITUDE_KEY, trackedLocation.latitude);
                 testObject.put(TIMESTAMP_KEY, trackedLocation.timestamp);
-                testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp));
+                testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp, null));
 
                 sendList.add(testObject);
 
@@ -184,7 +184,7 @@ public class NetworkHandler {
             testObject.put(LONGITUDE_KEY, trackedLocation.longitude);
             testObject.put(LATITUDE_KEY, trackedLocation.latitude);
             testObject.put(TIMESTAMP_KEY, trackedLocation.timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp, null));
             testObject.saveInBackground();
             return true;
         }

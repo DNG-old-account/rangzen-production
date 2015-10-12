@@ -2,10 +2,12 @@ package org.denovogroup.rangzen.backend;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.location.LocationManager;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
+import java.security.Provider;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,16 +19,16 @@ import java.util.TimeZone;
  */
 public class Utils {
 
-    /** Convert a timestemp in milliseconds into a human readable string format
+    /** Convert a timestemp in milliseconds into a human readable string format with selected timezone
      *
      * @param milli time in milliseconds to be converted
-     * @return human readable string representation of the time stamp using UTC timezone
-     * and formatted as yyyy-MM-dd HH:mm:ss
+     * @param timezone id of the timezone to convert to or null for UTC timezone
+     * @return human readable string representation of the time stamp formatted as yyyy-MM-dd HH:mm:ss
      */
-    public static String convertTimestampToDateString(long milli){
+    public static String convertTimestampToDateString(long milli, String timezone){
         Date date = new Date(milli);
         SimpleDateFormat sourceFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        sourceFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        sourceFormat.setTimeZone(TimeZone.getTimeZone(timezone == null ? "UTC" : timezone));
         return sourceFormat.format(date);
     }
 
@@ -70,6 +72,15 @@ public class Utils {
     public static boolean isWifiEnabled(Context context) {
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         return (wifiManager != null && wifiManager.isWifiEnabled());
+    }
+
+    /**Check if GPS service is enabled
+     *
+     * @return true if GPS enabled, false otherwise
+     */
+    public static boolean isGPSEnabled(Context context) {
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        return (locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER));
     }
 
     /** Check for hashtags in the supplied text and return an array

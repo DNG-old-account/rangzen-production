@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -22,6 +23,7 @@ import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.Peer;
 import org.denovogroup.rangzen.backend.PeerManager;
 import org.denovogroup.rangzen.backend.StorageBase;
+import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.locationtracking.LocationCacheHandler;
@@ -31,6 +33,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -217,8 +220,16 @@ public class DebugActivity extends ActionBarActivity {
 
         String result = "";
 
-        pending_locations = LocationCacheHandler.getInstance(this).getLocationsCount();
-        if(pending_locations > 0) result += "Locations: "+pending_locations+"\n";
+        Cursor locations = LocationCacheHandler.getInstance(this).getLocations();
+
+        pending_locations = locations.getCount();
+        if(pending_locations > 0){
+            result += "Locations: "+pending_locations;
+            locations.moveToLast();
+            result +=" (from: "+ Utils.convertTimestampToDateString(locations.getLong(locations.getColumnIndex(LocationCacheHandler.TIMESTAMP_COL)), TimeZone.getDefault().getID());
+            locations.moveToFirst();
+            result +=" to: "+ Utils.convertTimestampToDateString(locations.getLong(locations.getColumnIndex(LocationCacheHandler.TIMESTAMP_COL)), TimeZone.getDefault().getID()) + ")\n";
+        }
 
         pending_messages = 0;
         pending_network = 0;

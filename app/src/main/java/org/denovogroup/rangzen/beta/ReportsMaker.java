@@ -141,7 +141,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.SOCIAL_GRAPH);
             return testObject;
         } catch (JSONException e) {
@@ -156,7 +156,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Message.EXCHANGE);
             testObject.put(EVENT_PRIORITY_KEY, priority);
@@ -178,7 +178,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Message.REWEETED);
             testObject.put(EVENT_PRIORITY_KEY, priority);
@@ -197,7 +197,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Message.POSTED);
             testObject.put(EVENT_PRIORITY_KEY, priority);
@@ -216,7 +216,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Message.USER_PRIORITY);
             testObject.put(EVENT_OLD_PRIORITY_KEY, oldPriority);
@@ -236,7 +236,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Message.DELETED);
             testObject.put(EVENT_PRIORITY_KEY, priority);
@@ -255,7 +255,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.MESSAGE);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Message.SYSTEM_PRIORITY);
             testObject.put(EVENT_OLD_PRIORITY_KEY, oldPriority);
@@ -275,7 +275,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.NETWORK);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Network.NETWORK_STATE);
             testObject.put(EVENT_NETWORK_TYPE_KEY, networkType);
@@ -293,7 +293,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.NETWORK);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Network.ERROR);
             testObject.put(EVENT_NETWORK_TYPE_KEY, networkType);
@@ -311,7 +311,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.NETWORK);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Network.FOUND_DEVICE);
             testObject.put(EVENT_DEVICES_COUNT, (devicesIds != null) ? devicesIds.length : 0);
@@ -352,7 +352,7 @@ public class ReportsMaker {
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(TIMESTAMP_KEY, timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(timestamp, null));
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.UI);
             testObject.put(AGGREGATE_SEARCHES_KEY, searches);
             testObject.put(AGGREGATE_HASHTAGS_KEY, hashtags);

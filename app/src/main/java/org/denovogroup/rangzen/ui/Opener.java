@@ -52,11 +52,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.provider.Settings;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -414,10 +416,13 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         registerReceiver(receiver, filter);
         Log.i(TAG, "Registered receiver");
 
+
         if(!Utils.isBluetoothEnabled()){
             showNoBluetoothDialog();
         } else if(! Utils.isWifiEnabled(this)){
             showNoWifiDialog();
+        } else if(! Utils.isGPSEnabled(this)){
+            showNoGPSDialog();
         }
     }
 
@@ -527,6 +532,35 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             }
         });
         builder.setMessage(R.string.dialog_no_wifi_message);
+        builder.create();
+        builder.show();
+    }
+
+    /** create and display a dialog prompting the user about the enabled
+     * state of the Location service.
+     */
+    private void showNoGPSDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_gps);
+        builder.setTitle(R.string.dialog_no_gps_title);
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.setPositiveButton(R.string.turn_on, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                if(locationManager != null){
+                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivity(intent);
+                }
+                dialog.dismiss();
+            }
+        });
+        builder.setMessage(R.string.dialog_no_gps_message);
         builder.create();
         builder.show();
     }

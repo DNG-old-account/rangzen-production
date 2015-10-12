@@ -71,4 +71,7 @@
     <string name="unread_notification_title">Rangzen</string>
     <string name="unread_notification_content">New unread messages</string>
 
+    <string name="dialog_no_gps_title">Location service is off</string>
+    <string name="dialog_no_gps_message">It seems like Location service is disabled, Rangzen cannot run properly without enabling Location services.</string>
+
 </resources>
