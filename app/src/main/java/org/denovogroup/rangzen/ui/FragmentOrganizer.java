@@ -146,6 +146,15 @@ public class FragmentOrganizer extends Fragment {
                     reportBug();
                 }
             });
+
+            String version = "0.0";
+            try {
+                version = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(),0).versionName +" ("+getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(),0).versionCode+")";
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+            ((TextView) view5.findViewById(R.id.versionTextView)).setText("v"+version);
+
 			return view5;
 
 		case TRANSPARENT:
