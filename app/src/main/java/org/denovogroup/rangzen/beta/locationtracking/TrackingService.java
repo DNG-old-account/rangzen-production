@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -23,6 +24,7 @@ import org.denovogroup.rangzen.beta.WifiStateReceiver;
 import org.denovogroup.rangzen.ui.Opener;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -106,6 +108,18 @@ public class TrackingService extends Service implements LocationListener {
                 /* Check if last update was already sent (i.e the device couldn't get another update by the time the timer interval
                  ended) and save it if not */
                 if (lastLocationUpdate != null && (lastLocationSent == null || lastLocationUpdate.timestamp > lastLocationSent.timestamp)) {
+                    //add to the history log for the sampling action
+                    SharedPreferences history = getSharedPreferences("location_history", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor history_editor = history.edit();
+
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTimeInMillis(System.currentTimeMillis());
+                    String today = calendar.get(Calendar.DAY_OF_MONTH)+"-"+calendar.get(Calendar.MONTH)+"-"+calendar.get(Calendar.YEAR);
+
+                    history_editor.putInt(today, history.getInt(today, 0)+1);
+                    history_editor.commit();
+
+                    //save to cache until it can be flushed
                     saveToCache(lastLocationUpdate);
                 }
                 //try to send everything in local memory to the server
@@ -130,8 +144,6 @@ public class TrackingService extends Service implements LocationListener {
 
         locationUpdateTimer.cancel();
     }
-
-
 
     @Override
     public void onLocationChanged(Location location) {

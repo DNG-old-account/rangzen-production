@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -32,6 +33,7 @@ import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -56,6 +58,7 @@ public class DebugActivity extends ActionBarActivity {
     private TextView updateHoursTv;
     private TextView connectionsTv;
     private TextView pendingUpdatesTv;
+    private TextView locationHistoryTv;
     private Timer refreshTimer;
     private CheckBox trackLocation;
     private CheckBox unrestrictedNetwork;
@@ -80,6 +83,7 @@ public class DebugActivity extends ActionBarActivity {
         connectionsTv = (TextView) findViewById(R.id.connections);
         updateHoursTv = (TextView) findViewById(R.id.hours);
         pendingUpdatesTv = (TextView) findViewById(R.id.updates);
+        locationHistoryTv = (TextView) findViewById(R.id.location_history);
         trackLocation = (CheckBox) findViewById(R.id.trackLocation);
         unrestrictedNetwork = (CheckBox) findViewById(R.id.unrestrictedNetwork);
 
@@ -141,6 +145,13 @@ public class DebugActivity extends ActionBarActivity {
 
         connectionsTv.setText(connections);
         updateHoursTv.setText(""+getUpdateHours());
+
+        findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clearLocationHistory();
+            }
+        });
     }
 
     public String getMyId() {
@@ -187,12 +198,15 @@ public class DebugActivity extends ActionBarActivity {
 
                 final String pendingUpdates = getPendingUpdates();
 
+                final String locationHistory = getLocationHistory();
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         connectionsTv.setText(finalConnections);
                         updateHoursTv.setText("" + getUpdateHours());
                         pendingUpdatesTv.setText(pendingUpdates);
+                        locationHistoryTv.setText(locationHistory);
                     }
                 });
             }
@@ -275,5 +289,29 @@ public class DebugActivity extends ActionBarActivity {
     protected void onPause(){
         super.onPause();
         refreshTimer.cancel();
+    }
+
+    private String getLocationHistory(){
+        String log = "";
+
+        SharedPreferences history = getSharedPreferences("location_history",Context.MODE_PRIVATE);
+        if(history != null && !history.getAll().isEmpty()){
+            Map<String, Integer> items = (Map<String, Integer>) history.getAll();
+
+            for(Map.Entry entry : items.entrySet()){
+                log = log.concat(entry.getKey()+" : "+entry.getValue()+"\n");
+            }
+        } else {
+            log = "history is empty";
+        }
+
+        return log;
+    }
+
+    private void clearLocationHistory(){
+        SharedPreferences history = getSharedPreferences("location_history",Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = history.edit();
+        editor.clear();
+        editor.commit();
     }
 }

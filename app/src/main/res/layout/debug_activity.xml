@@ -134,6 +134,26 @@
             android:text="updates"
             android:layout_marginBottom="30dp"
             android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Location tracking history"
+            android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+        <TextView
+            android:id="@+id/location_history"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="history"
+            android:layout_marginBottom="30dp"
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clear history"
+            android:id="@+id/button"/>
     </LinearLayout>
 
 </ScrollView>
