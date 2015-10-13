@@ -19,6 +19,7 @@ import com.parse.SendCallback;
 
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.locationtracking.TrackedLocation;
+import org.denovogroup.rangzen.ui.DebugActivity;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.internal.util.collections.ArrayUtils;
@@ -46,6 +47,8 @@ import java.util.UUID;
  *
  */
 public class NetworkHandler {
+
+    private static boolean isUnrestricted = false;
 
     private static NetworkHandler instance;
     private static Context context;
@@ -81,11 +84,19 @@ public class NetworkHandler {
         if(instance == null){
             instance = new NetworkHandler();
         }
+
+        isUnrestricted = ctx.getSharedPreferences(DebugActivity.PREF_FILE, Context.MODE_PRIVATE).getBoolean(DebugActivity.IS_UNRESTRICTED_KEY, false);
+
         if(updateScheduleTimer == null){
             updateScheduleTimer = new Timer();
             updateScheduleTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
+                    if (isUnrestricted) {
+                        isEligableForSending = true;
+                        return;
+                    }
+
                     if ((updateSchedule != null && updateSchedule.length > 0 && updateSchedule[0] > -1)) {
                         Calendar c = Calendar.getInstance();
                         c.setTimeInMillis(System.currentTimeMillis());
@@ -141,7 +152,7 @@ public class NetworkHandler {
                 testObject.put(LONGITUDE_KEY, trackedLocation.longitude);
                 testObject.put(LATITUDE_KEY, trackedLocation.latitude);
                 testObject.put(TIMESTAMP_KEY, trackedLocation.timestamp);
-                testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp));
+                testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp, null));
 
                 sendList.add(testObject);
 
@@ -173,7 +184,7 @@ public class NetworkHandler {
             testObject.put(LONGITUDE_KEY, trackedLocation.longitude);
             testObject.put(LATITUDE_KEY, trackedLocation.latitude);
             testObject.put(TIMESTAMP_KEY, trackedLocation.timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp));
+            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp, null));
             testObject.saveInBackground();
             return true;
         }
@@ -190,7 +201,7 @@ public class NetworkHandler {
 
         sendPinnedReports();
 
-        if(report != null && isEligableForSending){
+        if(report != null){
             try {
                 //Convert to parse object
                 ParseObject testObject = new ParseObject(report.getString(ReportsMaker.EVENT_TAG_KEY));

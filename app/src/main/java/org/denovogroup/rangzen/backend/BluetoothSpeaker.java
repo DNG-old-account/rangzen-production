@@ -287,7 +287,7 @@ public class BluetoothSpeaker {
     Log.i(TAG, "Accepted socket from " + mSocket.getRemoteDevice());
     Log.i(TAG, "Accepted socket connected? " + mSocket.isConnected());
 
-      String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(), System.currentTimeMillis(), 0, 0, 0, null));
+      String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(), System.currentTimeMillis(), 0, 0, null));
     mExchange = new CryptographicExchange(mSocket.getInputStream(),
                              mSocket.getOutputStream(),
                              false,
@@ -417,24 +417,4 @@ public class BluetoothSpeaker {
       }
     }
   }
-
-    /** create and display a dialog prompting the user about the enabled
-     * state of the bluetooth service.
-     */
-    private void showNoBluetoothNotification(){
-        if(mContext == null) return;
-
-        int notificationId = R.string.dialog_no_bluetooth_message;
-
-        Intent notificationIntent = new Intent(mContext, Opener.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, notificationIntent, 0);
-
-        NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification notification = new Notification.Builder(mContext).setContentTitle(mContext.getText(R.string.dialog_no_bluetooth_title))
-                .setContentText(mContext.getText(R.string.dialog_no_bluetooth_message))
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentIntent(pendingIntent)
-                .build();
-        mNotificationManager.notify(notificationId, notification);
-    }
 }

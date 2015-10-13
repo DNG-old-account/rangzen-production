@@ -33,9 +33,11 @@ package org.denovogroup.rangzen.backend;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
+import org.denovogroup.rangzen.ui.DebugActivity;
 
 public class StartupIntentReceiver extends BroadcastReceiver {
   /** Included in log messages. */
@@ -43,11 +45,14 @@ public class StartupIntentReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    Intent serviceIntent = new Intent(context, RangzenService.class);
-    context.startService(serviceIntent);
+      Intent serviceIntent = new Intent(context, RangzenService.class);
+      context.startService(serviceIntent);
 
-  Intent trackingServiceIntent = new Intent(context, TrackingService.class);
-  context.startService(trackingServiceIntent);
+      SharedPreferences pref = context.getSharedPreferences(DebugActivity.PREF_FILE, Context.MODE_PRIVATE);
+      if(pref.getBoolean(DebugActivity.TRACK_LOCATION_KEY, true)) {
+          Intent trackingServiceIntent = new Intent(context, TrackingService.class);
+          context.startService(trackingServiceIntent);
+      }
   }
 }
 

@@ -84,7 +84,6 @@ public class LocationCacheHandler extends SQLiteOpenHelper{
      */
     public void insertLocation(TrackedLocation trackedLocation){
         if(trackedLocation != null && !hasLocation(trackedLocation)){
-            Log.d("liran","inserting");
             ContentValues content = new ContentValues();
             content.put(LATITUDE_COL, trackedLocation.latitude);
             content.put(LONGITUDE_COL, trackedLocation.longitude);

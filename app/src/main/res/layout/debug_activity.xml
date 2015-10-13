@@ -35,16 +35,34 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Tracking"
+                android:text="Track location"
                 android:layout_weight="1"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
 
-            <Button
-                android:id="@+id/startService"
+            <CheckBox
+                android:id="@+id/trackLocation"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:onClick="showServiceDialog"
-                android:text="Start/Stop tracking"/>
+                android:text=""/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Unrestricted network"
+                android:layout_weight="1"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+            <CheckBox
+                android:id="@+id/unrestrictedNetwork"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""/>
         </LinearLayout>
 
         <TextView
@@ -86,6 +104,34 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="peers"
+            android:layout_marginBottom="30dp"
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Network access hours"
+            android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+        <TextView
+            android:id="@+id/hours"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="hours"
+            android:layout_marginBottom="30dp"
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pending server updates"
+            android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+        <TextView
+            android:id="@+id/updates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="updates"
             android:layout_marginBottom="30dp"
             android:textAppearance="?android:attr/textAppearanceSmall"/>
     </LinearLayout>

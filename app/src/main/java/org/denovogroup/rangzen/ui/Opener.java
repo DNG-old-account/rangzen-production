@@ -32,6 +32,7 @@
 package org.denovogroup.rangzen.ui;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
 import org.denovogroup.rangzen.backend.ReadStateTracker;
@@ -51,11 +52,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.provider.Settings;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -117,10 +120,14 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         SearchView searchView = (SearchView) searchItem.getActionView();
         setSearhView(searchView);
 
+        //create an instance of NetworkHandler singleton to allow quick transmission of data.
+        NetworkHandler.getInstance(this);
+
         //get any hashtag passed data from previous click events
         Uri data = getIntent().getData();
         getIntent().setData(null);
         if(data != null) searchHashTagFromClick(data, searchItem);
+
         return true;
     }
 
@@ -172,7 +179,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             MessageStore messageStore = new MessageStore(this, StorageBase.ENCRYPTION_DEFAULT);
             messageStore.addMessage(
                     "This is the Rangzen message feed. Messages in the ether will appear here.",
-                    1L, "demo");
+                    1L, true, "demo");
         }
     }
 
@@ -409,10 +416,13 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         registerReceiver(receiver, filter);
         Log.i(TAG, "Registered receiver");
 
+
         if(!Utils.isBluetoothEnabled()){
             showNoBluetoothDialog();
         } else if(! Utils.isWifiEnabled(this)){
             showNoWifiDialog();
+        } else if(! Utils.isGPSEnabled(this)){
+            showNoGPSDialog();
         }
     }
 
@@ -526,12 +536,42 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         builder.show();
     }
 
+    /** create and display a dialog prompting the user about the enabled
+     * state of the Location service.
+     */
+    private void showNoGPSDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_gps);
+        builder.setTitle(R.string.dialog_no_gps_title);
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.setPositiveButton(R.string.turn_on, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                if(locationManager != null){
+                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivity(intent);
+                }
+                dialog.dismiss();
+            }
+        });
+        builder.setMessage(R.string.dialog_no_gps_message);
+        builder.create();
+        builder.show();
+    }
+
     public void setSearhView(SearchView searchView){
 
         //Define on close listener which support pre-honycomb devices as well with the app compat
         searchView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
+                ReportsMaker.updateUiStatistic(Opener.this, System.currentTimeMillis(), 1, 0, 0, 0, 0, 0, 0);
             }
 
             @Override
@@ -549,9 +589,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
                     @Override
                     protected List<MessageStore.Message> doInBackground(String... params) {
-                        if(!params[0].isEmpty()) {
-                            ReportsMaker.updateUiStatistic(Opener.this, System.currentTimeMillis(), 1, 0, 0, 0, 0, 0, 0);
-                        }
                         MessageStore store = new MessageStore(Opener.this, StorageBase.ENCRYPTION_DEFAULT);
                         return store.getMessagesContaining(params[0]);
                     }
@@ -576,6 +613,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                onQueryTextSubmit(newText);
                 return false;
             }
         });

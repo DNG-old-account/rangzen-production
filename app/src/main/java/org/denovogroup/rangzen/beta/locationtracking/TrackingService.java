@@ -1,8 +1,13 @@
 package org.denovogroup.rangzen.beta.locationtracking;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -12,8 +17,10 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.WifiStateReceiver;
+import org.denovogroup.rangzen.ui.Opener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +76,21 @@ public class TrackingService extends Service implements LocationListener {
         receiver = new WifiStateReceiver(getApplicationContext());
 
         locationManager = (LocationManager) getSystemService(Service.LOCATION_SERVICE);
+
+        locationManager.addGpsStatusListener(new GpsStatus.Listener() {
+            @Override
+            public void onGpsStatusChanged(int event) {
+                switch(event){
+                    case GpsStatus.GPS_EVENT_STARTED:
+                        dismissNoGPSNotification(TrackingService.this);
+                        break;
+                    case GpsStatus.GPS_EVENT_STOPPED:
+                        showNoGPSNotification(TrackingService.this);
+                        break;
+                }
+            }
+        });
+
         /*Register for updates from the specified location provider, all incoming transmission will be handled
           by the service acting as the listener*/
         //TODO maybe instead of forcing GPS as a provider i should use get best provider
@@ -200,10 +222,38 @@ public class TrackingService extends Service implements LocationListener {
      * @param trackedLocation to be saved into storage
      */
     private void saveToCache(TrackedLocation trackedLocation){
-        Log.d("liran","saving to cache");
         if(trackedLocation != null) {
             LocationCacheHandler cacheHandler = LocationCacheHandler.getInstance(getApplicationContext());
             cacheHandler.insertLocation(trackedLocation);
         }
+    }
+
+    /** create and display a dialog prompting the user about the enabled
+     * state of the bluetooth service.
+     */
+    private void showNoGPSNotification(Context context){
+        if(context == null) return;
+
+        int notificationId = R.string.dialog_no_gps_message;
+
+        Intent notificationIntent = new Intent(context, Opener.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
+
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notification = new Notification.Builder(context).setContentTitle(context.getText(R.string.dialog_no_gps_title))
+                .setContentText(context.getText(R.string.dialog_no_gps_message))
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .build();
+        mNotificationManager.notify(notificationId, notification);
+    }
+
+    /** dismiss the no bluetooth notification if showing
+     */
+    private void dismissNoGPSNotification(Context context){
+        int notificationId = R.string.dialog_no_gps_message;
+
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancel(notificationId);
     }
 }

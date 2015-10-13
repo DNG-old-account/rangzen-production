@@ -28,11 +28,6 @@
         <item>Info</item>
     </string-array>
 
-    <color name="whitish">#D7D7D7</color>
-    <color name="purple">#8D44AF</color>
-    <color name="purpleOld">#6d0094</color>
-    <color name="grey">#FFFEFF</color>
-
     <string name="hint">Get the word out</string>
     <string name="app_id">254046681454257</string>
     <string name="aboutTitle">About Rangzen</string>
@@ -66,7 +61,7 @@
     <string name="turn_on">Turn on</string>
     <string name="dialog_no_wifi_title">WiFi is off</string>
     <string name="dialog_no_wifi_message">It seems like WiFi direct is disabled, Rangzen cannot run properly without enabling WiFi.</string>
-    <string name="report_bug">Report a bug</string>
+    <string name="report_bug">Feedback</string>
     <string name="report_bug_hint">Describe the error you\'ve encountered</string>
     <string name="send">Send</string>
     <string name="sending_bug_report">Sending bug report</string>
@@ -76,4 +71,9 @@
     <string name="unread_notification_title">Rangzen</string>
     <string name="unread_notification_content">New unread messages</string>
 
+    <string name="dialog_no_gps_title">Location service is off</string>
+    <string name="dialog_no_gps_message">It seems like Location service is disabled, Rangzen cannot run properly without enabling Location services.</string>
+
+    <string name="confirm_delete_title">Delete item?</string>
+    <string name="confirm_delete">Are you sure you wish to remove this message? similar messages will not be received anymore.</string>
 </resources>
