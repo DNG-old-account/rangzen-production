@@ -2,11 +2,13 @@ package org.denovogroup.rangzen.ui;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -186,22 +188,45 @@ public class FeedFragment extends Fragment implements Refreshable{
                         //BETA END
                         break;
                     case deleteItemId:
-                        //BETA
-                        JSONObject report3 = ReportsMaker.getMessageDeletedReport(System.currentTimeMillis(), message.getMId(), message.getPriority(), message.getMessage());
-                        NetworkHandler.getInstance(getActivity()).sendEventReport(report3);
-                        //BETA END
+                        final MessageStore store_final = store;
+                        final MessageStore.Message message_final = message;
 
-                        //delete data from storage
-                        store.removeMessage(message.getMessage(), message.getMId());
+                        AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
+                        dialog.setTitle(R.string.confirm_delete_title);
+                        dialog.setMessage(R.string.confirm_delete);
+                        dialog.setIcon(R.drawable.ic_bin);
+                        dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                //BETA
+                                JSONObject report3 = ReportsMaker.getMessageDeletedReport(System.currentTimeMillis(), message_final.getMId(), message_final.getPriority(), message_final.getMessage());
+                                NetworkHandler.getInstance(getActivity()).sendEventReport(report3);
+                                //BETA END
 
-                        /*If data is currently being presenting as filtered search results, update
-                          the currently displayed to retain consistent look */
-                        List<MessageStore.Message> updatedList = mFeedListAdaper.getItems();
-                        if (updatedList != null) {
-                            updatedList.remove(position);
-                        }
-                        //refresh listview
-                        resetListAdapter(updatedList,true);
+                                //delete data from storage
+                                //store.deleteMessage(message.getMessage());
+                                store_final.removeMessage(message_final.getMessage(), message_final.getMId());
+
+                                /*If data is currently being presenting as filtered search results, update
+                                   the currently displayed to retain consistent look */
+                                List<MessageStore.Message> updatedList = mFeedListAdaper.getItems();
+                                if (updatedList != null) {
+                                    updatedList.remove(position);
+                                }
+                                //refresh listview
+                                resetListAdapter(updatedList,true);
+                                dialog.dismiss();
+                            }
+                        });
+                        dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+
+                        dialog.show();
+
                         break;
                     case retweetItemId:
                         //BETA

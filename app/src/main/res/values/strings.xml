@@ -74,4 +74,6 @@
     <string name="dialog_no_gps_title">Location service is off</string>
     <string name="dialog_no_gps_message">It seems like Location service is disabled, Rangzen cannot run properly without enabling Location services.</string>
 
+    <string name="confirm_delete_title">Delete item?</string>
+    <string name="confirm_delete">Are you sure you wish to remove this message? similar messages will not be received anymore.</string>
 </resources>
