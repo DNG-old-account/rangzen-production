@@ -1,6 +1,8 @@
 package org.denovogroup.rangzen.ui;
 
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -59,7 +61,7 @@ public class FeedFragment extends Fragment implements Refreshable{
       */
     private void setupListView(){
         setupListSwipeMenu();
-        resetListAdapter(null,false);
+        resetListAdapter(null, false);
     }
 
     /** Setting the Swipe menu which appears when an item is being swiped to the left
@@ -162,18 +164,41 @@ public class FeedFragment extends Fragment implements Refreshable{
                         updateViewDelayed = true;
                         break;
                     case deleteItemId:
-                        //delete data from storage
-                        //store.deleteMessage(message.getMessage());
-                        store.removeMessage(message.getMessage());
 
-                        /*If data is currently being presenting as filtered search results, update
-                          the currently displayed to retain consistent look */
-                        List<MessageStore.Message> updatedList = mFeedListAdaper.getItems();
-                        if (updatedList != null) {
-                            updatedList.remove(position);
-                        }
-                        //refresh listview
-                        resetListAdapter(updatedList,true);
+                        final MessageStore store_final = store;
+                        final MessageStore.Message message_final = message;
+
+                        AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
+                        dialog.setTitle(R.string.confirm_delete_title);
+                        dialog.setMessage(R.string.confirm_delete);
+                        dialog.setIcon(R.drawable.ic_bin);
+                        dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                //delete data from storage
+                                //store.deleteMessage(message.getMessage());
+                                store_final.removeMessage(message_final.getMessage());
+
+                                /*If data is currently being presenting as filtered search results, update
+                                   the currently displayed to retain consistent look */
+                                List<MessageStore.Message> updatedList = mFeedListAdaper.getItems();
+                                if (updatedList != null) {
+                                    updatedList.remove(position);
+                                }
+                                //refresh listview
+                                resetListAdapter(updatedList,true);
+                                dialog.dismiss();
+                            }
+                        });
+                        dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+
+                        dialog.show();
+
                         break;
                     case retweetItemId:
                         store.updatePriority(message.getMessage(), 1d, true);
