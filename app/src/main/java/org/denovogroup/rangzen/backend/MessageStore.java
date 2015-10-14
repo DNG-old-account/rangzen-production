@@ -200,7 +200,7 @@ public class MessageStore {
      * @param msg      The message to add.
      * @param priority The priority to associate with the message. The priority must
      *                 be [0,1].
-     * @param enforceLimits weather or not the priority should obey the min/max values.
+     * @param enforceLimits whether or not the priority should obey the min/max values.
      * @return Returns true if the message was added. If the message already
      * exists, does not modify the store and returns false.
      */
@@ -260,7 +260,7 @@ public class MessageStore {
      *
      * @param msg      The message whose priority should be changed.
      * @param priority The new priority to set.
-     * @param enforceLimits weather or not the new priority should obey the min/max values.
+     * @param enforceLimits whether or not the new priority should obey the min/max values.
      * @return True if the message was in the store (and its priority was changed),
      * false otherwise.
      */
