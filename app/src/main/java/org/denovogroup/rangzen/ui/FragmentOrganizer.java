@@ -34,9 +34,7 @@ package org.denovogroup.rangzen.ui;
 import com.google.zxing.common.BitMatrix;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -47,13 +45,11 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -69,20 +65,13 @@ import android.widget.Toast;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
-import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.StorageBase;
 
-import java.io.UnsupportedEncodingException;
-import java.util.Properties;
-
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * This class manages the behavior for all of the introductory fragments as well
@@ -536,7 +525,10 @@ public class FragmentOrganizer extends Fragment {
 
     private void openEmailSendingForm(){
         Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "rangzen_dev@denovogroup.org", null));
+        File log_filename = new File(Environment.getExternalStorageDirectory()+"/device_log.txt");
 
+
+        //get device info
         String userData = "";
 
         try {
@@ -549,8 +541,26 @@ public class FragmentOrganizer extends Fragment {
         userData += "Device: "+android.os.Build.DEVICE+"\n";
         userData += "Model: "+android.os.Build.MODEL + " ("+ android.os.Build.PRODUCT + ")\n";
 
-        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback:");
-        intent.putExtra(Intent.EXTRA_TEXT, userData);
+        try {
+            log_filename.createNewFile();
+            BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
+            writer.write(userData);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            //get log from device
+            String cmd = "logcat -d -f"+log_filename.getAbsolutePath();
+            Runtime.getRuntime().exec(cmd);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback");
+        intent.putExtra(Intent.EXTRA_TEXT, "Dear Rangzen support representative");
+        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
         startActivity(Intent.createChooser(intent, "Send mail using..."));
     }
 }
