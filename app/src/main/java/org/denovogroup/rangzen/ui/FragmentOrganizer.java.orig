@@ -34,12 +34,10 @@ package org.denovogroup.rangzen.ui;
 import com.google.zxing.common.BitMatrix;
 
 import android.app.Activity;
-<<<<<<< HEAD
 import android.bluetooth.BluetoothAdapter;
 import android.app.AlertDialog;
-=======
->>>>>>> e57198cd76be8984d68eda02293c91fed0093c1f
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -50,11 +48,14 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -62,6 +63,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -70,6 +72,7 @@ import android.widget.Toast;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
+import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.NetworkHandler;
@@ -77,14 +80,24 @@ import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.json.JSONObject;
 import org.w3c.dom.Text;
 
-import java.util.Random;
-import java.util.UUID;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Random;
+import java.util.UUID;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Properties;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 /**
  * This class manages the behavior for all of the introductory fragments as well
@@ -145,7 +158,8 @@ public class FragmentOrganizer extends Fragment {
             view5.findViewById(R.id.reportBug).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    reportBug();
+                    boolean includeLog = ((CheckBox) ((View) v.getParent()).findViewById(R.id.includeLog)).isChecked();
+                    reportBug(includeLog);
                 }
             });
 
@@ -352,7 +366,7 @@ public class FragmentOrganizer extends Fragment {
                 //BETA
                 JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(), mId, priority, message);
                 NetworkHandler.getInstance(getActivity()).sendEventReport(report);
-                ReportsMaker.updateUiStatistic(getActivity(), System.currentTimeMillis(),0, Utils.getHashtags(message).size(), 0, 0, 1, 0, 0);
+                ReportsMaker.updateUiStatistic(getActivity(), System.currentTimeMillis(), 0, Utils.getHashtags(message).size(), 0, 0, 1, 0, 0);
                 //BETA END
 
                 getActivity().setResult(Activity.RESULT_OK);
@@ -538,31 +552,32 @@ public class FragmentOrganizer extends Fragment {
 	}
 
     /**Open a dialog to send a bug report to dedicated server*/
-    public void reportBug() {
-        openEmailSendingForm();
+    public void reportBug(boolean includeLog) {
+        openEmailSendingForm(includeLog);
     }
 
-    private void openEmailSendingForm(){
+    private void openEmailSendingForm(boolean includeLog){
         Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "rangzen_dev@denovogroup.org", null));
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback");
+        intent.putExtra(Intent.EXTRA_TEXT, "Dear Rangzen support representative");
+
 <<<<<<< HEAD
-=======
-        File log_filename = new File(Environment.getExternalStorageDirectory()+"/device_log.txt");
-
-
         //get device info
->>>>>>> e57198cd76be8984d68eda02293c91fed0093c1f
         String userData = "";
+=======
 
-        try {
-            PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
-            userData += "Application: Ranzgen v"+info.versionName+" ("+info.versionCode+")\n";
-        } catch(PackageManager.NameNotFoundException e) {
-        }
+        if(includeLog) {
+            File log_filename = new File(Environment.getExternalStorageDirectory() + "/device_log.txt");
+>>>>>>> f0823482f2074c8bd226a694a2f172ccb8158594
 
+
+<<<<<<< HEAD
         userData += "OS version: "+android.os.Build.VERSION.SDK_INT+"\n";
         userData += "Device: "+android.os.Build.DEVICE+"\n";
         userData += "Model: "+android.os.Build.MODEL + " ("+ android.os.Build.PRODUCT + ")\n";
 
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback:");
+        intent.putExtra(Intent.EXTRA_TEXT, userData);
         try {
             log_filename.createNewFile();
             BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
@@ -571,18 +586,41 @@ public class FragmentOrganizer extends Fragment {
         } catch (IOException e) {
             e.printStackTrace();
         }
+=======
+            //get device info
+            String userData = "";
 
-        try {
-            //get log from device
-            String cmd = "logcat -d -f"+log_filename.getAbsolutePath();
-            Runtime.getRuntime().exec(cmd);
-        } catch (IOException e) {
-            e.printStackTrace();
+            try {
+                PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+                userData += "Application: Ranzgen v" + info.versionName + " (" + info.versionCode + ")\n";
+            } catch (PackageManager.NameNotFoundException e) {
+            }
+>>>>>>> f0823482f2074c8bd226a694a2f172ccb8158594
+
+            userData += "OS version: " + android.os.Build.VERSION.SDK_INT + "\n";
+            userData += "Device: " + android.os.Build.DEVICE + "\n";
+            userData += "Model: " + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")\n";
+
+            try {
+                log_filename.createNewFile();
+                BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
+                writer.write(userData);
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                //get log from device
+                String cmd = "logcat -d -f" + log_filename.getAbsolutePath();
+                Runtime.getRuntime().exec(cmd);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
         }
 
-        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback");
-        intent.putExtra(Intent.EXTRA_TEXT, "Dear Rangzen support representative");
-        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
         startActivity(Intent.createChooser(intent, "Send mail using..."));
     }
 }

@@ -63,6 +63,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -157,7 +158,8 @@ public class FragmentOrganizer extends Fragment {
             view5.findViewById(R.id.reportBug).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    reportBug();
+                    boolean includeLog = ((CheckBox)((View) v.getParent()).findViewById(R.id.includeLog)).isChecked();
+                    reportBug(includeLog);
                 }
             });
 
@@ -550,49 +552,53 @@ public class FragmentOrganizer extends Fragment {
 	}
 
     /**Open a dialog to send a bug report to dedicated server*/
-    public void reportBug() {
-        openEmailSendingForm();
+    public void reportBug(boolean includeLog) {
+        openEmailSendingForm(includeLog);
     }
 
-    private void openEmailSendingForm(){
+    private void openEmailSendingForm(boolean includeLog){
         Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "rangzen_dev@denovogroup.org", null));
-        File log_filename = new File(Environment.getExternalStorageDirectory()+"/device_log.txt");
-
-        //get device info
-        String userData = "";
-
-        try {
-            PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
-            userData += "Application: Ranzgen v"+info.versionName+" ("+info.versionCode+")\n";
-        } catch(PackageManager.NameNotFoundException e){
-        }
-
-        userData += "OS version: "+android.os.Build.VERSION.SDK_INT+"\n";
-        userData += "Device: "+android.os.Build.DEVICE+"\n";
-        userData += "Model: "+android.os.Build.MODEL + " ("+ android.os.Build.PRODUCT + ")\n";
-
-        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback:");
-        intent.putExtra(Intent.EXTRA_TEXT, userData);
-        try {
-            log_filename.createNewFile();
-            BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
-            writer.write(userData);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            //get log from device
-            String cmd = "logcat -d -f"+log_filename.getAbsolutePath();
-            Runtime.getRuntime().exec(cmd);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback");
         intent.putExtra(Intent.EXTRA_TEXT, "Dear Rangzen support representative");
-        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
+
+
+        if(includeLog) {
+            File log_filename = new File(Environment.getExternalStorageDirectory() + "/device_log.txt");
+            log_filename.delete();
+
+            //get device info
+            String userData = "";
+
+            try {
+                PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+                userData += "Application: Ranzgen v" + info.versionName + " (" + info.versionCode + ")\n";
+            } catch (PackageManager.NameNotFoundException e) {
+            }
+
+            userData += "OS version: " + android.os.Build.VERSION.SDK_INT + "\n";
+            userData += "Device: " + android.os.Build.DEVICE + "\n";
+            userData += "Model: " + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")\n";
+
+            try {
+                log_filename.createNewFile();
+                BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
+                writer.write(userData);
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                //get log from device
+                String cmd = "logcat -d -f" + log_filename.getAbsolutePath();
+                Runtime.getRuntime().exec(cmd);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
+        }
+
         startActivity(Intent.createChooser(intent, "Send mail using..."));
     }
 }
