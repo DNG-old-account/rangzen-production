@@ -41,11 +41,11 @@
 
     <string name="Upvote">Upvote</string>
     <string name="Downvote">Downvote</string>
-    <string name="dialog_no_bluetooth_title">Bluetooth is off</string>
-    <string name="dialog_no_bluetooth_message">It seems like bluetooth is disabled, Rangzen cannot run properly without enabling bluetooth.</string>
+    <string name="dialog_no_bluetooth_title">Rangzen Error:Bluetooth is off</string>
+    <string name="dialog_no_bluetooth_message">Please turn on Bluetooth.</string>
     <string name="turn_on">Turn on</string>
-    <string name="dialog_no_wifi_title">WiFi is off</string>
-    <string name="dialog_no_wifi_message">It seems like WiFi direct is disabled, Rangzen cannot run properly without enabling WiFi.</string>
+    <string name="dialog_no_wifi_title">Rangzen Error:WiFi is off</string>
+    <string name="dialog_no_wifi_message">Please turn on WiFi.</string>
     <string name="report_bug">Feedback</string>
     <string name="report_bug_hint">Describe the error you\'ve encountered</string>
     <string name="send">Send</string>
@@ -56,8 +56,8 @@
     <string name="unread_notification_title">Rangzen</string>
     <string name="unread_notification_content">New unread messages</string>
 
-    <string name="dialog_no_gps_title">Location service is off</string>
-    <string name="dialog_no_gps_message">It seems like Location service is disabled, Rangzen cannot run properly without enabling Location services.</string>
+    <string name="dialog_no_gps_title">Rangzen Error:GPS is off</string>
+    <string name="dialog_no_gps_message">Please turn on GPS.</string>
 
     <string name="confirm_delete_title">Delete item?</string>
     <string name="confirm_delete">Are you sure you wish to remove this message? similar messages will not be received anymore.</string>
