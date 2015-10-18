@@ -48,6 +48,7 @@ import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Looper;
 import android.os.Parcelable;
+import android.provider.Settings;
 import android.util.Log;
 
 import org.denovogroup.rangzen.R;
@@ -475,7 +476,7 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
 
         int notificationId = R.string.dialog_no_wifi_message;
 
-        Intent notificationIntent = new Intent(mContext, Opener.class);
+        Intent notificationIntent = new Intent(new Intent(Settings.ACTION_WIFI_SETTINGS));;
         PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, notificationIntent, 0);
 
         NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);

@@ -40,6 +40,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Parcelable;
+import android.provider.Settings;
 import android.util.Log;
 
 import org.denovogroup.rangzen.R;
@@ -150,7 +151,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
 
         int notificationId = R.string.dialog_no_bluetooth_message;
 
-        Intent notificationIntent = new Intent(context, Opener.class);
+        Intent notificationIntent = new Intent(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));;
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
