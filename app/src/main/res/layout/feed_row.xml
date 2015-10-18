@@ -25,11 +25,12 @@
 
         <TextView
             android:id="@+id/upvoteView"
-            android:layout_width="wrap_content"
+            android:layout_width="50dp"
             android:layout_height="fill_parent"
             android:gravity="center"
-            android:paddingEnd="15dp"
-            android:paddingStart="25dp"
+            android:paddingEnd="13dp"
+            android:paddingStart="13dp"
+            android:text="100"
             android:textColor="@android:color/black" />
 
         <LinearLayout

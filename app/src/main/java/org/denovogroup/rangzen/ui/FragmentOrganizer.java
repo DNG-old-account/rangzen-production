@@ -533,7 +533,7 @@ public class FragmentOrganizer extends Fragment {
 
         if(includeLog) {
             File log_filename = new File(Environment.getExternalStorageDirectory() + "/device_log.txt");
-
+            log_filename.delete();
 
             //get device info
             String userData = "";
