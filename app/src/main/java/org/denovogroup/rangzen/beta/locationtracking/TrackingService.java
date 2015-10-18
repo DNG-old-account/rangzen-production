@@ -19,9 +19,12 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.WifiStateReceiver;
 import org.denovogroup.rangzen.ui.Opener;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -56,6 +59,11 @@ public class TrackingService extends Service implements LocationListener {
     private static TrackedLocation lastLocationUpdate;
     private static boolean isFlushing = false;
     private static long flushInterval = 0;
+    public static final String HISTORY_FILE_NAME = "location_history";
+    public static final String HISTORY_SAMPLED_KEY = "sampled";
+    public static final String HISTORY_DISCARDED_KEY = "discarded";
+    public static final String HISTORY_FROM_KEY = "from";
+    public static final String HISTORY_TO_KEY = "to";
 
     public static WifiStateReceiver receiver;
 
@@ -105,23 +113,46 @@ public class TrackingService extends Service implements LocationListener {
             public void run() {
 
                 flushInterval += UPDATE_TIME_INTERVAL;
+
+                //add to the history log for the sampling action
+                SharedPreferences history = getSharedPreferences(HISTORY_FILE_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor history_editor = history.edit();
+
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(System.currentTimeMillis());
+                String date = calendar.get(Calendar.DAY_OF_MONTH)+"-"+calendar.get(Calendar.MONTH)+"-"+calendar.get(Calendar.YEAR);
+
+                JSONObject dataJson = null;
+
+                try {
+                    dataJson = new JSONObject(history.getString(date, new JSONObject().toString()));
+                    if(!dataJson.has(HISTORY_FROM_KEY)) dataJson.put(HISTORY_FROM_KEY, calendar.getTimeInMillis());
+                    dataJson.put(HISTORY_SAMPLED_KEY, dataJson.optInt(HISTORY_SAMPLED_KEY,0)+1);
+                    dataJson.put(HISTORY_TO_KEY, calendar.getTimeInMillis());
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
                 /* Check if last update was already sent (i.e the device couldn't get another update by the time the timer interval
                  ended) and save it if not */
-                if (lastLocationUpdate != null && (lastLocationSent == null || lastLocationUpdate.timestamp > lastLocationSent.timestamp)) {
-                    //add to the history log for the sampling action
-                    SharedPreferences history = getSharedPreferences("location_history", Context.MODE_PRIVATE);
-                    SharedPreferences.Editor history_editor = history.edit();
-
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.setTimeInMillis(System.currentTimeMillis());
-                    String today = calendar.get(Calendar.DAY_OF_MONTH)+"-"+calendar.get(Calendar.MONTH)+"-"+calendar.get(Calendar.YEAR);
-
-                    history_editor.putInt(today, history.getInt(today, 0)+1);
-                    history_editor.commit();
-
+                if (Utils.isGPSEnabled(getApplicationContext()) && lastLocationUpdate != null && (lastLocationSent == null || lastLocationUpdate.timestamp > lastLocationSent.timestamp)) {
                     //save to cache until it can be flushed
                     saveToCache(lastLocationUpdate);
+                } else if(dataJson != null){
+                    //count as discarded in the history log
+                    try {
+                        dataJson.put(HISTORY_DISCARDED_KEY, dataJson.optInt(HISTORY_DISCARDED_KEY, 0) + 1);
+                    } catch(JSONException e){
+                        e.printStackTrace();
+                    }
                 }
+
+                if(dataJson != null) {
+                    history_editor.putString(date, dataJson.toString());
+                }
+                history_editor.commit();
+
                 //try to send everything in local memory to the server
                 flushCache();
             }

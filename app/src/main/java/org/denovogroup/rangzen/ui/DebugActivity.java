@@ -29,8 +29,11 @@ import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.locationtracking.LocationCacheHandler;
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -292,14 +295,49 @@ public class DebugActivity extends ActionBarActivity {
     }
 
     private String getLocationHistory(){
+
+        int second = 1000;
+        int minute = 60 * second;
+        int hour = 60 * minute;
+
         String log = "";
 
-        SharedPreferences history = getSharedPreferences("location_history",Context.MODE_PRIVATE);
+        SharedPreferences history = getSharedPreferences(TrackingService.HISTORY_FILE_NAME,Context.MODE_PRIVATE);
         if(history != null && !history.getAll().isEmpty()){
             Map<String, Integer> items = (Map<String, Integer>) history.getAll();
 
             for(Map.Entry entry : items.entrySet()){
-                log = log.concat(entry.getKey()+" : "+entry.getValue()+"\n");
+                String date = (String)entry.getKey();
+                try {
+                    JSONObject data = new JSONObject((String)entry.getValue());
+                    Calendar calFrom = Calendar.getInstance();
+                    calFrom.setTimeInMillis(data.optLong(TrackingService.HISTORY_FROM_KEY,0));
+                    calFrom.set(Calendar.MILLISECOND, 0);
+
+                    Calendar calTo = Calendar.getInstance();
+                    calTo.setTimeInMillis(data.optLong(TrackingService.HISTORY_TO_KEY, 0));
+                    calTo.set(Calendar.MILLISECOND, 0);
+
+
+                    long duration = calTo.getTimeInMillis() - calFrom.getTimeInMillis();
+
+                    int hours = (int) Math.floor(duration/hour);
+                    int minutes = (int) Math.floor((duration-hours*hour)/minute);
+                    int seconds = (int) Math.floor((duration-hours*hour-minutes*minute)/second);
+
+                    int sampled = data.getInt(TrackingService.HISTORY_SAMPLED_KEY);
+                    int discarded = data.getInt(TrackingService.HISTORY_DISCARDED_KEY);
+
+                    String logEntry = date+"\n"
+                                        +"Total sampled: "+sampled+"\n"
+                                        +"Discarded: "+discarded+"\n"
+                                        +"Time collected(hh:mm:ss): "+hours+":"+minutes+":"+seconds+"\n";
+
+                    log = log.concat(logEntry+"\n");
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         } else {
             log = "history is empty";
