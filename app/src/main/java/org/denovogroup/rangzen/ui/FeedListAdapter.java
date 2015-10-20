@@ -44,6 +44,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.baoyz.swipemenulistview.SwipeMenuLayout;
@@ -75,6 +76,7 @@ public class FeedListAdapter extends BaseAdapter {
     private MessageStore mMessageStore;
     private List<MessageStore.Message> items;
     private HashMap<String,Boolean> unreadItems;
+    int visiblePositionOffset = 0;
 
     /**
      * Holds references to views so that findViewById() is not needed to be
@@ -182,6 +184,9 @@ public class FeedListAdapter extends BaseAdapter {
             mViewHolder = (ViewHolder) convertView.getTag();
         }
 
+        ListView listview = (ListView)parent;
+        visiblePositionOffset = listview.getFirstVisiblePosition();
+
         String hashtaggedMessage = message.getMessage();
 
         List<String> hashtags = Utils.getHashtags(message.getMessage());
@@ -203,7 +208,8 @@ public class FeedListAdapter extends BaseAdapter {
         mViewHolder.mExpandView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(((SwipeMenuLayout)parent.getChildAt(position)).isOpen()){
+                int localPosition = position - visiblePositionOffset;
+                if(((SwipeMenuLayout)parent.getChildAt(localPosition)).isOpen()){
                     ((SwipeMenuListView) parent).smoothCloseMenu();
                 } else {
                     ((SwipeMenuListView) parent).smoothOpenMenu(position);

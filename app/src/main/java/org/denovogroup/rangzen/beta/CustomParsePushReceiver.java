@@ -1,6 +1,8 @@
 package org.denovogroup.rangzen.beta;
 
+import android.app.ActivityManager;
 import android.bluetooth.BluetoothAdapter;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,6 +11,7 @@ import android.util.Log;
 import com.parse.ParsePushBroadcastReceiver;
 
 import org.denovogroup.rangzen.backend.MessageStore;
+import org.denovogroup.rangzen.backend.ReadStateTracker;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.json.JSONException;
@@ -47,6 +50,13 @@ public class CustomParsePushReceiver extends ParsePushBroadcastReceiver {
                 MessageStore store = new MessageStore(context, StorageBase.ENCRYPTION_DEFAULT);
                 for(RangzenMessage receivedMessage : receivedMessages) {
                     store.addMessage(receivedMessage.text, receivedMessage.priority, true, receivedMessage.mId);
+                    ReadStateTracker.setReadState(context, receivedMessage.text, false);
+                }
+
+                if(isAppInForeground(context)){
+                    Intent newintent = new Intent();
+                    newintent.setAction(MessageStore.NEW_MESSAGE);
+                    context.getApplicationContext().sendBroadcast(newintent);
                 }
             }
         } catch (JSONException e) {
@@ -98,5 +108,16 @@ public class CustomParsePushReceiver extends ParsePushBroadcastReceiver {
 
     private static boolean hasMessage(String pushedContent){
         return pushedContent.contains(RANGZEN_MESSAGE_PERFIX) && pushedContent.contains(RANGZEN_MESSAGE_POSTFIX);
+    }
+
+    /** Check if the app have a living instance in the foreground
+     *
+     * @return true if the app is active and in the foreground, false otherwise
+     */
+    public boolean isAppInForeground(Context context) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
+        ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
+        return componentInfo.getPackageName().contains("org.denovogroup.rangzen");
     }
 }

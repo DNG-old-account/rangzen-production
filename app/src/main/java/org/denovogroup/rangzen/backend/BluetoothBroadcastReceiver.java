@@ -39,12 +39,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.wifi.WifiManager;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.util.Log;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.ui.Opener;
+import org.json.JSONObject;
 
 
 /**
@@ -130,17 +134,21 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
                                                                      currentStateString,
                                                                      currentState));
 
+      boolean isEnabled = false;
       switch(currentState){
           case BluetoothAdapter.STATE_TURNING_OFF:
           case BluetoothAdapter.STATE_OFF:
+              JSONObject report = ReportsMaker.getNetworkStateChangedReport(System.currentTimeMillis(), "BLUETOOTH", false);
+              NetworkHandler.getInstance(context).sendEventReport(report);
               showNoBluetoothNotification(context);
               break;
           case BluetoothAdapter.STATE_TURNING_ON:
           case BluetoothAdapter.STATE_ON:
+              JSONObject report2 = ReportsMaker.getNetworkStateChangedReport(System.currentTimeMillis(), "BLUETOOTH", true);
+              NetworkHandler.getInstance(context).sendEventReport(report2);
               dismissNoBluetoothNotification(context);
               break;
       }
-
   }
 
     /** create and display a dialog prompting the user about the enabled

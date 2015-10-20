@@ -13,6 +13,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -21,6 +22,7 @@ import android.util.Log;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.WifiStateReceiver;
 import org.denovogroup.rangzen.ui.Opener;
 import org.json.JSONException;
@@ -93,9 +95,13 @@ public class TrackingService extends Service implements LocationListener {
                 switch(event){
                     case GpsStatus.GPS_EVENT_STARTED:
                         dismissNoGPSNotification(TrackingService.this);
+                        JSONObject report = ReportsMaker.getNetworkStateChangedReport(System.currentTimeMillis(), "GPS", true);
+                        NetworkHandler.getInstance(TrackingService.this).sendEventReport(report);
                         break;
                     case GpsStatus.GPS_EVENT_STOPPED:
                         showNoGPSNotification(TrackingService.this);
+                        JSONObject report2 = ReportsMaker.getNetworkStateChangedReport(System.currentTimeMillis(), "GPS", false);
+                        NetworkHandler.getInstance(TrackingService.this).sendEventReport(report2);
                         break;
                 }
             }

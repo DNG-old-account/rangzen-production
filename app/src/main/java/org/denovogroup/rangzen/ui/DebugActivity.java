@@ -17,6 +17,7 @@ import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.ParseRelation;
 import com.parse.SaveCallback;
 
 import org.denovogroup.rangzen.R;
@@ -264,17 +265,23 @@ public class DebugActivity extends ActionBarActivity {
             try {
                 List<ParseObject> list = query.fromLocalDatastore().find();
                 if(list != null) {
+
+                    int dirtyCount = 0;
+                    for(ParseObject obj : list){
+                        if(obj.isDirty()) dirtyCount++;
+                    }
+
                     if(queryType.equals(ReportsMaker.LogEvent.event_tag.MESSAGE)){
-                        pending_messages = list.size();
+                        pending_messages = dirtyCount;
                         if(pending_messages > 0) result += "Messages: "+pending_messages+"\n";
                     } else if(queryType.equals(ReportsMaker.LogEvent.event_tag.NETWORK)) {
-                        pending_network = list.size();
+                        pending_network = dirtyCount;
                         if(pending_network > 0) result += "Network: "+pending_network+"\n";
                     } else if(queryType.equals(ReportsMaker.LogEvent.event_tag.SOCIAL_GRAPH)) {
-                        pending_graph = list.size();
+                        pending_graph = dirtyCount;
                         if(pending_graph > 0) result += "Social graph: "+pending_graph+"\n";
                     } else if(queryType.equals(ReportsMaker.LogEvent.event_tag.UI)) {
-                        pending_ui = list.size();
+                        pending_ui = dirtyCount;
                         if(pending_ui > 0) result += "UI: "+pending_ui+"\n";
                     }
                 }
