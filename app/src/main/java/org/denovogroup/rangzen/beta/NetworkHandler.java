@@ -234,6 +234,47 @@ public class NetworkHandler {
         return false;
     }
 
+    public boolean sendEventReports(List<JSONObject> reports) {
+        sendPinnedReports();
+
+        if(reports != null && !reports.isEmpty()){
+            List<ParseObject> convertedReports = new ArrayList<ParseObject>();
+            try {
+                for(JSONObject report : reports) {
+                    //Convert to parse object
+                    ParseObject testObject = new ParseObject(report.getString(ReportsMaker.EVENT_TAG_KEY));
+                    Iterator<?> keys = report.keys();
+                    while (keys.hasNext()) {
+                        String key = (String) keys.next();
+                        if (report.get(key) != null) {
+                            if (report.get(key) instanceof Object[]) {
+                                try {
+                                    String[] str = (String[]) report.get(key);
+                                    testObject.put(key, Arrays.asList(str));
+                                } catch (ClassCastException e) {
+                                }
+                            } else {
+                                testObject.put(key, report.get(key));
+                            }
+                        }
+                    }
+                    convertedReports.add(testObject);
+                }
+                //this will make sure the report is saved into local cache until sent to parse
+                if(NetworkHandler.getInstance() != null && NetworkHandler.getInstance().isNetworkConnected() && isEligableForSending){
+                    ParseObject.saveAllInBackground(convertedReports);
+                } else {
+                    ParseObject.pinAllInBackground(convertedReports.get(0).getClassName(), convertedReports);
+                }
+                return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return false;
+    }
+
     /** send a ui event report to the server, even though input is JSONObject you should use
      * ReportsMaker class to create a properly formatted report before using this method.
      * this method will also clear the current data from the ui report after succesful sending

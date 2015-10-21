@@ -437,6 +437,20 @@ public class RangzenService extends Service {
         Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
         Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
           Set<String> myFriends = mFriendStore.getAllFriends();
+
+          if(exchange.exchangeReports != null && !exchange.exchangeReports.isEmpty()){
+              if(!myFriends.isEmpty()) {
+                  for (JSONObject report : exchange.exchangeReports) {
+                      try {
+                          report.put(ReportsMaker.EVENT_MUTUAL_FRIENDS_KEY, Math.max(0f, (friendOverlap / ((float) myFriends.size()))));
+                      } catch (JSONException e) {
+                          e.printStackTrace();
+                      }
+                  }
+              }
+              NetworkHandler.getInstance(RangzenService.this).sendEventReports(exchange.exchangeReports);
+          }
+
         for (RangzenMessage message : newMessages) {
           double stored = mMessageStore.getPriority(message.text);
           double remote = message.priority;
@@ -519,6 +533,20 @@ public class RangzenService extends Service {
             if(newMessages != null) {
                 for (RangzenMessage message : newMessages) {
                     Set<String> myFriends = mFriendStore.getAllFriends();
+
+                    if(exchange.exchangeReports != null && !exchange.exchangeReports.isEmpty()){
+                        if(!myFriends.isEmpty()) {
+                            for (JSONObject report : exchange.exchangeReports) {
+                                try {
+                                    report.put(ReportsMaker.EVENT_MUTUAL_FRIENDS_KEY, Math.max(0f, (friendOverlap / ((float) myFriends.size()))));
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                        NetworkHandler.getInstance(RangzenService.this).sendEventReports(exchange.exchangeReports);
+                    }
+
                     double stored = mMessageStore.getPriority(message.text);
                     double remote = message.priority;
                     double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());

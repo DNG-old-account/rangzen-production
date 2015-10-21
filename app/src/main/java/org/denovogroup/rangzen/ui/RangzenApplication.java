@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.StrictMode;
+import android.support.multidex.MultiDex;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -123,5 +124,11 @@ public class RangzenApplication extends Application{
                 }
             }
         });
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
     }
 }
