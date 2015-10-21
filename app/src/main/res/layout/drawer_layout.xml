@@ -6,9 +6,26 @@
     android:background="@drawable/firstb">
 
     <FrameLayout
-        android:id="@+id/mainContent"
+        android:animateLayoutChanges="true"
+        android:id="@+id/contentHolder"
         android:layout_width="match_parent"
         android:layout_height="match_parent" >
+
+        <Button
+            android:id="@+id/new_post_notification"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/holo_purple"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:visibility="gone"/>
+
+        <FrameLayout
+            android:id="@+id/mainContent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
     </FrameLayout>
 
     <ListView
