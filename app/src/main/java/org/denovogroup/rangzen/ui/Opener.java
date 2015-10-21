@@ -53,6 +53,7 @@ import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -68,11 +69,14 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * This class is the manager of all of the fragments that are clickable in the
@@ -85,6 +89,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     private ListView mListView;
     private ActionBarDrawerToggle mDrawerListener;
     private SidebarListAdapter mSidebarAdapter;
+    private Button newMessagesNotification;
     private static TextView mCurrentTextView;
     private static boolean mHasStored = false;
     private static boolean mFirstTime = true;
@@ -154,6 +159,16 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             }
 
         };
+        newMessagesNotification = (Button) findViewById(R.id.new_post_notification);
+        newMessagesNotification.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                notifyDataSetChanged(null);
+                //mark all the messages as read
+                ReadStateTracker.markAllAsRead(Opener.this);
+                setPendingUnreadMessagesDisplay();
+            }
+        });
 
         mDrawerLayout.setDrawerListener(mDrawerListener);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -591,9 +606,13 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         if(pendingNewMessagesMenuItem != null){
             if(unreadCount > 0) {
                 String countString = (unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? Integer.toString(unreadCount) : "+"+MAX_NEW_MESSAGES_DISPLAY;
-                pendingNewMessagesMenuItem.setTitle(countString + " " + getString(R.string.new_post));
-                pendingNewMessagesMenuItem.setVisible(true);
+                /*pendingNewMessagesMenuItem.setTitle(countString + " " + getString(R.string.new_post));
+                pendingNewMessagesMenuItem.setVisible(true);*/
+
+                newMessagesNotification.setText(countString + " " + ((unreadCount > 1) ? getString(R.string.new_posts) : getString(R.string.new_post)));
+                newMessagesNotification.setVisibility(View.VISIBLE);
             } else {
+                newMessagesNotification.setVisibility(View.GONE);
                 pendingNewMessagesMenuItem.setVisible(false);
             }
 
