@@ -37,6 +37,7 @@ import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.ComponentName;
+import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.content.Context;
@@ -130,6 +131,8 @@ public class RangzenService extends Service {
     private final static String TAG = "RangzenService";
 
     private static final int NOTIFICATION_ID = R.string.unread_notification_title;
+    private static final int RENAME_DELAY = 1000;
+    private static final String DUMMY_MAC_ADDRESS = "02:00:00:00:00:00";
 
     /**
      * Called whenever the service is requested to start. If the service is
@@ -189,9 +192,7 @@ public class RangzenService extends Service {
 
         mMessageStore = new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT);
 
-
-        String btAddress = mBluetoothSpeaker.getAddress();
-        mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
+        setWifiDirectFriendlyName();
         mWifiDirectSpeaker.setmSeekingDesired(true);
 
         // Schedule the background task thread to run occasionally.
@@ -600,5 +601,26 @@ public class RangzenService extends Service {
         List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
         ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
         return componentInfo.getPackageName().contains("org.denovogroup.rangzen");
+    }
+
+    /** retrieve the bluetooth MAC address from the bluetooth speaker and set the WifiDirectSpeaker
+     * friendly name accordingly.
+     */
+    private void setWifiDirectFriendlyName(){
+        String btAddress = mBluetoothSpeaker.getAddress();
+        if(mWifiDirectSpeaker != null) {
+            mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
+            if (mBluetoothSpeaker.getAddress().equals(DUMMY_MAC_ADDRESS)) {
+                Log.w(TAG, "Bluetooth speaker provided a dummy bluetooth" +
+                        " MAC address (" + DUMMY_MAC_ADDRESS + ") scheduling device name change.");
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        setWifiDirectFriendlyName();
+                    }
+                }, RENAME_DELAY);
+            }
+        }
     }
 }
