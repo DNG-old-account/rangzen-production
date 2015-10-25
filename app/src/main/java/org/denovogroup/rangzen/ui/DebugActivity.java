@@ -1,5 +1,6 @@
 package org.denovogroup.rangzen.ui;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,10 +21,12 @@ import com.parse.ParseQuery;
 import com.parse.ParseRelation;
 import com.parse.SaveCallback;
 
+import org.apache.tools.ant.taskdefs.PathConvert;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.Peer;
 import org.denovogroup.rangzen.backend.PeerManager;
+import org.denovogroup.rangzen.backend.RangzenService;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.NetworkHandler;
@@ -63,6 +66,7 @@ public class DebugActivity extends ActionBarActivity {
     private TextView connectionsTv;
     private TextView pendingUpdatesTv;
     private TextView locationHistoryTv;
+    private TextView connectionHistoryTv;
     private Timer refreshTimer;
     private CheckBox trackLocation;
     private CheckBox unrestrictedNetwork;
@@ -83,11 +87,13 @@ public class DebugActivity extends ActionBarActivity {
 
         appVersionTv = (TextView) findViewById(R.id.app_ver);
         myIdTv = (TextView) findViewById(R.id.user_id);
+        TextView bluetoothMacTv = (TextView) findViewById(R.id.bt_mac);
         myFriendsTv = (TextView) findViewById(R.id.friends_id);
         connectionsTv = (TextView) findViewById(R.id.connections);
         updateHoursTv = (TextView) findViewById(R.id.hours);
         pendingUpdatesTv = (TextView) findViewById(R.id.updates);
         locationHistoryTv = (TextView) findViewById(R.id.location_history);
+        connectionHistoryTv = (TextView) findViewById(R.id.connection_history);
         trackLocation = (CheckBox) findViewById(R.id.trackLocation);
         unrestrictedNetwork = (CheckBox) findViewById(R.id.unrestrictedNetwork);
 
@@ -150,10 +156,19 @@ public class DebugActivity extends ActionBarActivity {
         connectionsTv.setText(connections);
         updateHoursTv.setText(""+getUpdateHours());
 
+        bluetoothMacTv.setText(BluetoothAdapter.getDefaultAdapter().getAddress());
+
         findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 clearLocationHistory();
+            }
+        });
+
+        findViewById(R.id.button2).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clearConnectionHistory();
             }
         });
     }
@@ -204,6 +219,8 @@ public class DebugActivity extends ActionBarActivity {
 
                 final String locationHistory = getLocationHistory();
 
+                final String connectionHistory = getConnectionHistory();
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -211,6 +228,7 @@ public class DebugActivity extends ActionBarActivity {
                         updateHoursTv.setText("" + getUpdateHours());
                         pendingUpdatesTv.setText(pendingUpdates);
                         locationHistoryTv.setText(locationHistory);
+                        connectionHistoryTv.setText(connectionHistory);
                     }
                 });
             }
@@ -355,6 +373,30 @@ public class DebugActivity extends ActionBarActivity {
 
     private void clearLocationHistory(){
         SharedPreferences history = getSharedPreferences("location_history",Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = history.edit();
+        editor.clear();
+        editor.commit();
+    }
+
+    private String getConnectionHistory() {
+        String result = "";
+
+        SharedPreferences pref = getSharedPreferences(RangzenService.CONNECTION_HISTORY_FILE, MODE_PRIVATE);
+        Map<String, String> items = (Map<String, String>) pref.getAll();
+
+        if(items.isEmpty()){
+         result = "No recent partners";
+        } else {
+            for (Map.Entry entry : items.entrySet()) {
+                result += entry.getKey() + " (" + entry.getValue() + ")\n";
+            }
+        }
+
+        return result;
+    }
+
+    private void clearConnectionHistory() {
+        SharedPreferences history = getSharedPreferences(RangzenService.CONNECTION_HISTORY_FILE, MODE_PRIVATE);
         SharedPreferences.Editor editor = history.edit();
         editor.clear();
         editor.commit();

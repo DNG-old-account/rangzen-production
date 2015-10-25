@@ -43,6 +43,8 @@ public class ReportsMaker {
     public static final String EVENT_SUCCESSFUL_KEY = "Successful_count";
     public static final String EVENT_FAILED_KEY = "Failed_count";
     public static final String EVENT_ERRORS_KEY = "Errors";
+    public static final String EVENT_MESSAGES_BEFORE_KEY = "MSG_Count_before";
+    public static final String EVENT_MESSAGES_AFTER_KEY = "MSG_Count_after";
 
     public static class LogEvent{
         public static class event_tag{
@@ -326,7 +328,7 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getConnectedDeviceReport(long start, long finish, int successful, int failed, String errors){
+    public static JSONObject getConnectedDeviceReport(long start, long finish, int successful, int failed, String errors, int msgBefore, int msgAfter){
         try {
             String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
@@ -341,6 +343,8 @@ public class ReportsMaker {
             testObject.put(EVENT_SUCCESSFUL_KEY, successful);
             testObject.put(EVENT_FAILED_KEY, failed);
             testObject.put(EVENT_ERRORS_KEY, (errors!= null) ? errors : "");
+            testObject.put(EVENT_MESSAGES_BEFORE_KEY, msgBefore);
+            testObject.put(EVENT_MESSAGES_AFTER_KEY, msgAfter);
             return testObject;
         } catch (JSONException e) {
             e.printStackTrace();

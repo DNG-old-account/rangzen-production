@@ -269,10 +269,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      */
     public void selectItem(int position) {
         mListView.setItemChecked(position, true);
-        if (position != 2) {
-            String[] sidebar = getResources().getStringArray(R.array.sidebar);
-            setTitle(sidebar[position]);
-        }
+        String[] sidebar = getResources().getStringArray(R.array.sidebar);
+        setTitle(sidebar[position]);
     }
 
     /**
@@ -367,7 +365,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             intent.setClass(this, PostActivity.class);
             startActivityForResult(intent, Message);
             return;
-        } else if (position == 2) {
+        //} else if (position == 2) {
             /*TODO
             Intent intent = new Intent("com.google.zxing.client.android.SCAN");
             intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
@@ -375,9 +373,10 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             startActivityForResult(intent, 0);
             startActivityForResult(intent, QR);
             return;*/
+        /*} else if (position == 3) {
             Intent intent = new Intent(this,DebugActivity.class);
             startActivity(intent);
-            return;
+            return;*/
         } else {
             needAdd = new FragmentOrganizer();
             Bundle b = new Bundle();

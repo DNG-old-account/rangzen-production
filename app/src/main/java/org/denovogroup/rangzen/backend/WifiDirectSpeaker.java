@@ -262,6 +262,8 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
           Log.w(TAG, "Address from peer doesn't look like BT address or is reserved: " + bluetoothAddress);
         }
 
+      } else if(device.deviceName != null){
+          Log.i(TAG, "WifiP2p device found but name doesn't contain prefix " + device.deviceName);
       }
     }
     Log.v(TAG, "P2P peers changed");
@@ -416,7 +418,7 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
       }
       });
     } else {
-      Log.v(TAG, "Attempted to seek peers while already seeking, not doing it.");
+      Log.v(TAG, "Attempted to seek peers while already seeking or recently sought peers, not doing it (Seeking:"+getSeeking()+" ,Recently Sought:"+(!lastSeekingWasLongAgo())+")");
     }
 
   }
@@ -456,6 +458,7 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
       // change the Wifi Direct name of their device.
       Method method = mWifiP2pManager.getClass().getMethod("setDeviceName", Channel.class, String.class, ActionListener.class);
       method.invoke(mWifiP2pManager, mWifiP2pChannel, name, null);
+        Log.d(TAG, "Wifi direct device name changed to:"+name);
     } catch (NoSuchMethodException e) {
       e.printStackTrace();
       Log.e(TAG, "Reflection found no such method as setDeviceName");

@@ -277,6 +277,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
   private void onBluetoothConnected(Context context, Intent intent) {
     BluetoothDevice device;
     device = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+      Log.i(TAG, "Bluetooth broadcast: connected with "+ device);
   }
 
   /**

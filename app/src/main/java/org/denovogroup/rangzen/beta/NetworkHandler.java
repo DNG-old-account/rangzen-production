@@ -8,27 +8,21 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
-import com.parse.DeleteCallback;
 import com.parse.FindCallback;
-import com.parse.GetCallback;
 import com.parse.ParseException;
-import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.SaveCallback;
-import com.parse.SendCallback;
 
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.locationtracking.TrackedLocation;
 import org.denovogroup.rangzen.ui.DebugActivity;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mockito.internal.util.collections.ArrayUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -63,6 +57,7 @@ public class NetworkHandler {
     private static final String LONGITUDE_KEY = "Longitude";
     private static final String LATITUDE_KEY = "Latitude";
 
+    private static final int MAX_ITEMS_PER_PACKET = 200;
     private static final int MAX_PACKET_SIZE = 128000;
     private static final int NETWORK_TIMER_DURATION = 60 * 1000;
 
@@ -146,7 +141,10 @@ public class NetworkHandler {
         String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
 
         if(trackedLocations != null){
+
             List<ParseObject> sendList = new ArrayList<>();
+            int sentItemsCount = 0;
+
             for(TrackedLocation trackedLocation : trackedLocations){
                 ParseObject testObject = new ParseObject("LocationTracking");
                 testObject.put(USERID_KEY, mThisDeviceUUID);
@@ -157,16 +155,20 @@ public class NetworkHandler {
 
                 sendList.add(testObject);
 
-                long sizeInBytes = getObjectSizeInBytes(sendList);
-
-                if(sizeInBytes >= MAX_PACKET_SIZE){
-                    sendList.remove(sendList.size()-1);
-                    break;
+                //long sizeInBytes = getObjectSizeInBytes(sendList);
+                if(sendList.size() == MAX_ITEMS_PER_PACKET){
+                    //packets.add(sendList);
+                    sentItemsCount += sendList.size();
+                    List<ParseObject> packet = sendList;
+                    ParseObject.saveAllInBackground(packet);
+                    sendList = new ArrayList<>();
                 }
             }
 
+            sentItemsCount += sendList.size();
             ParseObject.saveAllInBackground(sendList);
-            return sendList.size();
+
+            return sentItemsCount;
         }
         return -1;
     }

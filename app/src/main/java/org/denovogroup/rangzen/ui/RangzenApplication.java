@@ -5,12 +5,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.Handler;
-import android.os.StrictMode;
 import android.support.multidex.MultiDex;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.parse.FindCallback;
@@ -20,8 +16,6 @@ import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 import com.parse.ParsePush;
 import com.parse.ParseQuery;
-import com.parse.PushService;
-import com.parse.SaveCallback;
 
 import io.fabric.sdk.android.Fabric;
 import org.denovogroup.rangzen.backend.FriendStore;
@@ -32,7 +26,6 @@ import org.denovogroup.rangzen.beta.CustomParsePushReceiver;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -185,6 +178,8 @@ public class RangzenApplication extends Application{
                         userdata.put("installationId", ParseInstallation.getCurrentInstallation().getInstallationId());
                         userdata.put("UUID", "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes()));
                         userdata.put("publicId", store.getPublicDeviceIDString());
+                        userdata.put("readable_publicId", store.getPublicDeviceIDString().substring(store.getPublicDeviceIDString().length()-9));
+                        userdata.put("bt_MAC", BluetoothAdapter.getDefaultAdapter().getAddress());
                         userdata.saveInBackground();
                     }
                 } else {

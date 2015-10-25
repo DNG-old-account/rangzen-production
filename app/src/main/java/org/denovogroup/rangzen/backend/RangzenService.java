@@ -37,6 +37,8 @@ import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.ComponentName;
+import android.content.SharedPreferences;
+import android.os.Handler;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -64,6 +66,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -142,6 +145,12 @@ public class RangzenService extends Service {
 
     private static final int NOTIFICATION_ID = R.string.unread_notification_title;
 
+    private static final String DUMMY_MAC_ADDRESS = "02:00:00:00:00:00";
+
+    private static final int RENAME_DELAY = 1000;
+
+    public static final String CONNECTION_HISTORY_FILE = "connection_history";
+
     /**
      * Called whenever the service is requested to start. If the service is
      * already running, this does /not/ create a new instance of the service.
@@ -179,6 +188,7 @@ public class RangzenService extends Service {
 
         mPeerManager = PeerManager.getInstance(this);
         mBluetoothSpeaker = new BluetoothSpeaker(this, mPeerManager);
+
         mPeerManager.setBluetoothSpeaker(mBluetoothSpeaker);
 
         mStartTime = new Date();
@@ -200,9 +210,7 @@ public class RangzenService extends Service {
 
         mMessageStore = new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT);
 
-
-        String btAddress = mBluetoothSpeaker.getAddress();
-        mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
+        setWifiDirectFriendlyName();
         mWifiDirectSpeaker.setmSeekingDesired(true);
 
         // Schedule the background task thread to run occasionally.
@@ -282,11 +290,14 @@ public class RangzenService extends Service {
           Peer peer = peers.get(mRandom.nextInt(peers.size()));
           try {
             if (peerManager.thisDeviceSpeaksTo(peer)) {
+                Log.v(TAG, "Local device speaks to remote device ("+peer+")");
               // Connect to the peer, starting an exchange with the peer once
               // connected. We only do this if thisDeviceSpeaksTo(peer), which
               // checks whether we initiate conversations with this peer or
               // it initiates with us (a function of our respective addresses).
               connectTo(peer);
+            } else {
+                Log.v(TAG, "Remote device speaks to local device ("+peer+")");
             }
           } catch (NoSuchAlgorithmException e) {
             Log.e(TAG, "No such algorithm for hashing in thisDeviceSpeaksTo!? " + e);
@@ -330,7 +341,8 @@ public class RangzenService extends Service {
       // The peer connection callback (defined elsewhere in the class) takes
       // the connect bluetooth socket and uses it to create a new Exchange.
         //BETA
-        String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(),System.currentTimeMillis(),0,0,null));
+        MessageStore mStore = new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT);
+        String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(),System.currentTimeMillis(),0,0,null, mStore.getMessageCount(), mStore.getMessageCount()));
       mBluetoothSpeaker.connect(peer, mPeerConnectionCallback, reportid);
     }
 
@@ -398,6 +410,10 @@ public class RangzenService extends Service {
      */
     /* package */ void cleanupAfterExchange(String reportId) {
         //BETA
+        Map<String, Object> changes = new HashMap<>();
+        MessageStore mStore = new MessageStore(this, StorageBase.ENCRYPTION_DEFAULT);
+        changes.put(ReportsMaker.EVENT_MESSAGES_AFTER_KEY, mStore.getMessageCount());
+        ReportsMaker.editReport(reportId , changes);
         NetworkHandler.getInstance(getApplicationContext()).sendEventReport(ReportsMaker.getBacklogedReport(reportId));
         ReportsMaker.removeReport(reportId);
         //BETA END
@@ -405,6 +421,14 @@ public class RangzenService extends Service {
       setLastExchangeTime();
       try {
         if (mSocket != null) {
+            //BETA
+            SharedPreferences pref = getSharedPreferences(CONNECTION_HISTORY_FILE,MODE_PRIVATE);
+            SharedPreferences.Editor editor = pref.edit();
+            String readableId = mSocket.getRemoteDevice().getAddress();
+            editor.putString(readableId, Utils.convertTimestampToDateString(System.currentTimeMillis(), TimeZone.getDefault().getID()));
+            editor.commit();
+            //BETA END END
+
           mSocket.close();
         }
       } catch (IOException e) {
@@ -412,6 +436,14 @@ public class RangzenService extends Service {
       }
       try {
         if (mBluetoothSpeaker.mSocket != null) {
+            //BETA
+            SharedPreferences pref = getSharedPreferences(CONNECTION_HISTORY_FILE,MODE_PRIVATE);
+            SharedPreferences.Editor editor = pref.edit();
+            String readableId = mBluetoothSpeaker.mSocket.getRemoteDevice().getAddress();
+            readableId.substring(Math.max(0,readableId.length()-8));
+            editor.putString(readableId,Utils.convertTimestampToDateString(System.currentTimeMillis(), TimeZone.getDefault().getID()));
+            editor.commit();
+            //BETA END END
           mBluetoothSpeaker.mSocket.close();
         }
       } catch (IOException e) {
@@ -721,5 +753,26 @@ public class RangzenService extends Service {
         List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
         ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
         return componentInfo.getPackageName().contains("org.denovogroup.rangzen");
+    }
+
+    /** retrieve the bluetooth MAC address from the bluetooth speaker and set the WifiDirectSpeaker
+     * friendly name accordingly.
+      */
+    private void setWifiDirectFriendlyName(){
+        String btAddress = mBluetoothSpeaker.getAddress();
+        if(mWifiDirectSpeaker != null) {
+            mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
+            if (mBluetoothSpeaker.getAddress().equals(DUMMY_MAC_ADDRESS)) {
+                Log.w(TAG, "Bluetooth speaker provided a dummy bluetooth" +
+                        " MAC address (" + DUMMY_MAC_ADDRESS + ") scheduling device name change.");
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        setWifiDirectFriendlyName();
+                    }
+                }, RENAME_DELAY);
+            }
+        }
     }
 }

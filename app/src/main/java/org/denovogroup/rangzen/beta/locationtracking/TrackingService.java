@@ -30,6 +30,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -142,9 +143,19 @@ public class TrackingService extends Service implements LocationListener {
 
                 /* Check if last update was already sent (i.e the device couldn't get another update by the time the timer interval
                  ended) and save it if not */
-                if (Utils.isGPSEnabled(getApplicationContext()) && lastLocationUpdate != null && (lastLocationSent == null || lastLocationUpdate.timestamp > lastLocationSent.timestamp)) {
+                if (Utils.isGPSEnabled(getApplicationContext()) && lastLocationUpdate != null && (lastLocationSent == null || (lastLocationUpdate.timestamp > lastLocationSent.timestamp && lastLocationUpdate.latitude != lastLocationSent.latitude))) {
                     //save to cache until it can be flushed
-                    saveToCache(lastLocationUpdate);
+                    if(!saveToCache(lastLocationUpdate)){
+                        if(dataJson != null) {
+                            //count as discarded in the history log
+                            try {
+                                dataJson.put(HISTORY_DISCARDED_KEY, dataJson.optInt(HISTORY_DISCARDED_KEY, 0) + 1);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                    }
                 } else if(dataJson != null){
                     //count as discarded in the history log
                     try {
@@ -270,11 +281,13 @@ public class TrackingService extends Service implements LocationListener {
      *
      * @param trackedLocation to be saved into storage
      */
-    private void saveToCache(TrackedLocation trackedLocation){
+    private boolean saveToCache(TrackedLocation trackedLocation){
         if(trackedLocation != null) {
             LocationCacheHandler cacheHandler = LocationCacheHandler.getInstance(getApplicationContext());
-            cacheHandler.insertLocation(trackedLocation);
+            return cacheHandler.insertLocation(trackedLocation);
         }
+
+        return false;
     }
 
     /** create and display a dialog prompting the user about the enabled
