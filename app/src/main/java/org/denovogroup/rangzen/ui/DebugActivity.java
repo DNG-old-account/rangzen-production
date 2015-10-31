@@ -1,5 +1,6 @@
 package org.denovogroup.rangzen.ui;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,6 +9,7 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -16,22 +18,29 @@ import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.ParseRelation;
 import com.parse.SaveCallback;
 
+import org.apache.tools.ant.taskdefs.PathConvert;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.Peer;
 import org.denovogroup.rangzen.backend.PeerManager;
+import org.denovogroup.rangzen.backend.RangzenService;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.locationtracking.LocationCacheHandler;
 import org.denovogroup.rangzen.beta.locationtracking.TrackingService;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -56,6 +65,8 @@ public class DebugActivity extends ActionBarActivity {
     private TextView updateHoursTv;
     private TextView connectionsTv;
     private TextView pendingUpdatesTv;
+    private TextView locationHistoryTv;
+    private TextView connectionHistoryTv;
     private Timer refreshTimer;
     private CheckBox trackLocation;
     private CheckBox unrestrictedNetwork;
@@ -76,10 +87,13 @@ public class DebugActivity extends ActionBarActivity {
 
         appVersionTv = (TextView) findViewById(R.id.app_ver);
         myIdTv = (TextView) findViewById(R.id.user_id);
+        TextView bluetoothMacTv = (TextView) findViewById(R.id.bt_mac);
         myFriendsTv = (TextView) findViewById(R.id.friends_id);
         connectionsTv = (TextView) findViewById(R.id.connections);
         updateHoursTv = (TextView) findViewById(R.id.hours);
         pendingUpdatesTv = (TextView) findViewById(R.id.updates);
+        locationHistoryTv = (TextView) findViewById(R.id.location_history);
+        connectionHistoryTv = (TextView) findViewById(R.id.connection_history);
         trackLocation = (CheckBox) findViewById(R.id.trackLocation);
         unrestrictedNetwork = (CheckBox) findViewById(R.id.unrestrictedNetwork);
 
@@ -141,6 +155,22 @@ public class DebugActivity extends ActionBarActivity {
 
         connectionsTv.setText(connections);
         updateHoursTv.setText(""+getUpdateHours());
+
+        bluetoothMacTv.setText(BluetoothAdapter.getDefaultAdapter().getAddress());
+
+        findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clearLocationHistory();
+            }
+        });
+
+        findViewById(R.id.button2).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clearConnectionHistory();
+            }
+        });
     }
 
     public String getMyId() {
@@ -187,12 +217,18 @@ public class DebugActivity extends ActionBarActivity {
 
                 final String pendingUpdates = getPendingUpdates();
 
+                final String locationHistory = getLocationHistory();
+
+                final String connectionHistory = getConnectionHistory();
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         connectionsTv.setText(finalConnections);
                         updateHoursTv.setText("" + getUpdateHours());
                         pendingUpdatesTv.setText(pendingUpdates);
+                        locationHistoryTv.setText(locationHistory);
+                        connectionHistoryTv.setText(connectionHistory);
                     }
                 });
             }
@@ -247,17 +283,23 @@ public class DebugActivity extends ActionBarActivity {
             try {
                 List<ParseObject> list = query.fromLocalDatastore().find();
                 if(list != null) {
+
+                    int dirtyCount = 0;
+                    for(ParseObject obj : list){
+                        if(obj.isDirty()) dirtyCount++;
+                    }
+
                     if(queryType.equals(ReportsMaker.LogEvent.event_tag.MESSAGE)){
-                        pending_messages = list.size();
+                        pending_messages = dirtyCount;
                         if(pending_messages > 0) result += "Messages: "+pending_messages+"\n";
                     } else if(queryType.equals(ReportsMaker.LogEvent.event_tag.NETWORK)) {
-                        pending_network = list.size();
+                        pending_network = dirtyCount;
                         if(pending_network > 0) result += "Network: "+pending_network+"\n";
                     } else if(queryType.equals(ReportsMaker.LogEvent.event_tag.SOCIAL_GRAPH)) {
-                        pending_graph = list.size();
+                        pending_graph = dirtyCount;
                         if(pending_graph > 0) result += "Social graph: "+pending_graph+"\n";
                     } else if(queryType.equals(ReportsMaker.LogEvent.event_tag.UI)) {
-                        pending_ui = list.size();
+                        pending_ui = dirtyCount;
                         if(pending_ui > 0) result += "UI: "+pending_ui+"\n";
                     }
                 }
@@ -275,5 +317,88 @@ public class DebugActivity extends ActionBarActivity {
     protected void onPause(){
         super.onPause();
         refreshTimer.cancel();
+    }
+
+    private String getLocationHistory(){
+
+        int second = 1000;
+        int minute = 60 * second;
+        int hour = 60 * minute;
+
+        String log = "";
+
+        SharedPreferences history = getSharedPreferences(TrackingService.HISTORY_FILE_NAME,Context.MODE_PRIVATE);
+        if(history != null && !history.getAll().isEmpty()){
+            Map<String, Integer> items = (Map<String, Integer>) history.getAll();
+
+            for(Map.Entry entry : items.entrySet()){
+                String date = (String)entry.getKey();
+                try {
+                    JSONObject data = new JSONObject((String)entry.getValue());
+                    Calendar calFrom = Calendar.getInstance();
+                    calFrom.setTimeInMillis(data.optLong(TrackingService.HISTORY_FROM_KEY,0));
+                    calFrom.set(Calendar.MILLISECOND, 0);
+
+                    Calendar calTo = Calendar.getInstance();
+                    calTo.setTimeInMillis(data.optLong(TrackingService.HISTORY_TO_KEY, 0));
+                    calTo.set(Calendar.MILLISECOND, 0);
+
+
+                    long duration = calTo.getTimeInMillis() - calFrom.getTimeInMillis();
+
+                    int hours = (int) Math.floor(duration/hour);
+                    int minutes = (int) Math.floor((duration-hours*hour)/minute);
+                    int seconds = (int) Math.floor((duration-hours*hour-minutes*minute)/second);
+
+                    int sampled = data.getInt(TrackingService.HISTORY_SAMPLED_KEY);
+                    int discarded = data.getInt(TrackingService.HISTORY_DISCARDED_KEY);
+
+                    String logEntry = date+"\n"
+                                        +"Total sampled: "+sampled+"\n"
+                                        +"Discarded: "+discarded+"\n"
+                                        +"Time collected(hh:mm:ss): "+hours+":"+minutes+":"+seconds+"\n";
+
+                    log = log.concat(logEntry+"\n");
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            log = "history is empty";
+        }
+
+        return log;
+    }
+
+    private void clearLocationHistory(){
+        SharedPreferences history = getSharedPreferences("location_history",Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = history.edit();
+        editor.clear();
+        editor.commit();
+    }
+
+    private String getConnectionHistory() {
+        String result = "";
+
+        SharedPreferences pref = getSharedPreferences(RangzenService.CONNECTION_HISTORY_FILE, MODE_PRIVATE);
+        Map<String, String> items = (Map<String, String>) pref.getAll();
+
+        if(items.isEmpty()){
+         result = "No recent partners";
+        } else {
+            for (Map.Entry entry : items.entrySet()) {
+                result += entry.getKey() + " (" + entry.getValue() + ")\n";
+            }
+        }
+
+        return result;
+    }
+
+    private void clearConnectionHistory() {
+        SharedPreferences history = getSharedPreferences(RangzenService.CONNECTION_HISTORY_FILE, MODE_PRIVATE);
+        SharedPreferences.Editor editor = history.edit();
+        editor.clear();
+        editor.commit();
     }
 }

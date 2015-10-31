@@ -82,7 +82,7 @@ public class LocationCacheHandler extends SQLiteOpenHelper{
      *
      * @param trackedLocation to be cached
      */
-    public void insertLocation(TrackedLocation trackedLocation){
+    public boolean insertLocation(TrackedLocation trackedLocation){
         if(trackedLocation != null && !hasLocation(trackedLocation)){
             ContentValues content = new ContentValues();
             content.put(LATITUDE_COL, trackedLocation.latitude);
@@ -93,8 +93,10 @@ public class LocationCacheHandler extends SQLiteOpenHelper{
             if(db != null){
                 db.insert(TABLE_NAME, null, content);
                 //Log.d(LOG_TAG, "saved to cache");
+                return true;
             }
         }
+        return false;
     }
 
     /** Look for a location in the cache based on its timestamp

@@ -35,12 +35,16 @@ public class ReportsMaker {
     public static final String EVENT_MESSAGE_KEY = "Message";
     public static final String EVENT_DEVICES_COUNT = "Devices_count";
     public static final String EVENT_DEVICES_IDS = "Devices_Ids";
+    public static final String EVENT_CONNECTION_START_READABLE_KEY = "Readable_Connection_start";
     public static final String EVENT_CONNECTION_START_KEY = "Connection_start";
+    public static final String EVENT_CONNECTION_DURATION_KEY = "Connection_duration";
     public static final String EVENT_CONNECTION_FINISH_KEY = "Connection_finish";
     public static final String EVENT_EXCHANGED_KEY = "Exchanged_count";
     public static final String EVENT_SUCCESSFUL_KEY = "Successful_count";
     public static final String EVENT_FAILED_KEY = "Failed_count";
     public static final String EVENT_ERRORS_KEY = "Errors";
+    public static final String EVENT_MESSAGES_BEFORE_KEY = "MSG_Count_before";
+    public static final String EVENT_MESSAGES_AFTER_KEY = "MSG_Count_after";
 
     public static class LogEvent{
         public static class event_tag{
@@ -150,7 +154,7 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getMessageExchangeReport(long timestamp, String sender, String receiver, String messageId, double priority, float mutualFriends, String exchangeTimes){
+    public static JSONObject getMessageExchangeReport(long timestamp, String sender, String receiver, String message,String messageId, double priority, float mutualFriends, String exchangeTimes){
         try{
             String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
@@ -162,6 +166,7 @@ public class ReportsMaker {
             testObject.put(EVENT_PRIORITY_KEY, priority);
             testObject.put(EVENT_SENDER_KEY, sender);
             testObject.put(EVENT_RECEIVER_KEY, receiver);
+            testObject.put(EVENT_MESSAGE_KEY, message);
             testObject.put(EVENT_MESSAGE_ID_KEY, messageId);
             testObject.put(EVENT_MUTUAL_FRIENDS_KEY, mutualFriends);
             testObject.put(EVENT_EXCHANGE_TIMES_KEY, exchangeTimes);
@@ -323,19 +328,23 @@ public class ReportsMaker {
         return null;
     }
 
-    public static JSONObject getConnectedDeviceReport(long start, long finish, int successful, int failed, String errors){
+    public static JSONObject getConnectedDeviceReport(long start, long finish, int successful, int failed, String errors, int msgBefore, int msgAfter){
         try {
             String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
             JSONObject testObject = new JSONObject();
             testObject.put(USERID_KEY, mThisDeviceUUID);
             testObject.put(EVENT_TAG_KEY, LogEvent.event_tag.NETWORK);
             testObject.put(EVENT_ACTION_KEY, LogEvent.event_action.Network.CONNECTED_DEVICE);
+            testObject.put(EVENT_CONNECTION_START_READABLE_KEY, Utils.convertTimestampToDateString(start , null));
             testObject.put(EVENT_CONNECTION_START_KEY, start);
             testObject.put(EVENT_CONNECTION_FINISH_KEY, finish);
+            testObject.put(EVENT_CONNECTION_DURATION_KEY, finish-start);
             testObject.put(EVENT_EXCHANGED_KEY, successful+failed);
             testObject.put(EVENT_SUCCESSFUL_KEY, successful);
             testObject.put(EVENT_FAILED_KEY, failed);
             testObject.put(EVENT_ERRORS_KEY, (errors!= null) ? errors : "");
+            testObject.put(EVENT_MESSAGES_BEFORE_KEY, msgBefore);
+            testObject.put(EVENT_MESSAGES_AFTER_KEY, msgAfter);
             return testObject;
         } catch (JSONException e) {
             e.printStackTrace();

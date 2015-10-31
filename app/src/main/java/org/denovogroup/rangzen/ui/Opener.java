@@ -74,11 +74,14 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * This class is the manager of all of the fragments that are clickable in the
@@ -91,6 +94,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     private ListView mListView;
     private ActionBarDrawerToggle mDrawerListener;
     private SidebarListAdapter mSidebarAdapter;
+    private Button newMessagesNotification;
     private static TextView mCurrentTextView;
     private static boolean mHasStored = false;
     private static boolean mFirstTime = true;
@@ -165,6 +169,16 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             }
 
         };
+        newMessagesNotification = (Button) findViewById(R.id.new_post_notification);
+        newMessagesNotification.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                notifyDataSetChanged(null);
+                //mark all the messages as read
+                ReadStateTracker.markAllAsRead(Opener.this);
+                setPendingUnreadMessagesDisplay();
+            }
+        });
 
         mDrawerLayout.setDrawerListener(mDrawerListener);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -174,12 +188,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         if(mFirstTime){
             //Start the read state tracker to tell what messages are not read yet
             ReadStateTracker.initTracker(getApplicationContext());
-
-            //put first message into the feed
-            MessageStore messageStore = new MessageStore(this, StorageBase.ENCRYPTION_DEFAULT);
-            messageStore.addMessage(
-                    "This is the Rangzen message feed. Messages in the ether will appear here.",
-                    1L, true, "demo");
         }
     }
 
@@ -261,10 +269,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      */
     public void selectItem(int position) {
         mListView.setItemChecked(position, true);
-        if (position != 2) {
-            String[] sidebar = getResources().getStringArray(R.array.sidebar);
-            setTitle(sidebar[position]);
-        }
+        String[] sidebar = getResources().getStringArray(R.array.sidebar);
+        setTitle(sidebar[position]);
     }
 
     /**
@@ -359,7 +365,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             intent.setClass(this, PostActivity.class);
             startActivityForResult(intent, Message);
             return;
-        } else if (position == 2) {
+        //} else if (position == 2) {
             /*TODO
             Intent intent = new Intent("com.google.zxing.client.android.SCAN");
             intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
@@ -367,9 +373,10 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             startActivityForResult(intent, 0);
             startActivityForResult(intent, QR);
             return;*/
+        /*} else if (position == 3) {
             Intent intent = new Intent(this,DebugActivity.class);
             startActivity(intent);
-            return;
+            return;*/
         } else {
             needAdd = new FragmentOrganizer();
             Bundle b = new Bundle();
@@ -641,9 +648,13 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         if(pendingNewMessagesMenuItem != null){
             if(unreadCount > 0) {
                 String countString = (unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? Integer.toString(unreadCount) : "+"+MAX_NEW_MESSAGES_DISPLAY;
-                pendingNewMessagesMenuItem.setTitle(countString + " " + getString(R.string.new_post));
-                pendingNewMessagesMenuItem.setVisible(true);
+                /*pendingNewMessagesMenuItem.setTitle(countString + " " + getString(R.string.new_post));
+                pendingNewMessagesMenuItem.setVisible(true);*/
+
+                newMessagesNotification.setText(countString + " " + ((unreadCount > 1) ? getString(R.string.new_posts) : getString(R.string.new_post)));
+                newMessagesNotification.setVisibility(View.VISIBLE);
             } else {
+                newMessagesNotification.setVisibility(View.GONE);
                 pendingNewMessagesMenuItem.setVisible(false);
             }
         }

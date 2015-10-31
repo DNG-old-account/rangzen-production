@@ -50,6 +50,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.InputType;
@@ -62,6 +63,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -78,6 +80,10 @@ import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.json.JSONObject;
 import org.w3c.dom.Text;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Random;
 import java.util.UUID;
 
@@ -152,7 +158,8 @@ public class FragmentOrganizer extends Fragment {
             view5.findViewById(R.id.reportBug).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    reportBug();
+                    boolean includeLog = ((CheckBox)((View) v.getParent()).findViewById(R.id.includeLog)).isChecked();
+                    reportBug(includeLog);
                 }
             });
 
@@ -359,7 +366,7 @@ public class FragmentOrganizer extends Fragment {
                 //BETA
                 JSONObject report = ReportsMaker.getMessagePostedReport(System.currentTimeMillis(), mId, priority, message);
                 NetworkHandler.getInstance(getActivity()).sendEventReport(report);
-                ReportsMaker.updateUiStatistic(getActivity(), System.currentTimeMillis(),0, Utils.getHashtags(message).size(), 0, 0, 1, 0, 0);
+                ReportsMaker.updateUiStatistic(getActivity(), System.currentTimeMillis(), 0, Utils.getHashtags(message).size(), 0, 0, 1, 0, 0);
                 //BETA END
 
                 getActivity().setResult(Activity.RESULT_OK);
@@ -545,26 +552,53 @@ public class FragmentOrganizer extends Fragment {
 	}
 
     /**Open a dialog to send a bug report to dedicated server*/
-    public void reportBug() {
-        openEmailSendingForm();
+    public void reportBug(boolean includeLog) {
+        openEmailSendingForm(includeLog);
     }
 
-    private void openEmailSendingForm(){
+    private void openEmailSendingForm(boolean includeLog){
         Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "rangzen_dev@denovogroup.org", null));
-        String userData = "";
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback");
+        intent.putExtra(Intent.EXTRA_TEXT, "Dear Rangzen support representative");
 
-        try {
-            PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
-            userData += "Application: Ranzgen v"+info.versionName+" ("+info.versionCode+")\n";
-        } catch(PackageManager.NameNotFoundException e) {
+
+        if(includeLog) {
+            File log_filename = new File(Environment.getExternalStorageDirectory() + "/device_log.txt");
+            log_filename.delete();
+
+            //get device info
+            String userData = "";
+
+            try {
+                PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+                userData += "Application: Ranzgen v" + info.versionName + " (" + info.versionCode + ")\n";
+            } catch (PackageManager.NameNotFoundException e) {
+            }
+
+            userData += "OS version: " + android.os.Build.VERSION.SDK_INT + "\n";
+            userData += "Device: " + android.os.Build.DEVICE + "\n";
+            userData += "Model: " + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")\n";
+
+            try {
+                log_filename.createNewFile();
+                BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
+                writer.write(userData);
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                //get log from device
+                String cmd = "logcat -d -f" + log_filename.getAbsolutePath();
+                Runtime.getRuntime().exec(cmd);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
         }
 
-        userData += "OS version: "+android.os.Build.VERSION.SDK_INT+"\n";
-        userData += "Device: "+android.os.Build.DEVICE+"\n";
-        userData += "Model: "+android.os.Build.MODEL + " ("+ android.os.Build.PRODUCT + ")\n";
-
-        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback:");
-        intent.putExtra(Intent.EXTRA_TEXT, userData);
         startActivity(Intent.createChooser(intent, "Send mail using..."));
     }
 }

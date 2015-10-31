@@ -51,7 +51,7 @@ class IntroductionFragmentAdapter extends FragmentPagerAdapter implements
         IconPagerAdapter {
     
     /** Number of slides in the introduction. */
-    private int mCount = 3;
+    private int mCount = 1;//3;
 
     public IntroductionFragmentAdapter(FragmentManager fm) {
         super(fm);

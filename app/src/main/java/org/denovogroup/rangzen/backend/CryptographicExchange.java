@@ -111,6 +111,7 @@ public class CryptographicExchange extends Exchange {
     // the error message and error state of the exchange to reasonable values
     // before throwing their exceptions.
     try {
+        exchangeReports = new ArrayList<JSONObject>();
       // TODO(lerner): This (initializing PSIs) is costly, so we may want to
       // do this offline if it's making exchanges slow.
       initializePSIObjects();
@@ -255,8 +256,8 @@ public class CryptographicExchange extends Exchange {
               if (NetworkHandler.getInstance() != null) {
                   String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
                   for (RangzenMessage msg : cm.messages) {
-                      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), msg.mId, msg.priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), "" + watch.getElapsedTime());
-                      NetworkHandler.getInstance().sendEventReport(report);
+                      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), msg.text ,msg.mId, msg.priority, 0f, "" + watch.getElapsedTime());
+                      exchangeReports.add(report);
                   }
               }
               //BETA END
@@ -320,8 +321,8 @@ public class CryptographicExchange extends Exchange {
               String exception = executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
               // BETA
               watch.stop();
-              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), ""+watch.getElapsedTime());
-              if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
+              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).text,mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, 0, ""+watch.getElapsedTime());
+              exchangeReports.add(report);
               //BETA END
               if (exception != null && !exception.isEmpty()) {
                   executor.shutdown();

@@ -286,8 +286,8 @@ public class BluetoothSpeaker {
     mSocket = mServerSocket.accept();
     Log.i(TAG, "Accepted socket from " + mSocket.getRemoteDevice());
     Log.i(TAG, "Accepted socket connected? " + mSocket.isConnected());
-
-      String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(), System.currentTimeMillis(), 0, 0, null));
+      MessageStore mStore = new MessageStore(mContext, StorageBase.ENCRYPTION_DEFAULT);
+      String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(), System.currentTimeMillis(), 0, 0, null, mStore.getMessageCount(), mStore.getMessageCount()));
     mExchange = new CryptographicExchange(mSocket.getInputStream(),
                              mSocket.getOutputStream(),
                              false,

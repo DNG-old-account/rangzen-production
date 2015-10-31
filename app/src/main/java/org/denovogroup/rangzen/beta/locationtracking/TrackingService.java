@@ -6,23 +6,31 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.NetworkHandler;
+import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.WifiStateReceiver;
 import org.denovogroup.rangzen.ui.Opener;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -54,6 +62,11 @@ public class TrackingService extends Service implements LocationListener {
     private static TrackedLocation lastLocationUpdate;
     private static boolean isFlushing = false;
     private static long flushInterval = 0;
+    public static final String HISTORY_FILE_NAME = "location_history";
+    public static final String HISTORY_SAMPLED_KEY = "sampled";
+    public static final String HISTORY_DISCARDED_KEY = "discarded";
+    public static final String HISTORY_FROM_KEY = "from";
+    public static final String HISTORY_TO_KEY = "to";
 
     public static WifiStateReceiver receiver;
 
@@ -83,9 +96,13 @@ public class TrackingService extends Service implements LocationListener {
                 switch(event){
                     case GpsStatus.GPS_EVENT_STARTED:
                         dismissNoGPSNotification(TrackingService.this);
+                        JSONObject report = ReportsMaker.getNetworkStateChangedReport(System.currentTimeMillis(), "GPS", true);
+                        NetworkHandler.getInstance(TrackingService.this).sendEventReport(report);
                         break;
                     case GpsStatus.GPS_EVENT_STOPPED:
                         showNoGPSNotification(TrackingService.this);
+                        JSONObject report2 = ReportsMaker.getNetworkStateChangedReport(System.currentTimeMillis(), "GPS", false);
+                        NetworkHandler.getInstance(TrackingService.this).sendEventReport(report2);
                         break;
                 }
             }
@@ -103,11 +120,56 @@ public class TrackingService extends Service implements LocationListener {
             public void run() {
 
                 flushInterval += UPDATE_TIME_INTERVAL;
+
+                //add to the history log for the sampling action
+                SharedPreferences history = getSharedPreferences(HISTORY_FILE_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor history_editor = history.edit();
+
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(System.currentTimeMillis());
+                String date = calendar.get(Calendar.DAY_OF_MONTH)+"-"+calendar.get(Calendar.MONTH)+"-"+calendar.get(Calendar.YEAR);
+
+                JSONObject dataJson = null;
+
+                try {
+                    dataJson = new JSONObject(history.getString(date, new JSONObject().toString()));
+                    if(!dataJson.has(HISTORY_FROM_KEY)) dataJson.put(HISTORY_FROM_KEY, calendar.getTimeInMillis());
+                    dataJson.put(HISTORY_SAMPLED_KEY, dataJson.optInt(HISTORY_SAMPLED_KEY,0)+1);
+                    dataJson.put(HISTORY_TO_KEY, calendar.getTimeInMillis());
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
                 /* Check if last update was already sent (i.e the device couldn't get another update by the time the timer interval
                  ended) and save it if not */
-                if (lastLocationUpdate != null && (lastLocationSent == null || lastLocationUpdate.timestamp > lastLocationSent.timestamp)) {
-                    saveToCache(lastLocationUpdate);
+                if (Utils.isGPSEnabled(getApplicationContext()) && lastLocationUpdate != null && (lastLocationSent == null || (lastLocationUpdate.timestamp > lastLocationSent.timestamp && lastLocationUpdate.latitude != lastLocationSent.latitude))) {
+                    //save to cache until it can be flushed
+                    if(!saveToCache(lastLocationUpdate)){
+                        if(dataJson != null) {
+                            //count as discarded in the history log
+                            try {
+                                dataJson.put(HISTORY_DISCARDED_KEY, dataJson.optInt(HISTORY_DISCARDED_KEY, 0) + 1);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                    }
+                } else if(dataJson != null){
+                    //count as discarded in the history log
+                    try {
+                        dataJson.put(HISTORY_DISCARDED_KEY, dataJson.optInt(HISTORY_DISCARDED_KEY, 0) + 1);
+                    } catch(JSONException e){
+                        e.printStackTrace();
+                    }
                 }
+
+                if(dataJson != null) {
+                    history_editor.putString(date, dataJson.toString());
+                }
+                history_editor.commit();
+
                 //try to send everything in local memory to the server
                 flushCache();
             }
@@ -130,8 +192,6 @@ public class TrackingService extends Service implements LocationListener {
 
         locationUpdateTimer.cancel();
     }
-
-
 
     @Override
     public void onLocationChanged(Location location) {
@@ -221,11 +281,13 @@ public class TrackingService extends Service implements LocationListener {
      *
      * @param trackedLocation to be saved into storage
      */
-    private void saveToCache(TrackedLocation trackedLocation){
+    private boolean saveToCache(TrackedLocation trackedLocation){
         if(trackedLocation != null) {
             LocationCacheHandler cacheHandler = LocationCacheHandler.getInstance(getApplicationContext());
-            cacheHandler.insertLocation(trackedLocation);
+            return cacheHandler.insertLocation(trackedLocation);
         }
+
+        return false;
     }
 
     /** create and display a dialog prompting the user about the enabled

@@ -99,6 +99,8 @@ public class Exchange implements Runnable {
   private String reportId;
   private String partnerId;
 
+    public List<JSONObject> exchangeReports;
+
   /** Send up to this many messages (top priority) from the message store. */
   private static final int NUM_MESSAGES_TO_SEND = 100;
 
@@ -273,7 +275,7 @@ public class Exchange implements Runnable {
               //BETA
               watch.stop();
               String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, messageFromStore.getMId(), messageFromStore.getPriority(), Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), "" + watch.getElapsedTime());
+              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, messageFromStore.getMessage(), messageFromStore.getMId(), messageFromStore.getPriority(), Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), "" + watch.getElapsedTime());
               if (NetworkHandler.getInstance() != null)
                   NetworkHandler.getInstance().sendEventReport(report);
               //BETA END
@@ -345,11 +347,11 @@ public class Exchange implements Runnable {
               watch.start();              List<RangzenMessage> res = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
               mMessagesReceived.addAll(res);
               watch.stop();
-              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()),""+watch.getElapsedTime());
+              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, mMessagesReceived.get(mMessagesReceived.size()-1).text, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()),""+watch.getElapsedTime());
               if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
           } catch (InterruptedException |ExecutionException | TimeoutException e) {
               watch.stop();
-              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()),""+watch.getElapsedTime());
+              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, mMessagesReceived.get(mMessagesReceived.size()-1).text, mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, Math.max(0f,((float) commonFriends) / friendStore.getAllFriends().size()),""+watch.getElapsedTime());
               if(NetworkHandler.getInstance() != null) NetworkHandler.getInstance().sendEventReport(report);
               e.printStackTrace();
               task.cancel(true);
