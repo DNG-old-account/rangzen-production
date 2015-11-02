@@ -365,18 +365,17 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             intent.setClass(this, PostActivity.class);
             startActivityForResult(intent, Message);
             return;
-        //} else if (position == 2) {
-            /*TODO
+        /*} else if (position == 2) {
             Intent intent = new Intent("com.google.zxing.client.android.SCAN");
             intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
             // startActivityForResult(intent, 0);
             startActivityForResult(intent, 0);
             startActivityForResult(intent, QR);
             return;*/
-        /*} else if (position == 3) {
+        } else if (position == 2) {
             Intent intent = new Intent(this,DebugActivity.class);
             startActivity(intent);
-            return;*/
+            return;
         } else {
             needAdd = new FragmentOrganizer();
             Bundle b = new Bundle();

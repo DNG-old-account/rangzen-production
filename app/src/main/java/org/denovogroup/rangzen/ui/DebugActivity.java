@@ -221,6 +221,8 @@ public class DebugActivity extends ActionBarActivity {
 
                 final String connectionHistory = getConnectionHistory();
 
+                Log.d("DebugActivity","updating view:"+"("+finalConnections+")"+"("+pendingUpdates+")"+"("+locationHistory+")"+"("+connectionHistory+")");
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

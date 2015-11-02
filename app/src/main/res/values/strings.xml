@@ -26,7 +26,7 @@
         <item>Feed</item>
         <item>New Post</item>
         <!--<item>Add Friend</item>-->
-        <!--<item>Debug</item>-->
+        <item>Debug</item>
         <item>Info</item>
     </string-array>
 
