@@ -185,7 +185,7 @@ public class MessageStore extends SQLiteOpenHelper {
             }
             cursor.close();
         }
-        return null;
+        return new ArrayList<>();
     }
 
     /** Return an array of messages sorted by according their priority and deleted state
@@ -211,7 +211,7 @@ public class MessageStore extends SQLiteOpenHelper {
             }
             cursor.close();
         }
-        return null;
+        return new ArrayList<>();
     }
 
     /** Return a single message matching supplied text or null if no match can be found.
@@ -228,8 +228,7 @@ public class MessageStore extends SQLiteOpenHelper {
                     +" LIMIT 1;";
             Cursor cursor = db.rawQuery(query, null);
             if(cursor.getCount() > 0){
-                cursor.moveToFirst();
-                Message result = new Message(cursor.getDouble(cursor.getColumnIndex(COL_PRIORITY)),cursor.getString(cursor.getColumnIndex(COL_MESSAGE)));
+                Message result = convertToMessages(cursor).get(0);
                 cursor.close();
                 return result;
             }
