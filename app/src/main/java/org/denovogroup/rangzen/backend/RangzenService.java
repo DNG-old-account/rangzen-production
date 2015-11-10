@@ -190,7 +190,7 @@ public class RangzenService extends Service {
                                                    mBluetoothSpeaker,
                                                    new WifiDirectFrameworkGetter());
 
-        mMessageStore = new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT);
+        mMessageStore = MessageStore.getInstance(this);
 
         setWifiDirectFriendlyName();
         mWifiDirectSpeaker.setmSeekingDesired(true);
@@ -339,7 +339,7 @@ public class RangzenService extends Service {
                 socket.getOutputStream(),
                 true,
                 new FriendStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT),
-                new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT),
+                MessageStore.getInstance(RangzenService.this),
                 RangzenService.this.mExchangeCallback);
             (new Thread(mExchange)).start();
           } catch (IOException e) {
@@ -407,9 +407,9 @@ public class RangzenService extends Service {
           double remote = message.priority;
           double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
           try {
-            if (mMessageStore.contains(message.text)) {
+            if (mMessageStore.containsOrRemoved(message.text)){
                 //update existing message priority unless its marked as removed by user
-                if(stored != MessageStore.REMOVED) mMessageStore.updatePriority(message.text, newPriority, true);
+                mMessageStore.updatePriority(message.text, newPriority, true);
             } else {
                 hasNew = true;
                 mMessageStore.addMessage(message.text, newPriority, true);
@@ -458,9 +458,9 @@ public class RangzenService extends Service {
                     double remote = message.priority;
                     double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
                     try {
-                        if (mMessageStore.contains(message.text)) {
+                        if (mMessageStore.containsOrRemoved(message.text)){
                             //update existing message priority unless its marked as removed by user
-                            if(stored != MessageStore.REMOVED) mMessageStore.updatePriority(message.text, newPriority, true);
+                            mMessageStore.updatePriority(message.text, newPriority, true);
                         } else {
                             hasNew = true;
                             mMessageStore.addMessage(message.text, newPriority, true);

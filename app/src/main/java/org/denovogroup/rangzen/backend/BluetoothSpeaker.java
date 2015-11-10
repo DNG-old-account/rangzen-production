@@ -285,7 +285,7 @@ public class BluetoothSpeaker {
                              mSocket.getOutputStream(),
                              false,
                              new FriendStore(mContext, StorageBase.ENCRYPTION_DEFAULT),
-                             new MessageStore(mContext, StorageBase.ENCRYPTION_DEFAULT),
+                             MessageStore.getInstance(mContext),
                              mContext.mExchangeCallback);
     //mExchange.execute((Boolean) null);
     // Start the exchange.

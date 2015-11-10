@@ -327,15 +327,11 @@ public class FragmentOrganizer extends Fragment {
              */
             @Override
             public void onClick(View v) {
-                MessageStore messageStore = new MessageStore(getActivity(),
-                        StorageBase.ENCRYPTION_DEFAULT);
+                MessageStore messageStore = MessageStore.getInstance(getActivity());
                 String message = ((TextView) getActivity().findViewById(
                         R.id.editText1)).getText().toString();
                 float priority = 1.0f;
-                boolean alreadyExists = !messageStore.addMessage(message, priority, true);
-                if(alreadyExists){
-                    messageStore.updatePriority(message,priority, true);
-                }
+                messageStore.addMessage(message, priority, true);
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 getActivity().setResult(Activity.RESULT_OK);

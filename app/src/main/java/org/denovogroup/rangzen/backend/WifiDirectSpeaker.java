@@ -239,6 +239,7 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
    * an extra.
    */
   private void onWifiP2pPeersChanged(Context context, Intent intent) {
+
     // Temp used merely for readability (avoiding very long line/weird indent).
     Parcelable temp = intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
     WifiP2pDeviceList peerDevices = (WifiP2pDeviceList) temp;

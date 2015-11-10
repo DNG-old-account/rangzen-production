@@ -121,7 +121,7 @@ public class FeedFragment extends Fragment implements Refreshable{
         listView.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(final int position, SwipeMenu swipeMenu, int index) {
-                MessageStore store = new MessageStore(getActivity(), StorageBase.ENCRYPTION_DEFAULT);
+                MessageStore store = MessageStore.getInstance(getActivity());
                 MessageStore.Message message = (mFeedListAdaper.getItems() == null) ? store.getKthMessage(position) : mFeedListAdaper.getItems().get(position);
                 boolean updateViewDelayed = false;
                 switch (swipeMenu.getMenuItem(index).getId()) {
@@ -215,7 +215,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                                     the currently displayed to retain consistent look */
                             List<MessageStore.Message> updatedList = mFeedListAdaper.getItems();
                             if (updatedList != null) {
-                                MessageStore store = new MessageStore(getActivity(), StorageBase.ENCRYPTION_DEFAULT);
+                                MessageStore store = MessageStore.getInstance(getActivity());
                                 double oldPri = updatedList.get(position).getPriority();
                                 updatedList.get(position).setPriority(store.getPriority(updatedList.get(position).getMessage()));
                                 updatedList = sortDetachedList(updatedList);
@@ -289,7 +289,7 @@ public class FeedFragment extends Fragment implements Refreshable{
      */
     private double getNextPriority(boolean up, MessageStore.Message message, int position){
 
-        MessageStore store = new MessageStore(getActivity(),StorageBase.ENCRYPTION_DEFAULT);
+        MessageStore store = MessageStore.getInstance(getActivity());
         MessageStore.Message currentlyEvaluatedMessage;
         /** The message one priority slot away from the supplied message based on the direction of the update*/
         MessageStore.Message m1 = null;

@@ -217,16 +217,17 @@ public class Exchange implements Runnable {
    */
   /* package */ List<RangzenMessage> getMessages() { 
     List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
-    for (int k=0; k<NUM_MESSAGES_TO_SEND; k++) {
-      MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
-      if (messageFromStore == null) {
-        break;
+    List<MessageStore.Message> messagesFromStore = MessageStore.getInstance().getMessages(false, NUM_MESSAGES_TO_SEND);
+      if (messagesFromStore != null) {
+          for (MessageStore.Message message :messagesFromStore) {
+              if(message != null){
+                  messages.add(new RangzenMessage.Builder()
+                          .text(message.getMessage())
+                          .priority(message.getPriority())
+                          .build());
+              }
+          }
       }
-      messages.add(new RangzenMessage.Builder()
-                                     .text(messageFromStore.getMessage())
-                                     .priority(messageFromStore.getPriority())
-                                     .build());
-    }
     return messages;
   }
 
@@ -235,23 +236,19 @@ public class Exchange implements Runnable {
    * object, and write that Message out to the output stream.
    */
   private void sendMessages() {
+      // get messages to send
+      List<RangzenMessage> messages = getMessages();
       //notify the recipient how many items we expect to send him.
-      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(NUM_MESSAGES_TO_SEND),1d);
+      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messages.size()),1d);
       if(lengthValueWrite(out, exchangeInfoMessage)) {
           // Send messages
-          for (int k = 0; k < NUM_MESSAGES_TO_SEND; k++) {
-              List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
-              MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
-              if (messageFromStore == null) {
-                  break;
-              }
-              messages.add(new RangzenMessage.Builder()
-                      .text(messageFromStore.getMessage())
-                      .priority(messageFromStore.getPriority())
-                      .build());
+         for(RangzenMessage message : messages){
+
+             List<RangzenMessage> packet = new ArrayList<>();
+             packet.add(message);
 
               CleartextMessages messagesMessage = new CleartextMessages.Builder()
-                      .messages(messages)
+                      .messages(packet)
                       .build();
               lengthValueWrite(out, messagesMessage);
           }

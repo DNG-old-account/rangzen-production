@@ -180,7 +180,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             ReadStateTracker.initTracker(getApplicationContext());
 
             //put first message into the feed
-            MessageStore messageStore = new MessageStore(this,StorageBase.ENCRYPTION_DEFAULT);
+            MessageStore messageStore = MessageStore.getInstance(this);
             messageStore.addMessage(
                     "This is the Rangzen message feed. Messages in the ether will appear here.",
                     1L, true);
@@ -554,8 +554,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
                     @Override
                     protected List<MessageStore.Message> doInBackground(String... params) {
-                        MessageStore store = new MessageStore(Opener.this, StorageBase.ENCRYPTION_DEFAULT);
-                        return store.getMessagesContaining(params[0]);
+                        MessageStore store = MessageStore.getInstance(Opener.this);
+                        return store.getMessagesContaining(params[0], false, -1);
                     }
 
                     @Override
