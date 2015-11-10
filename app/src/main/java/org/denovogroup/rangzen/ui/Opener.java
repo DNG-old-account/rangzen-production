@@ -595,8 +595,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
                     @Override
                     protected List<MessageStore.Message> doInBackground(String... params) {
-                        MessageStore store = new MessageStore(Opener.this, StorageBase.ENCRYPTION_DEFAULT);
-                        return store.getMessagesContaining(params[0]);
+                        MessageStore store = MessageStore.getInstance(Opener.this);
+                        return store.getMessagesContaining(params[0], false ,-1);
                     }
 
                     @Override

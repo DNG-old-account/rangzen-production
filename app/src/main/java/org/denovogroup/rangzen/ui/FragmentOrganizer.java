@@ -352,14 +352,13 @@ public class FragmentOrganizer extends Fragment {
              */
             @Override
             public void onClick(View v) {
-                MessageStore messageStore = new MessageStore(getActivity(),
-                        StorageBase.ENCRYPTION_DEFAULT);
+                MessageStore messageStore = MessageStore.getInstance(getActivity());
                 float priority = 1.0f;
                 String message = ((TextView) getActivity().findViewById(R.id.editText1)).getText().toString();
                 String mId = UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes()) + "_" + System.currentTimeMillis();
                 boolean alreadyExists = !messageStore.addMessage(message, priority, true, mId);
                 if (alreadyExists) {
-                    messageStore.updatePriority(message, priority, true, mId);
+                    messageStore.updatePriority(message, priority, true);
                 }
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();

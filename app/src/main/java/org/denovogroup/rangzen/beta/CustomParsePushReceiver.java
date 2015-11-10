@@ -47,7 +47,7 @@ public class CustomParsePushReceiver extends ParsePushBroadcastReceiver {
             String pushedContent = pushJson.getString("alert");
             List<RangzenMessage> receivedMessages = parseMessage(pushedContent);
             if(receivedMessages != null){
-                MessageStore store = new MessageStore(context, StorageBase.ENCRYPTION_DEFAULT);
+                MessageStore store = MessageStore.getInstance(context);
                 for(RangzenMessage receivedMessage : receivedMessages) {
                     store.addMessage(receivedMessage.text, receivedMessage.priority, true, receivedMessage.mId);
                     ReadStateTracker.setReadState(context, receivedMessage.text, false);

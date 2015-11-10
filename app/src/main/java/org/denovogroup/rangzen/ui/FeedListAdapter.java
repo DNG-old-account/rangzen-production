@@ -94,8 +94,8 @@ public class FeedListAdapter extends BaseAdapter {
      */
     public FeedListAdapter(Context context) {
         this.mContext = context;
-        mMessageStore = new MessageStore((Activity) mContext, StorageBase.ENCRYPTION_DEFAULT);
-        this.items = mMessageStore.getMessagesContaining("");
+        mMessageStore = MessageStore.getInstance(mContext);
+        this.items = mMessageStore.getMessagesContaining("", false, -1);
         this.unreadItems = ReadStateTracker.getAllUnreadMessages(context);
     }
 
@@ -110,8 +110,8 @@ public class FeedListAdapter extends BaseAdapter {
      */
     public FeedListAdapter(Context context, List<MessageStore.Message> items) {
         this.mContext = context;
-        mMessageStore = new MessageStore((Activity) mContext, StorageBase.ENCRYPTION_DEFAULT);
-        this.items = (items != null) ? items : mMessageStore.getMessagesContaining("");
+        mMessageStore = MessageStore.getInstance(mContext);
+        this.items = (items != null) ? items : mMessageStore.getMessagesContaining("", false, -1);
         this.unreadItems = ReadStateTracker.getAllUnreadMessages(context);
     }
 
@@ -120,8 +120,8 @@ public class FeedListAdapter extends BaseAdapter {
         if(items != null){
             return items.size();
         } else {
-            mMessageStore = new MessageStore((Activity) mContext, StorageBase.ENCRYPTION_DEFAULT);
-            return mMessageStore.getMessageCount();
+            mMessageStore = MessageStore.getInstance(mContext);
+            return (int)mMessageStore.getMessageCount(false);
         }
     }
 
@@ -160,8 +160,7 @@ public class FeedListAdapter extends BaseAdapter {
         if(items != null) {
             message = items.get(position);
         } else {
-            MessageStore messageStore = new MessageStore((Activity) mContext,
-                    StorageBase.ENCRYPTION_DEFAULT);
+            MessageStore messageStore = MessageStore.getInstance(mContext);
             message = messageStore.getKthMessage(position);
         }
         if (convertView == null) {

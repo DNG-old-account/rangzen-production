@@ -231,17 +231,17 @@ public class Exchange implements Runnable {
    */
   /* package */ List<RangzenMessage> getMessages() { 
     List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
-    for (int k=0; k<NUM_MESSAGES_TO_SEND; k++) {
-      MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
-      if (messageFromStore == null) {
-        break;
+      List<MessageStore.Message> messagesFromStore = messageStore.getMessages(false, NUM_MESSAGES_TO_SEND);
+
+      for(MessageStore.Message message : messagesFromStore){
+          if(message != null){
+              messages.add(new RangzenMessage.Builder()
+                      .text(message.getMessage())
+                      .priority(message.getPriority())
+                      .mId(message.getMId())
+                      .build());
+          }
       }
-      messages.add(new RangzenMessage.Builder()
-              .text(messageFromStore.getMessage())
-              .priority(messageFromStore.getPriority())
-              .mId(messageFromStore.getMId())
-              .build());
-    }
     return messages;
   }
 
@@ -255,27 +255,20 @@ public class Exchange implements Runnable {
       if(lengthValueWrite(out, exchangeInfoMessage)) {
             StopWatch watch = new StopWatch();
           // Send messages
-          for (int k = 0; k < NUM_MESSAGES_TO_SEND; k++) {
+          List<RangzenMessage> messages = getMessages();
+          for(RangzenMessage message : messages){
               watch.start();
-              List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
-              MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
-              if (messageFromStore == null) {
-                  break;
-              }
-              messages.add(new RangzenMessage.Builder()
-                      .text(messageFromStore.getMessage())
-                      .priority(messageFromStore.getPriority())
-                      .mId(messageFromStore.getMId())
-                      .build());
+              List<RangzenMessage> packet = new ArrayList<RangzenMessage>();
+              packet.add(message);
 
               CleartextMessages messagesMessage = new CleartextMessages.Builder()
-                      .messages(messages)
+                      .messages(packet)
                       .build();
               lengthValueWrite(out, messagesMessage);
               //BETA
               watch.stop();
               String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, messageFromStore.getMessage(), messageFromStore.getMId(), messageFromStore.getPriority(), Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), "" + watch.getElapsedTime());
+              JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, partnerId, message.text, message.mId, message.priority, Math.max(0f, ((float) commonFriends) / friendStore.getAllFriends().size()), "" + watch.getElapsedTime());
               if (NetworkHandler.getInstance() != null)
                   NetworkHandler.getInstance().sendEventReport(report);
               //BETA END

@@ -31,21 +31,16 @@
 package org.denovogroup.rangzen.backend;
 
 import android.bluetooth.BluetoothAdapter;
+import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.UUID;
 
 /**
@@ -53,71 +48,80 @@ import java.util.UUID;
  * instantiated as such, automatically encrypts and decrypts data before storing
  * in Android.
  */
-public class MessageStore {
-    /**
-     * A handle for the underlying store
-     */
-    private StorageBase store;
+public class MessageStore extends SQLiteOpenHelper {
 
-    /**
-     * Context for the app.
-     */
-    private Context mContext;
+    public static final String NEW_MESSAGE = "new message";
 
-    /**
-     * The internal key used in the underlying store for Rangzen message data.
-     */
-    private static final String MESSAGES_KEY = "RangzenMessages-";
+    private static MessageStore instance;
+    private static final String TAG = "MessageStore";
+    //readable true/false operators since SQLite does not support boolean values
+    private static final int TRUE = 1;
+    private static final int FALSE = 0;
 
-    /**
-     * Intent action for new message arrival in the store.
-     */
-    public static final String NEW_MESSAGE = "org.denovogroup.rangzen.NEW_MESSAGE_ACTION";
-
-    /**
-     * The internal key used in the underlying store for Rangzen message
-     * priorities.
-     */
-    private static final String MESSAGE_PRIORITY_KEY = "RangzenMessagePriority-";
-
-  private static final String MESSAGE_ID_KEY = "rangzenMessageId-";
-
-    /**
-     * The number of bins to use for storing messages. Each bin stores
-     * 1/NUM_BINS range of priority values, called the INCREMENT. Bin 0 stores
-     * [0,INCREMENT), bin 1 stores [INCREMENT, 2*INCREMENT), etc.
-     */
-    private static final int NUM_BINS = 5;
-
-    /**
-     * The range increment, computed from the number of bins.
-     */
-    private static final double INCREMENT = 1.0f / (double) NUM_BINS;
-
-    /**
-     * The min priority value.
-     */
+    //messages properties
     private static final double MIN_PRIORITY_VALUE = 0.01f;
-
-    /**
-     * The max priority value.
-     */
     private static final double MAX_PRIORITY_VALUE = 1.0f;
+    private static final int MAX_MESSAGE_SIZE = 140;
 
-    // The default value that indicates not removed item.
-    public static final double REMOVED = -0.5f;
+    private static final String DATABASE_NAME = "MessageStore.db";
+    private static final int DATABASE_VERSION = 1;
 
-    // The default value that indicates not found.
-    public static final double NOT_FOUND = -2.0f;
+    private static final String TABLE = "Messages";
+    private static final String COL_ROWID = "_id";
+    private static final String COL_MESSAGE = "message";
+    private static final String COL_MESSAGEID = "messageId";
+    private static final String COL_PRIORITY = "priority";
+    private static final String COL_DELETED = "deleted";
 
+    /** Get the current instance of MessageStore and create one if necessary.
+     * Implemented as a singleton */
+    public synchronized static MessageStore getInstance(Context context){
+        if(instance == null && context != null){
+            instance = new MessageStore(context);
+        }
+        return instance;
+    }
+
+    /** Get the current instance of MessageStore or null if none already created */
+    public synchronized static MessageStore getInstance(){
+        return getInstance(null);
+    }
+
+    /** private constructor for forcing singleton pattern for MessageStore */
+    private MessageStore(Context context){
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        instance = this;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE + " ("
+                + COL_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + COL_MESSAGEID + " TEXT UNIQUE NOT NULL,"
+                + COL_MESSAGE + " VARCHAR(" + MAX_MESSAGE_SIZE + ") NOT NULL,"
+                + COL_PRIORITY + " REAL NOT NULL DEFAULT " + MIN_PRIORITY_VALUE + ","
+                + COL_DELETED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_DELETED + " IN(" + TRUE + "," + FALSE + "))"
+                + ");");
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        /*recreate table on upgrade, this should be better implemented once final data base structure
+          is reached*/
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE);
+        onCreate(db);
+    }
+
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        onUpgrade(db, oldVersion, newVersion);
+    }
 
     /**
      * Check that the given priority value is in range.
      * @throws IllegalArgumentException if value is outside of range
      */
-  /* package */
-    static void checkPriority(double priority)
-            throws IllegalArgumentException {
+    private static void checkPriority(double priority) throws IllegalArgumentException{
         if (priority < MIN_PRIORITY_VALUE || priority > MAX_PRIORITY_VALUE) {
             throw new IllegalArgumentException("Priority " + priority
                     + " is outside valid range of ["+MIN_PRIORITY_VALUE+","+MAX_PRIORITY_VALUE+"]");
@@ -125,452 +129,277 @@ public class MessageStore {
     }
 
     /**
-     * Determines the bin key for a given bin number.
-     *
-     * @param bin The bin number.
-     * @return The String bin key to use for that bin.
+     * Check check that the given priority value is in range and return nearest limit if not.
      */
-    private static String getBinKey(int bin) {
-        return MESSAGES_KEY + bin;
+    private static double streamlinePriority(double priority){
+        if (priority < MIN_PRIORITY_VALUE){
+            return MIN_PRIORITY_VALUE;
+
+        } else if(priority > MAX_PRIORITY_VALUE) {
+            return MAX_PRIORITY_VALUE;
+        }else{
+            return priority;
+        }
     }
 
-    /**
-     * Determines the message priority key for a given message.
-     *
-     * @param msg The message.
-     * @return The String message priority key for that message.
+    /** convert cursor data returned from SQL queries into Message objects that can be returned to
+     * query supplier. This implementation does not close the supplied cursor when done
+     * @param cursor Cursor data returned from SQLite database
+     * @return list of Message items contained by the cursor or an empty list if cursor was empty
      */
-    private static String getMessagePriorityKey(String msg) {
-        return MESSAGE_PRIORITY_KEY + msg;
-  }
+    private List<Message> convertToMessages(Cursor cursor){
 
-  private static String getMessageIdKey(String msg){
-    return MESSAGE_ID_KEY + msg;
-    }
+        List<Message> messages = new ArrayList<>();
+        cursor.moveToFirst();
 
-    /**
-     * Determines the bin that corresponds to a given priority value.
-     *
-     * @param priority The priority for which to identify the bin number.
-     * @return The bin number.
-     */
-    private static int getBinForPriority(double priority) {
+        int priorityColIndex = cursor.getColumnIndex(COL_PRIORITY);
+        int messageColIndex = cursor.getColumnIndex(COL_MESSAGE);
+        int messageIdColIndex = cursor.getColumnIndex(COL_MESSAGEID);
 
-        int bin = (int) (priority / INCREMENT);
-        if (bin >= NUM_BINS) {
-            // We should only select this bin if priority == 1.0.
-            bin = NUM_BINS - 1;
+        if (cursor.getCount() > 0) {
+            while (!cursor.isAfterLast()){
+                messages.add(new Message(
+                        cursor.getDouble(priorityColIndex),
+                        cursor.getString(messageColIndex),
+                        cursor.getString(messageIdColIndex)
+                ));
+                cursor.moveToNext();
+            }
         }
 
-        return bin;
+        return messages;
     }
 
-    /**
-     * Determines the message key to use for the bin corresponding to the given
-     * priority.
-     *
-     * @param priority The message for which to look up the key.
-     * @return A String to use as a key for the given bin.
+    /** Return an array of messages sorted by according their priority and deleted state
+     * @param getDeleted whether or not results should include deleted items
+     * @param limit Maximum number of items to return or -1 for unlimited
+     * @return List of Message items based on database items matching conditions
      */
-    private static String getBinKeyForPriority(double priority) {
-        int bin = getBinForPriority(priority);
-        return getBinKey(bin);
+    public List<Message> getMessages(boolean getDeleted, int limit){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+            String query = "SELECT * FROM " + TABLE
+                    +(!getDeleted ? " WHERE "+COL_DELETED+"="+FALSE : "")
+                    +" ORDER BY "+COL_DELETED+", "+COL_PRIORITY+" DESC"
+                    +(limit > 0 ? " LIMIT "+limit : "")
+                    +";";
+            Cursor cursor = db.rawQuery(query, null);
+            if(cursor.getCount() > 0){
+                List<Message> result = convertToMessages(cursor);
+                cursor.close();
+                return result;
+            }
+            cursor.close();
+        }
+        return new ArrayList<>();
     }
 
-    /**
-     * Creates a Rangzen message store, with a consistent application of
-     * encryption of that stored data, as specified. All messages are associated
-     * with a priority value that can be modified.
-     *
-     * @param context        The app instance for which to perform storage.
-     * @param encryptionMode The encryption mode to use for all calls using this instance.
-     *                       <p/>
-     *                       TODO(barath): Add support for a storage limit, which
-     *                       automatically triggers garbage collection when hit.
+    /** Return an array of messages sorted by according their priority and deleted state
+     * @param getDeleted whether or not results should include deleted items
+     * @param limit Maximum number of items to return or -1 for unlimited
+     * @return List of Message items based on database items matching conditions
      */
-    public MessageStore(Context context, int encryptionMode)
-            throws IllegalArgumentException {
-        store = new StorageBase(context, encryptionMode);
-        mContext = context;
+    public List<Message> getMessagesContaining(String message, boolean getDeleted, int limit){
+        if(message == null) message = "";
+
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+            String query = "SELECT * FROM " + TABLE+" WHERE "+COL_MESSAGE+" LIKE '%"+message+"%'"
+                    +(!getDeleted ? " AND "+COL_DELETED+"="+FALSE : "")
+                    +" ORDER BY "+COL_DELETED+", "+COL_PRIORITY+" DESC"
+                    +(limit > 0 ? " LIMIT "+limit : "")
+                    +";";
+            Cursor cursor = db.rawQuery(query, null);
+            if(cursor.getCount() > 0){
+                List<Message> result = convertToMessages(cursor);
+                cursor.close();
+                return result;
+            }
+            cursor.close();
+        }
+        return new ArrayList<>();
+    }
+
+    /** Return a single message matching supplied text or null if no match can be found.
+     * @param getDeleted whether or not results should include deleted items
+     * @return A Message item based on database item matching conditions or null
+     */
+    private Message getMessage(String message, boolean getDeleted) throws IllegalArgumentException{
+        if(message == null || message.isEmpty()) throw new IllegalArgumentException("Message cannot be empty or null ["+message+"].");
+
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+            String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + message + "'"
+                    +(!getDeleted ? " AND "+COL_DELETED+"="+FALSE : "")
+                    +" LIMIT 1;";
+            Cursor cursor = db.rawQuery(query, null);
+            if(cursor.getCount() > 0){
+                Message result = convertToMessages(cursor).get(0);
+                cursor.close();
+                return result;
+            }
+            cursor.close();
+            Log.d(TAG, "getMessage found no match for [" + message + "]");
+        }
+        return null;
+    }
+
+    /** return if message exists in database and is not in removed state **/
+    public boolean contains(String message){
+        return getMessage(message, false) != null;
+    }
+
+    /** return if message exists in database, even if is in removed state **/
+    public boolean containsOrRemoved(String message){
+        return getMessage(message, true) != null;
+    }
+
+    /** return the message in position K from the database. K position is calculated
+     * after sorting results based on priority. removed messages do not count.
+     * @param position position of the message to be returned
+     * @return Message in the K position based on priority or null if position too high
+     */
+    public Message getKthMessage(int position){
+        List<Message> result = getMessages(false, position + 1);
+        return (result.size() > position) ? result.get(position) : null;
     }
 
     /**
      * Adds the given message with the given priority.
      *
-     * @param msg      The message to add.
+     * @param message      The message to add.
      * @param priority The priority to associate with the message. The priority must
      *                 be [0,1].
-     * @param enforceLimits whether or not the priority should obey the min/max values.
-     * @return Returns true if the message was added. If the message already
-     * exists, does not modify the store and returns false.
+     * @param enforceLimit whether or not the priority should be streamlined to the limits
+     *                     if set to false and value is outside of limit, an exception is thrown
+     * @return Returns true if the message was added. If message already exists, update its values
      */
-    public boolean addMessage(String msg, double priority, boolean enforceLimits, String mId) {
-        //Check if priority is within allowed range and fix it to closest edge if outside of range.
-        try {
-            if(enforceLimits) checkPriority(priority);
-        } catch (IllegalArgumentException e){
-            priority = (priority > MAX_PRIORITY_VALUE) ? MAX_PRIORITY_VALUE : MIN_PRIORITY_VALUE;
+    public boolean addMessage(String message, double priority, boolean enforceLimit, String mId){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+
+            if (enforceLimit) {
+                priority = streamlinePriority(priority);
+            } else {
+                checkPriority(priority);
+            }
+
+            if(containsOrRemoved(message)) {
+                db.execSQL("UPDATE "+TABLE+" SET "+COL_PRIORITY+"="+priority+","+COL_DELETED+"="+FALSE+
+                        " WHERE " + COL_MESSAGE + "='" + message + "';");
+                Log.d(TAG, "Message was already in store and was simply updated.");
+            } else {
+                ContentValues content = new ContentValues();
+                content.put(COL_MESSAGE, message);
+                content.put(COL_MESSAGEID, mId);
+                content.put(COL_PRIORITY, priority);
+                db.insert(TABLE, null, content);
+                Log.d(TAG, "Message added to store.");
+            }
+            return true;
         }
-
-        // Check whether we have the message already (perhaps in another bin).
-        // TODO(barath): Consider improving performance by selecting a different
-        // key.
-        String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
-
-        String msgIdKey = MESSAGE_ID_KEY + msg;
-
-        // A value less than all priorities in the store.
-        final double MIN_PRIORITY = -1.0f;
-
-        boolean found = !(store.getDouble(msgPriorityKey, NOT_FOUND) < MIN_PRIORITY);
-        if (found) {
-            return false;
-        }
-
-        // Get the existing message set for the bin, if it exists.
-        String binKey = getBinKeyForPriority(priority);
-        Set<String> msgs = store.getSet(binKey);
-        if (msgs == null) {
-            msgs = new HashSet<String>();
-        }
-
-        // Add the message with the given priority, and to the bin.
-        store.putDouble(msgPriorityKey, priority);
-        msgs.add(msg);
-        store.putSet(binKey, msgs);
-        store.put(msgIdKey, mId);
-
-        return true;
+        Log.d(TAG, "Message not added to store, either message or database is null. ["+message+"]");
+        return false;
     }
 
     /**
-     * Get the priority of a message, if it exists in the store.
+     * Remove the given message from the store, the message data is retained with its deleted
+     * state set to true.
      *
-     * @param msg The text of the message to search for.
-     * @return The priority of the message as we know it, or MessageStore.NOT_FOUND
-     * if the message is not in the store.
+     * @param message The message to remove.
+     * @return Returns true if the message was removed. If the message was not
+     * found, returns false.
      */
-    public double getPriority(String msg) {
-        String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
-        return store.getDouble(msgPriorityKey, NOT_FOUND);
+    public boolean removeMessage(String message){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_DELETED + "=" + TRUE + " WHERE " + COL_MESSAGE + "='" + message + "';");
+            return  true;
+        }
+        Log.d(TAG, "Message not added to store, either message or database is null. ["+message+"]");
+        return false;
+    }
+
+    /**
+     * Delete the given message from the store. this will completely remove the data from storage
+     *
+     * @param message The message to remove.
+     * @return Returns true if the message was removed or not found, false otherwise
+     */
+    public boolean deleteMessage(String message) {
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null && message != null) {
+            db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + message + "';");
+            return true;
+        }
+        Log.d(TAG, "Message not added to store, either message or database is null. [" + message + "]");
+        return false;
+    }
+
+    /** return the amount of items in the database.
+     *
+     * @param countDeleted if set to true count will include items marked as deleted
+     * @return number of items in the database.
+     */
+    public long getMessageCount(boolean countDeleted){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null){
+            return DatabaseUtils.queryNumEntries(db, TABLE, countDeleted ? null : COL_DELETED + "=" + FALSE);
+        }
+        return 0;
+    }
+
+    /** return the priority of the given message or 0 if message not exists**/
+    public double getPriority(String message){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+            Cursor cursor = db.rawQuery("SELECT "+COL_PRIORITY+" FROM "+TABLE+" WHERE "+COL_MESSAGE+"='"+message+"';", null);
+            if(cursor.getCount() > 0){
+                cursor.moveToFirst();
+                return cursor.getDouble(cursor.getColumnIndex(COL_PRIORITY));
+            }
+        }
+        return 0;
+    }
+
+    /** return the messageId of the given message or an empty string if message not exists**/
+    public String getMessageId(String message){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+            Cursor cursor = db.rawQuery("SELECT "+COL_MESSAGEID+" FROM "+TABLE+" WHERE "+COL_MESSAGE+"='"+message+"';", null);
+            if(cursor.getCount() > 0){
+                cursor.moveToFirst();
+                return cursor.getString(cursor.getColumnIndex(COL_MESSAGEID));
+            }
+        }
+        return "";
     }
 
     /**
      * Update the priority of a message, if it exists in the store
      *
-     * @param msg      The message whose priority should be changed.
+     * @param message      The message whose priority should be changed.
      * @param priority The new priority to set.
-     * @param enforceLimits whether or not the new priority should obey the min/max values.
+     * @param enforceLimit whether or not the new priority should be streamlined to limits
+     *                      if set to false and priority is outside of limit an exception is thrown
      * @return True if the message was in the store (and its priority was changed),
      * false otherwise.
      */
-    public boolean updatePriority(String msg, double priority, boolean enforceLimits, String mId) {
-        //Check if priority is within allowed range and fix it to closest edge if outside of range.
-        try {
-            if(enforceLimits) checkPriority(priority);
-        } catch (IllegalArgumentException e){
-            priority = (priority > MAX_PRIORITY_VALUE) ? MAX_PRIORITY_VALUE : MIN_PRIORITY_VALUE;
-        }
-
-        // A value less than all priorities in the store.
-        final double MIN_PRIORITY = -1.0f;
-
-        String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
-        boolean found = !(store.getDouble(msgPriorityKey, NOT_FOUND) < MIN_PRIORITY);
-        if (!found) {
-            return false;
-        }
-
-        /*replace previous message with new version, thus letting the system
-         place the new version in the appropriate bin*/
-        deleteMessage(msg);
-        addMessage(msg, priority, enforceLimits, mId);
-        return true;
-    }
-
-    /** move the specified message with the specified priority one slot within its bin.
-     * thus allowing for shift in position of items with similar priorities.
-     *
-     * @param msg      The message whose position should be changed.
-     * @param moveUp direction of movement where true is for up and false for down
-     * @return True if the message was in the store, false otherwise.
-     */
-    public Boolean updatePositionInBin(String msg, boolean moveUp){
-        //TODO this cannot work with current Set usage, need some other ordering mechanism or change underlying data structure
-        // TODO(barath): Consider improving performance by selecting a different key.
-        String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
-
-        // A value less than all priorities in the store.
-        final double MIN_PRIORITY = -1.0f;
-
-        //look for the message to be removed
-        boolean found = !(store.getDouble(msgPriorityKey, NOT_FOUND) < MIN_PRIORITY);
-        if (!found) {
-            return false;
-        }
-
-        // Get the existing message set for the bin.
-        Double priority = store.getDouble(msgPriorityKey, NOT_FOUND);
-        if(priority == NOT_FOUND) return false;
-        String binKey = getBinKeyForPriority(priority);
-        Set<String> msgs = store.getSet(binKey);
-
-        if (msgs == null) return false;
-
-        // shift the message inside its set.
-        List<String> sortedSet = new ArrayList<>();
-        sortedSet.addAll(msgs);
-
-        int currentIndex = sortedSet.indexOf(msg);
-        int newIndex = (moveUp) ? currentIndex-1 : currentIndex+1;
-
-        if(newIndex < 0 || newIndex >= sortedSet.size()) return false;
-
-        String newPositionMessage = sortedSet.get(newIndex);
-
-        sortedSet.set(newIndex, msg);
-        sortedSet.set(currentIndex, newPositionMessage);
-        msgs.clear();
-        msgs.addAll(sortedSet);
-
-        store.putSet(binKey, msgs);
-        return true;
-    }
-
-    /**
-     * Check whether the store contains the given message.
-     *
-     * @param msg A message to check for.
-     * @return True if the message is contained in the store, false otherwise.
-     */
-    public boolean contains(String msg) {
-        // A value less than all priorities in the store.
-        final double MIN_PRIORITY = -1.0f;
-        String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
-        return !(store.getDouble(msgPriorityKey, NOT_FOUND) < MIN_PRIORITY);
-    }
-
-    /**
-     * Remove the given message from the store, the message data is retained with priority of
-     * REMOVED constant.
-     *
-     * @param msg The message to remove.
-     * @return Returns true if the message was removed. If the message was not
-     * found, returns false.
-     */
-    public boolean removeMessage(String msg, String mId){
-        return updatePriority(msg, REMOVED, false, mId);
-    }
-
-    /**
-     * Delete the given message from the store. this also remove the data from storage
-     *
-     * @param msg The message to remove.
-     * @return Returns true if the message was removed. If the message was not
-     * found, returns false.
-     */
-    public boolean deleteMessage(String msg) {
-        // TODO(barath): Consider improving performance by selecting a different
-        // key.
-        String msgPriorityKey = MESSAGE_PRIORITY_KEY + msg;
-
-        // A value less than all priorities in the store.
-        final double MIN_PRIORITY = -1.0f;
-
-        //look for the message to be removed
-        boolean found = !(store.getDouble(msgPriorityKey, NOT_FOUND) < MIN_PRIORITY);
-        if (!found) {
-            return false;
-        }
-
-        // Get the existing message set for the bin.
-        Double priority = store.getDouble(msgPriorityKey, NOT_FOUND);
-        if(priority == NOT_FOUND) return false;
-        String binKey = getBinKeyForPriority(priority);
-        Set<String> msgs = store.getSet(binKey);
-
-        if (msgs == null) return false;
-
-        // Remove the message with the given priority, from the bin.
-        store.removeData(msgPriorityKey);
-        msgs.remove(msg);
-        store.putSet(binKey, msgs);
-        return true;
-    }
-
-    /**
-     * Returns the given message's priority, if present.
-     *
-     * @param msg      The message whose priority to retrieve.
-     * @param defvalue The default value to return if not found.
-     * @return Returns msg's priority or defvalue if not found.
-     */
-    public double getMessagePriority(String msg, double defvalue) {
-        return store.getDouble(getMessagePriorityKey(msg), defvalue);
-  }
-
-  public String getMessageId(String msg) {
-    return ""+store.get(getMessageIdKey(msg));
-    }
-
-    /**
-     * Returns the messages with highest priority values.
-     *
-     * @param k The number of messages to return.
-     * @return Returns up to k messages with the highest priority values.
-     */
-    public TreeMap<Double, Collection<String>> getTopK(int k) {
-        TreeMap<Double, Collection<String>> topk = new TreeMap<Double, Collection<String>>();
-
-        int msgsStored = 0;
-
-        binloop:
-        for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
-            String binKey = getBinKey(bin);
-            Set<String> msgs = store.getSet(binKey);
-
-            if (msgs == null)
-                continue;
-
-            TreeMap<Double, List<String>> sortedmsgs = new TreeMap<Double, List<String>>();
-            for (String m : msgs) {
-                double priority = getMessagePriority(m, -1);
-                if (!sortedmsgs.containsKey(priority)) {
-                    sortedmsgs.put(priority, new ArrayList<String>());
-                }
-                sortedmsgs.get(priority).add(m);
+    public boolean updatePriority(String message, double priority, boolean enforceLimit) {
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+            if(enforceLimit){
+                priority = streamlinePriority(priority);
+            } else {
+                checkPriority(priority);
             }
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_PRIORITY+"="+priority+" WHERE "+COL_MESSAGE+"='"+message+"';");
 
-            NavigableMap<Double, List<String>> descMap = sortedmsgs
-                    .descendingMap();
-            for (Entry<Double, List<String>> e : descMap.entrySet()) {
-                for (String m : e.getValue()) {
-                    if (msgsStored >= k)
-                        break binloop;
-
-                    double priority = e.getKey();
-                    if (!topk.containsKey(priority)) {
-                        topk.put(priority, new HashSet<String>());
-                    }
-                    topk.get(priority).add(m);
-                    msgsStored++;
-                }
-            }
+            Log.d(TAG, "Message priority changed in the store.");
+            return true;
         }
-
-        return topk;
-    }
-
-    /**
-     * This will iterate over all of the messages in the message store and
-     * return the number of messages
-     *
-     * @return count The total number of messages in the message store.
-     */
-    public int getMessageCount() {
-        int count = 0;
-        for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
-            String binKey = getBinKey(bin);
-            Set<String> msgs = store.getSet(binKey);
-            if (msgs == null)
-                continue;
-
-            for (String m : msgs) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    /**
-     * This method goes through every message in all of the bins and if contain
-     * the specified string, inserts them into an array list by trust score and
-     * then in the case of a tie, alphabetically.
-     *
-     * @param query The string to look for in the message
-     * @return a list of messages containing the set query.
-     * @throws NullPointerException if set query is null
-     */
-    public List<Message> getMessagesContaining(String query){
-
-        if(query == null ) throw new NullPointerException("Query string is null");
-
-        List<Message> result = new ArrayList<Message>();
-
-        for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
-            String binKey = getBinKey(bin);
-            Set<String> msgs = store.getSet(binKey);
-            if (msgs == null)
-                continue;
-
-            for (String m : msgs) {
-                if(m.toLowerCase().contains(query.toLowerCase())) {
-                    double priority = getMessagePriority(m, -1);
-                    if(priority >= MIN_PRIORITY_VALUE) result.add(new Message(priority, m, getMessageId(m)));
-
-                }
-            }
-        }
-        Collections.sort(result, new Comparator<Message>() {
-
-            @Override
-            public int compare(Message lhs, Message rhs) {
-                Message left = (Message) lhs;
-                Message right = (Message) rhs;
-                if (left.getPriority() > right.getPriority()) {
-                    return -1;
-                } else if (left.getPriority() < right.getPriority()) {
-                    return 1;
-                } else {
-                    return left.getMessage().compareTo(right.getMessage());
-                }
-            }
-        });
-        return result;
-    }
-
-    /**
-     * This method goes through every message in all of the bins and inserts
-     * them into an array list by trust score and then in the case of a tie,
-     * alphabetically.
-     *
-     * @param k The index of the message to return.
-     * @return A message object that is the kth most trusted.
-     */
-    public Message getKthMessage(int k) {
-        ArrayList<Message> topk = new ArrayList<Message>();
-
-        for (int bin = NUM_BINS - 1; bin >= 0; bin--) {
-            String binKey = getBinKey(bin);
-            Set<String> msgs = store.getSet(binKey);
-            if (msgs == null)
-                continue;
-
-            for (String m : msgs) {
-                double priority = getMessagePriority(m, -1);
-                String mId = getMessageId(m);
-                topk.add(new Message(priority, m, mId));
-            }
-        }
-        Collections.sort(topk, new Comparator<Message>() {
-
-            @Override
-            public int compare(Message lhs, Message rhs) {
-                Message left = (Message) lhs;
-                Message right = (Message) rhs;
-                if (left.getPriority() > right.getPriority()) {
-                    return -1;
-                } else if (left.getPriority() < right.getPriority()) {
-                    return 1;
-                } else {
-                    return left.getMessage().compareTo(right.getMessage());
-                }
-            }
-        });
-        if (topk.size() <= k) {
-            return null;
-        }
-        return topk.get(k);
+        Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
+        return false;
     }
 
     /**
@@ -607,11 +436,9 @@ public class MessageStore {
             return mPriority;
         }
 
-        /**
-         * this method is used for temporary displayed item update purposes and should not be used
-         * for actual stored data manipulation
-         */
-        public void setPriority(double priority) {
+        /**this method is used for temporary displayed item update purposes and should not be used
+         * for actual stored data manipulation */
+        public void setPriority(double priority){
             mPriority = priority;
         }
 

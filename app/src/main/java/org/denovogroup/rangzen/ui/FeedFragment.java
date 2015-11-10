@@ -133,7 +133,7 @@ public class FeedFragment extends Fragment implements Refreshable{
         listView.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(final int position, SwipeMenu swipeMenu, int index) {
-                MessageStore store = new MessageStore(getActivity(), StorageBase.ENCRYPTION_DEFAULT);
+                MessageStore store = MessageStore.getInstance(getActivity());
                 MessageStore.Message message = (mFeedListAdaper.getItems() == null) ? store.getKthMessage(position) : mFeedListAdaper.getItems().get(position);
                 boolean updateViewDelayed = false;
                 switch (swipeMenu.getMenuItem(index).getId()) {
@@ -155,7 +155,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                             //change priority
                             store.updatePriority(message.getMessage(), nextUpPriority);
                         }*/
-                        store.updatePriority(message.getMessage(), getNextPriority(true, message, position), true, message.getMId());
+                        store.updatePriority(message.getMessage(), getNextPriority(true, message, position), true);
                         updateViewDelayed = true;
                         //BETA
                         JSONObject report = ReportsMaker.getMessagePriorityChangedByUserReport(System.currentTimeMillis(), message.getMId(), oldLowPriority, message.getPriority(), message.getMessage());
@@ -180,7 +180,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                             //change priority
                             store.updatePriority(message.getMessage(), nextDownPriority);
                         }*/
-                        store.updatePriority(message.getMessage(), getNextPriority(false, message, position), true, message.getMId());
+                        store.updatePriority(message.getMessage(), getNextPriority(false, message, position), true);
                         updateViewDelayed = true;
                         //BETA
                         JSONObject report2 = ReportsMaker.getMessagePriorityChangedByUserReport(System.currentTimeMillis(), message.getMId(), oldHighPriority, message.getPriority(), message.getMessage());
@@ -205,7 +205,7 @@ public class FeedFragment extends Fragment implements Refreshable{
 
                                 //delete data from storage
                                 //store.deleteMessage(message.getMessage());
-                                store_final.removeMessage(message_final.getMessage(), message_final.getMId());
+                                store_final.removeMessage(message_final.getMessage());
 
                                 /*If data is currently being presenting as filtered search results, update
                                    the currently displayed to retain consistent look */
@@ -234,7 +234,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                         NetworkHandler.getInstance(getActivity()).sendEventReport(report4);
                         //BETA
 
-                        store.updatePriority(message.getMessage(), 1d, true, message.getMId());
+                        store.updatePriority(message.getMessage(), 1d, true);
                         updateViewDelayed = true;
                         break;
                 }
@@ -248,7 +248,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                                     the currently displayed to retain consistent look */
                             List<MessageStore.Message> updatedList = mFeedListAdaper.getItems();
                             if (updatedList != null) {
-                                MessageStore store = new MessageStore(getActivity(), StorageBase.ENCRYPTION_DEFAULT);
+                                MessageStore store = MessageStore.getInstance(getActivity());
                                 double oldPri = updatedList.get(position).getPriority();
                                 updatedList.get(position).setPriority(store.getPriority(updatedList.get(position).getMessage()));
                                 updatedList = sortDetachedList(updatedList);
@@ -323,7 +323,7 @@ public class FeedFragment extends Fragment implements Refreshable{
      */
     private double getNextPriority(boolean up, MessageStore.Message message, int position){
 
-        MessageStore store = new MessageStore(getActivity(),StorageBase.ENCRYPTION_DEFAULT);
+        MessageStore store = MessageStore.getInstance(getActivity());
         MessageStore.Message currentlyEvaluatedMessage;
         /** The message one priority slot away from the supplied message based on the direction of the update*/
         MessageStore.Message m1 = null;

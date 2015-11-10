@@ -286,13 +286,13 @@ public class BluetoothSpeaker {
     mSocket = mServerSocket.accept();
     Log.i(TAG, "Accepted socket from " + mSocket.getRemoteDevice());
     Log.i(TAG, "Accepted socket connected? " + mSocket.isConnected());
-      MessageStore mStore = new MessageStore(mContext, StorageBase.ENCRYPTION_DEFAULT);
-      String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(), System.currentTimeMillis(), 0, 0, null, mStore.getMessageCount(), mStore.getMessageCount()));
+      MessageStore mStore = MessageStore.getInstance(mContext);
+      String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(), System.currentTimeMillis(), 0, 0, null, (int)mStore.getMessageCount(false), (int)mStore.getMessageCount(false)));
     mExchange = new CryptographicExchange(mSocket.getInputStream(),
                              mSocket.getOutputStream(),
                              false,
                              new FriendStore(mContext, StorageBase.ENCRYPTION_DEFAULT),
-                             new MessageStore(mContext, StorageBase.ENCRYPTION_DEFAULT),
+                             MessageStore.getInstance(mContext),
                              mContext.mExchangeCallback, reportid, ""+UUID.nameUUIDFromBytes(mSocket.getRemoteDevice().getAddress().getBytes()));
     //mExchange.execute((Boolean) null);
     // Start the exchange.

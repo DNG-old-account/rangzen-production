@@ -129,7 +129,7 @@ public class RangzenApplication extends Application{
                         String pushedContent = (String) installationsList.get(0).get("messages");
                         List<RangzenMessage> receivedMessages = CustomParsePushReceiver.parseMessage(pushedContent);
                         if (receivedMessages != null) {
-                            MessageStore mStore = new MessageStore(getApplicationContext(), StorageBase.ENCRYPTION_DEFAULT);
+                            MessageStore mStore = MessageStore.getInstance(getApplicationContext());
                             boolean receivedNew = false;
                             for (RangzenMessage receivedMessage : receivedMessages) {
                                 if(!mStore.contains(receivedMessage.text)) {

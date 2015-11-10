@@ -213,6 +213,7 @@ public class CryptographicExchange extends Exchange {
       //create a message pool to be sent and send each message individually to allow partial data recovery in case of connection loss
       boolean success = true;
       List<RangzenMessage> messagesPool = getMessages();
+      Log.d("liran","pool:"+getMessages());
       //notify the recipient how many items we expect to send him.
       RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messagesPool.size()),1d, "notifyReceiver");
 

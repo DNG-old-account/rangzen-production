@@ -208,7 +208,7 @@ public class RangzenService extends Service {
                                                    mBluetoothSpeaker,
                                                    new WifiDirectFrameworkGetter());
 
-        mMessageStore = new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT);
+        mMessageStore = MessageStore.getInstance(RangzenService.this);
 
         setWifiDirectFriendlyName();
         mWifiDirectSpeaker.setmSeekingDesired(true);
@@ -341,8 +341,8 @@ public class RangzenService extends Service {
       // The peer connection callback (defined elsewhere in the class) takes
       // the connect bluetooth socket and uses it to create a new Exchange.
         //BETA
-        MessageStore mStore = new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT);
-        String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(),System.currentTimeMillis(),0,0,null, mStore.getMessageCount(), mStore.getMessageCount()));
+        MessageStore mStore = MessageStore.getInstance(RangzenService.this);
+        String reportid = ReportsMaker.prepReport(ReportsMaker.getConnectedDeviceReport(System.currentTimeMillis(),System.currentTimeMillis(),0,0,null, (int)mStore.getMessageCount(false), (int)mStore.getMessageCount(false)));
       mBluetoothSpeaker.connect(peer, mPeerConnectionCallback, reportid);
     }
 
@@ -363,7 +363,7 @@ public class RangzenService extends Service {
                 socket.getOutputStream(),
                 true,
                 new FriendStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT),
-                new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT),
+                MessageStore.getInstance(RangzenService.this),
                 RangzenService.this.mExchangeCallback, reportId, ""+UUID.nameUUIDFromBytes(socket.getRemoteDevice().getAddress().getBytes()));
             (new Thread(mExchange)).start();
           } catch (IOException e) {
@@ -411,8 +411,8 @@ public class RangzenService extends Service {
     /* package */ void cleanupAfterExchange(String reportId) {
         //BETA
         Map<String, Object> changes = new HashMap<>();
-        MessageStore mStore = new MessageStore(this, StorageBase.ENCRYPTION_DEFAULT);
-        changes.put(ReportsMaker.EVENT_MESSAGES_AFTER_KEY, mStore.getMessageCount());
+        MessageStore mStore = MessageStore.getInstance(this);
+        changes.put(ReportsMaker.EVENT_MESSAGES_AFTER_KEY, mStore.getMessageCount(false));
         ReportsMaker.editReport(reportId , changes);
         NetworkHandler.getInstance(getApplicationContext()).sendEventReport(ReportsMaker.getBacklogedReport(reportId));
         ReportsMaker.removeReport(reportId);
@@ -488,15 +488,14 @@ public class RangzenService extends Service {
           double remote = message.priority;
           double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
           try {
-            if (mMessageStore.contains(message.text)) {
+            if (mMessageStore.containsOrRemoved(message.text)) {
 				//update existing message priority unless its marked as removed by user
-                if(stored != MessageStore.REMOVED){                //BETA
+                //BETA
                 double oldPriority = message.priority;
                 JSONObject report = ReportsMaker.getMessagePriorityChangedBySystemReport(System.currentTimeMillis(),message.mId, oldPriority,newPriority,message.text);
                 NetworkHandler.getInstance(getApplicationContext()).sendEventReport(report);
                 //BETA END
-                mMessageStore.updatePriority(message.text, newPriority, true,message.mId);
-				}
+                mMessageStore.updatePriority(message.text, newPriority, true);
             } else {
                 hasNew = true;
                 mMessageStore.addMessage(message.text, newPriority, true, message.mId);
@@ -583,16 +582,15 @@ public class RangzenService extends Service {
                     double remote = message.priority;
                     double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
                     try {
-                        if (mMessageStore.contains(message.text)) {
+                        if (mMessageStore.containsOrRemoved(message.text)) {
 
 							//update existing message priority unless its marked as removed by user
-                            if(stored != MessageStore.REMOVED){                            //BETA
+                            //BETA
                             double oldPriority = message.priority;
                             JSONObject report = ReportsMaker.getMessagePriorityChangedBySystemReport(System.currentTimeMillis(),message.mId, oldPriority,newPriority,message.text);
                             NetworkHandler.getInstance(getApplicationContext()).sendEventReport(report);
                             //BETA END
-                            mMessageStore.updatePriority(message.text, newPriority, true, message.mId);
-							}
+                            mMessageStore.updatePriority(message.text, newPriority, true);
                         } else {
                             hasNew = true;
                             mMessageStore.addMessage(message.text, newPriority, true, message.mId);
