@@ -8,12 +8,18 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+import com.mongodb.MongoException;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.SaveCallback;
 
+import org.bson.Document;
 import org.denovogroup.rangzen.backend.Utils;
 import org.denovogroup.rangzen.beta.locationtracking.TrackedLocation;
 import org.denovogroup.rangzen.ui.DebugActivity;
@@ -43,10 +49,15 @@ import java.util.UUID;
  */
 public class NetworkHandler {
 
+    private static final String TAG = "NetworkHandler";
+
     private static boolean isUnrestricted = false;
 
     private static NetworkHandler instance;
     private static Context context;
+
+    private static final String CONNECTION_STRING = "mongodb://localhost/?ssl=true";
+    private static final String DATABASE = "dbname";
 
     //general keys
     private static final String USERID_KEY = "Userid";
@@ -69,7 +80,15 @@ public class NetworkHandler {
 
     private static Timer updateScheduleTimer;
 
+    private static MongoClient mongo;
+    private static MongoDatabase db;
+
+    private static final String LOCATION_COLLECTION = "LocationTracking";
+
     public static NetworkHandler getInstance(){
+
+        getDatabase();
+
         if(instance == null || context == null){
             return null;
         }
@@ -80,6 +99,8 @@ public class NetworkHandler {
         if(instance == null){
             instance = new NetworkHandler();
         }
+
+        getDatabase();
 
         isUnrestricted = ctx.getSharedPreferences(DebugActivity.PREF_FILE, Context.MODE_PRIVATE).getBoolean(DebugActivity.IS_UNRESTRICTED_KEY, false);
 
@@ -119,6 +140,28 @@ public class NetworkHandler {
         return instance;
     }
 
+    /** Return the remote database to be written/queried or null if an error occur.
+     * If client wasn't initialized yet it will be initialized when calling this function.
+      * @return the database which can run queries and interact with the application or null.
+     */
+    public static MongoDatabase getDatabase(){
+        if(db != null) return  db;
+
+        MongoClientURI uri = new MongoClientURI(CONNECTION_STRING);
+        try {
+            mongo = new MongoClient(uri);
+            db = mongo.getDatabase(DATABASE);
+            return db;
+        } catch (MongoException e){
+            e.printStackTrace();
+            if(mongo != null) mongo.close();
+            mongo = null;
+            db = null;
+        }
+        Log.d(TAG,"Database was null and could not be instantiated");
+        return null;
+    }
+
     /** check if the device is currently connected to an internet service such as WiFi and GSM
      *
      * @return true is connected, false otherwise
@@ -141,34 +184,25 @@ public class NetworkHandler {
         String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
 
         if(trackedLocations != null){
-
-            List<ParseObject> sendList = new ArrayList<>();
-            int sentItemsCount = 0;
+            List<Document> sendList = new ArrayList<>();
 
             for(TrackedLocation trackedLocation : trackedLocations){
-                ParseObject testObject = new ParseObject("LocationTracking");
-                testObject.put(USERID_KEY, mThisDeviceUUID);
-                testObject.put(LONGITUDE_KEY, trackedLocation.longitude);
-                testObject.put(LATITUDE_KEY, trackedLocation.latitude);
-                testObject.put(TIMESTAMP_KEY, trackedLocation.timestamp);
-                testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp, null));
 
-                sendList.add(testObject);
+                Document doc = new Document();
+                doc.append(USERID_KEY, mThisDeviceUUID);
+                doc.append(LONGITUDE_KEY, trackedLocation.longitude);
+                doc.append(LATITUDE_KEY, trackedLocation.latitude);
+                doc.append(TIMESTAMP_KEY, trackedLocation.timestamp);
+                doc.append(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp, null));
 
-                //long sizeInBytes = getObjectSizeInBytes(sendList);
-                if(sendList.size() == MAX_ITEMS_PER_PACKET){
-                    //packets.add(sendList);
-                    sentItemsCount += sendList.size();
-                    List<ParseObject> packet = sendList;
-                    ParseObject.saveAllInBackground(packet);
-                    sendList = new ArrayList<>();
-                }
+                sendList.add(doc);
             }
 
-            sentItemsCount += sendList.size();
-            ParseObject.saveAllInBackground(sendList);
-
-            return sentItemsCount;
+            if(getDatabase() != null) {
+                MongoCollection<Document> collection = getDatabase().getCollection(LOCATION_COLLECTION);
+                collection.insertMany(sendList);
+                return sendList.size();
+            }
         }
         return -1;
     }
@@ -182,14 +216,18 @@ public class NetworkHandler {
         String mThisDeviceUUID = ""+ UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
 
         if(trackedLocation != null){
-            ParseObject testObject = new ParseObject("LocationTracking");
-            testObject.put(USERID_KEY, mThisDeviceUUID);
-            testObject.put(LONGITUDE_KEY, trackedLocation.longitude);
-            testObject.put(LATITUDE_KEY, trackedLocation.latitude);
-            testObject.put(TIMESTAMP_KEY, trackedLocation.timestamp);
-            testObject.put(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp, null));
-            testObject.saveInBackground();
-            return true;
+            Document doc = new Document();
+            doc.append(USERID_KEY, mThisDeviceUUID);
+            doc.append(LONGITUDE_KEY, trackedLocation.longitude);
+            doc.append(LATITUDE_KEY, trackedLocation.latitude);
+            doc.append(TIMESTAMP_KEY, trackedLocation.timestamp);
+            doc.append(TIME_KEY, Utils.convertTimestampToDateString(trackedLocation.timestamp, null));
+
+            if(getDatabase() != null) {
+                MongoCollection collection = getDatabase().getCollection(LOCATION_COLLECTION);
+                collection.insertOne(doc);
+                return true;
+            }
         }
         return false;
     }
@@ -205,32 +243,12 @@ public class NetworkHandler {
         sendPinnedReports();
 
         if(report != null){
-            try {
-                //Convert to parse object
-                ParseObject testObject = new ParseObject(report.getString(ReportsMaker.EVENT_TAG_KEY));
-                Iterator<?> keys = report.keys();
-                while(keys.hasNext()) {
-                    String key = (String)keys.next();
-                    if(report.get(key) != null){
-                        if(report.get(key) instanceof Object[]){
-                            try {
-                                String[] str = (String[]) report.get(key);
-                                testObject.put(key, Arrays.asList(str));
-                            } catch (ClassCastException e){}
-                        } else {
-                            testObject.put(key, report.get(key));
-                        }
-                    }
-                }
-                //this will make sure the report is saved into local cache until sent to parse
-                if(NetworkHandler.getInstance() != null && NetworkHandler.getInstance().isNetworkConnected() && isEligableForSending){
-                    testObject.saveInBackground();
-                } else {
-                    testObject.pinInBackground(testObject.getClassName());
-                }
+            Document doc = Document.parse(report.toString());
+
+            if(getDatabase() != null){
+                MongoCollection collection = getDatabase().getCollection("idonno");
+                collection.insertOne(doc);
                 return true;
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
         }
         return false;
@@ -240,37 +258,17 @@ public class NetworkHandler {
         sendPinnedReports();
 
         if(reports != null && !reports.isEmpty()){
-            List<ParseObject> convertedReports = new ArrayList<ParseObject>();
-            try {
-                for(JSONObject report : reports) {
-                    //Convert to parse object
-                    ParseObject testObject = new ParseObject(report.getString(ReportsMaker.EVENT_TAG_KEY));
-                    Iterator<?> keys = report.keys();
-                    while (keys.hasNext()) {
-                        String key = (String) keys.next();
-                        if (report.get(key) != null) {
-                            if (report.get(key) instanceof Object[]) {
-                                try {
-                                    String[] str = (String[]) report.get(key);
-                                    testObject.put(key, Arrays.asList(str));
-                                } catch (ClassCastException e) {
-                                }
-                            } else {
-                                testObject.put(key, report.get(key));
-                            }
-                        }
-                    }
-                    convertedReports.add(testObject);
-                }
-                //this will make sure the report is saved into local cache until sent to parse
-                if(NetworkHandler.getInstance() != null && NetworkHandler.getInstance().isNetworkConnected() && isEligableForSending){
-                    ParseObject.saveAllInBackground(convertedReports);
-                } else {
-                    ParseObject.pinAllInBackground(convertedReports.get(0).getClassName(), convertedReports);
-                }
+            List<Document> convertedReports = new ArrayList<>();
+            for(JSONObject report : reports) {
+
+                Document doc = Document.parse(report.toString());
+                convertedReports.add(doc);
+            }
+
+            if(getDatabase() != null){
+                MongoCollection collection = getDatabase().getCollection("idonno");
+                collection.insertMany(convertedReports);
                 return true;
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
         }
 
@@ -294,35 +292,12 @@ public class NetworkHandler {
         Calendar c2 = Calendar.getInstance();
 
         if(report != null && isEligableForSending && c1.get(Calendar.DAY_OF_MONTH) != c2.get(Calendar.DAY_OF_MONTH)){
-            try {
-                //Convert to parse object
-                ParseObject testObject = new ParseObject(report.getString(ReportsMaker.EVENT_TAG_KEY));
-                Iterator<?> keys = report.keys();
-                while(keys.hasNext()) {
-                    String key = (String)keys.next();
-                    if(report.get(key) != null){
-                        if(report.get(key) instanceof Object[]){
-                            try {
-                                String[] str = (String[]) report.get(key);
-                                testObject.put(key, Arrays.asList(str));
-                            } catch (ClassCastException e){}
-                        } else {
-                            testObject.put(key, report.get(key));
-                        }
-                    }
-                }
-                //this will make sure the report is saved into local cache until sent to parse
-                if(NetworkHandler.getInstance() != null && NetworkHandler.getInstance().isNetworkConnected() && isEligableForSending && context != null){
-                    testObject.saveInBackground(new SaveCallback() {
-                        @Override
-                        public void done(ParseException e) {
-                            ReportsMaker.clearUiStatistic(context);
-                        }
-                    });
-                }
+            Document doc = Document.parse(report.toString());
+
+            if(getDatabase() != null) {
+                MongoCollection collection = getDatabase().getCollection("idonno");
+                collection.insertOne(doc);
                 return true;
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
         }
         return false;
@@ -330,7 +305,7 @@ public class NetworkHandler {
 
     /** Run over the local parse datastore and tries to send the items in it, cleaning any item which has been sent */
     private void sendPinnedReports(){
-        if(!isEligableForSending || isSendingPinnedInBackground) return;
+        /*if(!isEligableForSending || isSendingPinnedInBackground) return;
 
         isSendingPinnedInBackground = true;
         String[] querytypes = {ReportsMaker.LogEvent.event_tag.MESSAGE,
@@ -358,7 +333,7 @@ public class NetworkHandler {
                     }
                 }
             });
-        }
+        }*/
     }
 
     private long getObjectSizeInBytes(Object obj) {
