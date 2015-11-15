@@ -138,7 +138,7 @@ public class RangzenService extends Service {
                             "org.denovogroup.rangzen.LAST_EXCHANGE_TIME_KEY";
 
     /** Time to wait between exchanges, in milliseconds. */
-    private static final int TIME_BETWEEN_EXCHANGES_MILLIS = 10 * 1000;
+    private static final int TIME_BETWEEN_EXCHANGES_MILLIS = 0;//10 * 1000;
 
     /** Android Log Tag. */
     private final static String TAG = "RangzenService";
@@ -148,6 +148,7 @@ public class RangzenService extends Service {
     private static final String DUMMY_MAC_ADDRESS = "02:00:00:00:00:00";
 
     private static final int RENAME_DELAY = 1000;
+    private static final int BACKOFF_FOR_ATTEMPT_MILLIES = 20 * 1000;
 
     public static final String CONNECTION_HISTORY_FILE = "connection_history";
 
@@ -291,11 +292,29 @@ public class RangzenService extends Service {
           try {
             if (peerManager.thisDeviceSpeaksTo(peer)) {
                 Log.v(TAG, "Local device speaks to remote device ("+peer+")");
-              // Connect to the peer, starting an exchange with the peer once
-              // connected. We only do this if thisDeviceSpeaksTo(peer), which
-              // checks whether we initiate conversations with this peer or
-              // it initiates with us (a function of our respective addresses).
-              connectTo(peer);
+                // Connect to the peer, starting an exchange with the peer once
+                // connected. We only do this if thisDeviceSpeaksTo(peer), which
+                // checks whether we initiate conversations with this peer or
+                // it initiates with us (a function of our respective addresses).
+
+                //optimize connection using history tracker
+                ExchangeHistoryTracker.ExchangeHistoryItem historyItem = ExchangeHistoryTracker.getInstance().getHistoryItem(peer.address);
+                boolean hasHistory = historyItem != null;
+                boolean storeVersionChanged = false;
+                boolean waitedMuch = false;
+
+                if(hasHistory) {
+                    storeVersionChanged = !historyItem.storeVersion.equals(MessageStore.getInstance(RangzenService.this).getStoreVersion());
+                    waitedMuch = historyItem.lastExchangeTime + historyItem.attempts*BACKOFF_FOR_ATTEMPT_MILLIES < System.currentTimeMillis();
+                }
+
+                Log.d(TAG,"has history: "+hasHistory);
+                Log.d(TAG,"storeVersion: " +storeVersionChanged);
+                Log.d(TAG,"waitedMuch: " +waitedMuch);
+                if(!hasHistory || storeVersionChanged || waitedMuch){
+                    Log.d(TAG,"Can connect with peer: "+peer);
+                    connectTo(peer);
+                }
             } else {
                 Log.v(TAG, "Remote device speaks to local device ("+peer+")");
             }
@@ -359,6 +378,7 @@ public class RangzenService extends Service {
           Log.i(TAG, "Socket connected, attempting exchange");
           try {
             mExchange = new CryptographicExchange(
+                    socket.getRemoteDevice().getAddress(),
                 socket.getInputStream(),
                 socket.getOutputStream(),
                 true,
@@ -520,6 +540,8 @@ public class RangzenService extends Service {
         }
 
           if(hasNew){
+              mMessageStore.updateStoreVersion();
+              ExchangeHistoryTracker.getInstance().updateHistory(RangzenService.this, exchange.getPeerAddress());
               if(isAppInForeground()) {
                   Intent intent = new Intent();
                   intent.setAction(MessageStore.NEW_MESSAGE);
@@ -527,6 +549,8 @@ public class RangzenService extends Service {
               } else {
                   showUnreadMessagesNotification();
               }
+          } else {
+              ExchangeHistoryTracker.getInstance().updateAttemptsHistory(exchange.getPeerAddress());
           }
 
           //BETA
@@ -627,6 +651,8 @@ public class RangzenService extends Service {
             //BETA END
 
             if(hasNew){
+              mMessageStore.updateStoreVersion();
+              ExchangeHistoryTracker.getInstance().updateHistory(RangzenService.this, exchange.getPeerAddress());
                 if(isAppInForeground()) {
                     Intent intent = new Intent();
                     intent.setAction(MessageStore.NEW_MESSAGE);
@@ -634,6 +660,8 @@ public class RangzenService extends Service {
                 } else {
                     showUnreadMessagesNotification();
                 }
+            } else {
+                ExchangeHistoryTracker.getInstance().updateAttemptsHistory(exchange.getPeerAddress());
             }
 
             RangzenService.this.cleanupAfterExchange(reportId);

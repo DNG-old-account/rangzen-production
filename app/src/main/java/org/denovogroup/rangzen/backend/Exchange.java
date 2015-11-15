@@ -70,6 +70,8 @@ import java.util.concurrent.TimeoutException;
  * oblivious to the underlying network communications used.
  */
 public class Exchange implements Runnable { 
+    /** Peer bluetooth address with which interacting, for history optimization. */
+  /* package */ String peerAddress;
   /** Store of friends to use in this exchange. */
   /* package */ FriendStore friendStore;
   /** Store of messages to use in this exchange. */
@@ -165,14 +167,16 @@ public class Exchange implements Runnable {
    * Create a new exchange which will communicate over the given Input/Output
    * streams and use the given context to access storage for messages/friends.
    *
+   * @param peerAddress the bluetooth address of the remote peer.
    * @param in An input stream which delivers a stream of data from the remote peer.
    * @param in An output stream which delivers a stream of data to the remote peer.
    * @param friendStore A store of friends to use in the friend-exchange protocol.
    * @param messageStore A store of messages to exchange with the remote peer.
    */
-  public Exchange(InputStream in, OutputStream out, boolean asInitiator, 
+  public Exchange(String peerAddress, InputStream in, OutputStream out, boolean asInitiator, 
                   FriendStore friendStore, MessageStore messageStore, 
                   ExchangeCallback callback, String reportId, String partnerId) throws IllegalArgumentException {
+    this.peerAddress = peerAddress;
     this.in = in;
     this.out = out;
     this.friendStore = friendStore;
@@ -602,4 +606,8 @@ public class Exchange implements Runnable {
   public String getPartnerId(){
     return partnerId;
   }
+
+    public String getPeerAddress(){
+        return peerAddress;
+    }
 }

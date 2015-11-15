@@ -239,6 +239,7 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
    * an extra.
    */
   private void onWifiP2pPeersChanged(Context context, Intent intent) {
+
     // Temp used merely for readability (avoiding very long line/weird indent).
     Parcelable temp = intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
     WifiP2pDeviceList peerDevices = (WifiP2pDeviceList) temp;
@@ -267,6 +268,8 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
       }
     }
     Log.v(TAG, "P2P peers changed");
+
+      ExchangeHistoryTracker.getInstance().cleanHistory(mPeerManager.getPeers());
   }
 
   /**
@@ -346,7 +349,7 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
    * device, or null if no such peer exists.
    */
   private Peer getCanonicalPeerByDevice(BluetoothDevice device) {
-    return mPeerManager.getCanonicalPeer(new Peer(new BluetoothPeerNetwork(device)));
+    return mPeerManager.getCanonicalPeer(new Peer(new BluetoothPeerNetwork(device), device.getAddress()));
   }
 
   /**

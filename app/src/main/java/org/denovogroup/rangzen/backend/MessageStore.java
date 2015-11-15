@@ -54,6 +54,7 @@ public class MessageStore extends SQLiteOpenHelper {
 
     private static MessageStore instance;
     private static final String TAG = "MessageStore";
+    private static String storeVersion;
     //readable true/false operators since SQLite does not support boolean values
     private static final int TRUE = 1;
     private static final int FALSE = 0;
@@ -400,6 +401,17 @@ public class MessageStore extends SQLiteOpenHelper {
         }
         Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
         return false;
+    }
+
+    /** Return the current version of the store */
+    public String getStoreVersion(){
+        if(storeVersion == null) updateStoreVersion();
+        return  storeVersion;
+    }
+
+    /** Randomize a version code for the store and set it*/
+    public void updateStoreVersion(){
+        storeVersion = UUID.randomUUID().toString();
     }
 
     /**
