@@ -382,9 +382,9 @@ public class CryptographicExchange extends Exchange {
   /**
    * Pass-through constructor to superclass constructor.
    */
-  public CryptographicExchange(InputStream in, OutputStream out, boolean asInitiator, 
+  public CryptographicExchange(String peerAddress, InputStream in, OutputStream out, boolean asInitiator,
                                FriendStore friendStore, MessageStore messageStore, 
                                ExchangeCallback callback) throws IllegalArgumentException {
-    super(in, out, asInitiator, friendStore, messageStore, callback);
+    super(peerAddress, in, out, asInitiator, friendStore, messageStore, callback);
   }
 }

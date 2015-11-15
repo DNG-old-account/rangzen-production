@@ -266,6 +266,8 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
       }
     }
     Log.v(TAG, "P2P peers changed");
+
+      ExchangeHistoryTracker.getInstance().cleanHistory(mPeerManager.getPeers());
   }
 
   /**
@@ -345,7 +347,7 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
    * device, or null if no such peer exists.
    */
   private Peer getCanonicalPeerByDevice(BluetoothDevice device) {
-    return mPeerManager.getCanonicalPeer(new Peer(new BluetoothPeerNetwork(device)));
+    return mPeerManager.getCanonicalPeer(new Peer(new BluetoothPeerNetwork(device), device.getAddress()));
   }
 
   /**

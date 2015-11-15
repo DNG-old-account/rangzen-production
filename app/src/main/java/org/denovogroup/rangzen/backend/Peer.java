@@ -36,6 +36,8 @@ import java.util.Date;
  * Medium-independent representation of a remote peer.
  */
 public class Peer {
+    /** The bluetooth address of this peer */
+    public String address;
   /** An object that encapsulates the network connection(s) to this peer */
   private PeerNetwork network;
 
@@ -47,7 +49,8 @@ public class Peer {
    *
    * @param network The PeerNetwork object for this peer
    */
-  public Peer(PeerNetwork network) {
+  public Peer(PeerNetwork network, String address) {
+      this.address = address;
     this.network = network;
     lastSeen = new Date();
   }
@@ -151,7 +154,7 @@ public class Peer {
    * @return A deep copy of the peer.
    */
   public Peer clone() {
-    Peer clone = new Peer(network.clone());
+    Peer clone = new Peer(network.clone(), address);
 
     return clone;
   }

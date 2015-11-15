@@ -281,7 +281,9 @@ public class BluetoothSpeaker {
     mSocket = mServerSocket.accept();
     Log.i(TAG, "Accepted socket from " + mSocket.getRemoteDevice());
     Log.i(TAG, "Accepted socket connected? " + mSocket.isConnected());
-    mExchange = new CryptographicExchange(mSocket.getInputStream(),
+    mExchange = new CryptographicExchange(
+                            mSocket.getRemoteDevice().getAddress(),
+                            mSocket.getInputStream(),
                              mSocket.getOutputStream(),
                              false,
                              new FriendStore(mContext, StorageBase.ENCRYPTION_DEFAULT),

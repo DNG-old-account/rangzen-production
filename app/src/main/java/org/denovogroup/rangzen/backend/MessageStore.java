@@ -40,6 +40,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Storage for Rangzen messages that uses StorageBase underneath. If
@@ -49,6 +50,8 @@ import java.util.List;
 public class MessageStore extends SQLiteOpenHelper {
 
     public static final String NEW_MESSAGE = "new message";
+
+    private static String storeVersion;
 
     private static MessageStore instance;
     private static final String TAG = "MessageStore";
@@ -380,6 +383,18 @@ public class MessageStore extends SQLiteOpenHelper {
         }
         Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
         return false;
+    }
+
+    /** Return the current version of the store */
+    public String getStoreVersion(){
+        if(storeVersion == null) updateStoreVersion();
+
+        return  storeVersion;
+    }
+
+    /** Randomize a version code for the store and set it*/
+    public void updateStoreVersion(){
+        storeVersion = UUID.randomUUID().toString();
     }
 
     /**
