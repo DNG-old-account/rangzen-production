@@ -95,6 +95,15 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/rangzen_app_name"
+            android:screenOrientation="portrait"
+            android:theme="@style/MyThemeDrawer"
+            android:windowSoftInputMode="adjustResize">
+        </activity>
+
     </application>
 
 </manifest>

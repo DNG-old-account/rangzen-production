@@ -26,6 +26,7 @@
         <item>Feed</item>
         <item>New Post</item>
         <item>Add Friend</item>
+        <item>Settings</item>
         <item>Info</item>
     </string-array>
 
@@ -60,5 +61,8 @@
     <string name="confirm_delete_title">Delete item?</string>
     <string name="confirm_delete">Are you sure you wish to remove this message? similar messages will not be received anymore.</string>
     <string name="include_log">Include log</string>
+    <string name="privacy_scheme_title">Privacy scheme</string>
+    <string name="scheme_details_title">Scheme detail</string>
+    <string name="priority_threshold_title">Priority threshold</string>
 
 </resources>
