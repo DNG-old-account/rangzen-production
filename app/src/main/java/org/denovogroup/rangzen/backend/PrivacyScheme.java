@@ -102,10 +102,6 @@ public class PrivacyScheme {
         this.autodelete = autodelete;
     }
 
-    public float getAutodeleteThreshold(Context context){
-        return context.getSharedPreferences(SettingsActivity.SETTINGS_FILE, Context.MODE_PRIVATE).getFloat(SettingsActivity.PRIORITY_THRESHOLD_KEY, SettingsActivity.DEFAULT_PRIORITY_THRESHOLD);
-    }
-
     public boolean isShareLocation() {
         return shareLocation;
     }

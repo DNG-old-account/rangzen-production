@@ -33,8 +33,10 @@ package org.denovogroup.rangzen.backend;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection.ServerReplyTuple;
 import org.denovogroup.rangzen.objects.ClientMessage;
+import org.denovogroup.rangzen.objects.JSONMessage;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.objects.ServerMessage;
+import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -61,6 +63,9 @@ import okio.ByteString;
  * Performs a single exchange with a Rangzen peer, using the PSI protocol
  * to exchange friends in a zero-knowledge fashion.
  *
+ * Transferred messages are being converted into a well known JSON format to enable message
+ * exchange between two different types of message java objects.
+ *
  * This class is given input and output streams and communicates over them,
  * oblivious to the underlying network communications used.
  */
@@ -83,6 +88,8 @@ public class CryptographicExchange extends Exchange {
 
   /** Tag appears in Android log messages. */
   private static final String TAG = "CryptographicExchange";
+
+    private static final String MESSAGE_COUNT_KEY = "count";
   
   /**
    * Perform the exchange asynchronously, calling back success or failure on
@@ -203,14 +210,14 @@ public class CryptographicExchange extends Exchange {
       boolean success = true;
       List<RangzenMessage> messagesPool = getMessages();
       //notify the recipient how many items we expect to send him.
-      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messagesPool.size()),1d);
+      JSONMessage exchangeInfoMessage = new JSONMessage("{\""+MESSAGE_COUNT_KEY+"\":"+messagesPool.size()+"}");
 
       if(!lengthValueWrite(out, exchangeInfoMessage)){
           success = false;
       } else {
           for (RangzenMessage message : messagesPool) {
-              List<RangzenMessage> messageWrapper = new ArrayList<>();
-              messageWrapper.add(message);
+              List<JSONMessage> messageWrapper = new ArrayList<>();
+              messageWrapper.add(new JSONMessage(message.toJSON()));
               ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
                       .build();
               if (!lengthValueWrite(out, cm)) {
@@ -234,10 +241,10 @@ public class CryptographicExchange extends Exchange {
 
       //the first message received is a hint, telling the us how many messages will be sent
       int messageCount = 0;
-      RangzenMessage exchangeInfo = lengthValueRead(in, RangzenMessage.class);
+      JSONMessage exchangeInfo = lengthValueRead(in, JSONMessage.class);
       if(exchangeInfo != null){
           try {
-              messageCount = Integer.parseInt(exchangeInfo.text);
+              messageCount = new JSONObject(exchangeInfo.jsonString).getInt(MESSAGE_COUNT_KEY);
           } catch (Exception e){}
       }
 
@@ -270,7 +277,9 @@ public class CryptographicExchange extends Exchange {
           try {
               mRemoteClientMessage = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
               //Add everything passed in the wrapper to the pool
-              mMessagesReceived.addAll(mRemoteClientMessage.messages);
+              for(JSONMessage message : mRemoteClientMessage.messages) {
+                  mMessagesReceived.add(RangzenMessage.fromJSON(message.jsonString));
+              }
           } catch (ExecutionException ex){
               executor.shutdown();
               if (mMessagesReceived.isEmpty()) {

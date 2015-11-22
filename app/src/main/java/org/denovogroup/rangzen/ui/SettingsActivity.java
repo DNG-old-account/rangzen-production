@@ -18,16 +18,8 @@ import org.denovogroup.rangzen.backend.PrivacyManager;
  */
 public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSeekBarChangeListener{
 
-    public static final String SETTINGS_FILE = "Settings";
-
-    public static final int DEFAULT_PRIVACY_SCHEME = 1;
-    public static final float DEFAULT_PRIORITY_THRESHOLD = 0f;
-
-    public static final String PRIVACY_KEY = "privacy";
-    public static final String PRIORITY_THRESHOLD_KEY = "priority_threshold";
-
-    private int privacy_scheme = DEFAULT_PRIVACY_SCHEME;
-    private float priority_threshold = DEFAULT_PRIORITY_THRESHOLD;
+    private int privacy_scheme;
+    private float priority_threshold;
 
     SeekBar privacySeeker;
     SeekBar priorityThresholdSeeker;
@@ -52,6 +44,7 @@ public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSee
         getStoredSettings();
     }
 
+    /** build the dynamic view parts such as the privacy scheme seeker */
     private void initView() {
         privacySeeker.setOnSeekBarChangeListener(this);
         profiles = PrivacyManager.getInstance().getSchemes();
@@ -114,26 +107,21 @@ public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSee
     public void onStopTrackingTouch(SeekBar seekBar) {
         switch (seekBar.getId()) {
             case R.id.privacySeekBar:
-                getSharedPreferences(SETTINGS_FILE, MODE_PRIVATE).edit()
-                        .putInt(PRIVACY_KEY, privacy_scheme)
-                        .commit();
-
+                PrivacyManager.setCurrentScheme(this, privacy_scheme);
                 priorityThresholdSeeker.setEnabled(PrivacyManager.getInstance().getScheme(privacy_scheme).isAutodelete());
                 break;
             case R.id.priorityThresholdSeekBar:
-                getSharedPreferences(SETTINGS_FILE, MODE_PRIVATE).edit()
-                        .putFloat(PRIORITY_THRESHOLD_KEY, seekBar.getProgress() / 100f)
-                        .commit();
+                PrivacyManager.setCurrentAutodeleteThreshold(this, seekBar.getProgress() / 100f);
                 break;
         }
     }
 
     public void getStoredSettings(){
-        privacy_scheme = getSharedPreferences(SETTINGS_FILE,MODE_PRIVATE).getInt(PRIVACY_KEY, DEFAULT_PRIVACY_SCHEME);
+        privacy_scheme = PrivacyManager.getCurrentScheme(this);
         privacySeeker.setProgress((int) Math.round(getPrivacySeekerSectionSize() * privacy_scheme));
         onProgressChanged(privacySeeker, privacySeeker.getProgress(), true);
 
-        priority_threshold = getSharedPreferences(SETTINGS_FILE,MODE_PRIVATE).getFloat(PRIORITY_THRESHOLD_KEY, DEFAULT_PRIORITY_THRESHOLD);
+        priority_threshold = PrivacyManager.getCurrentAutodeleteThreshold(this);
         priorityThresholdSeeker.setProgress(Math.round(priority_threshold * 100));
     }
 }
