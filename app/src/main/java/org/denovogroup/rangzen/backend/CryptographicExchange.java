@@ -36,6 +36,7 @@ import org.denovogroup.rangzen.beta.NetworkHandler;
 import org.denovogroup.rangzen.beta.ReportsMaker;
 import org.denovogroup.rangzen.beta.StopWatch;
 import org.denovogroup.rangzen.objects.ClientMessage;
+import org.denovogroup.rangzen.objects.JSONMessage;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.objects.ServerMessage;
 import org.json.JSONException;
@@ -70,6 +71,9 @@ import okio.ByteString;
  * Performs a single exchange with a Rangzen peer, using the PSI protocol
  * to exchange friends in a zero-knowledge fashion.
  *
+ * Transferred messages are being converted into a well known JSON format to enable message
+ * exchange between two different types of message java objects.
+ *
  * This class is given input and output streams and communicates over them,
  * oblivious to the underlying network communications used.
  */
@@ -92,6 +96,8 @@ public class CryptographicExchange extends Exchange {
 
   /** Tag appears in Android log messages. */
   private static final String TAG = "CryptographicExchange";
+
+    private static final String MESSAGE_COUNT_KEY = "count";
   
   /**
    * Perform the exchange asynchronously, calling back success or failure on
@@ -213,17 +219,16 @@ public class CryptographicExchange extends Exchange {
       //create a message pool to be sent and send each message individually to allow partial data recovery in case of connection loss
       boolean success = true;
       List<RangzenMessage> messagesPool = getMessages();
-      Log.d("liran","pool:"+getMessages());
       //notify the recipient how many items we expect to send him.
-      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messagesPool.size()),1d, "notifyReceiver");
+      JSONMessage exchangeInfoMessage = new JSONMessage("{\""+MESSAGE_COUNT_KEY+"\":"+messagesPool.size()+"}");
 
       if(!lengthValueWrite(out, exchangeInfoMessage)){
           success = false;
       } else {
           for (RangzenMessage message : messagesPool) {
               watch.start();
-              List<RangzenMessage> messageWrapper = new ArrayList<>();
-              messageWrapper.add(message);
+              List<JSONMessage> messageWrapper = new ArrayList<>();
+              messageWrapper.add(new JSONMessage(message.toJSON()));
               ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
                       .build();
               if (!lengthValueWrite(out, cm)) {
@@ -256,9 +261,12 @@ public class CryptographicExchange extends Exchange {
 
               if (NetworkHandler.getInstance() != null) {
                   String mThisDeviceUUID = "" + UUID.nameUUIDFromBytes(BluetoothAdapter.getDefaultAdapter().getAddress().getBytes());
-                  for (RangzenMessage msg : cm.messages) {
-                      JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), msg.text ,msg.mId, msg.priority, 0f, "" + watch.getElapsedTime());
-                      exchangeReports.add(report);
+                  for (JSONMessage msg : cm.messages) {
+                      try {
+                          JSONObject data = new JSONObject(msg.jsonString);
+                          JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), mThisDeviceUUID, getPartnerId(), data.optString(RangzenMessage.TEXT_KEY, ""), data.optString(RangzenMessage.MID_KEY, ""), data.optDouble(RangzenMessage.PRIORITY_KEY,-1), 0f, "" + watch.getElapsedTime());
+                          exchangeReports.add(report);
+                      } catch (JSONException e){}
                   }
               }
               //BETA END
@@ -280,10 +288,10 @@ public class CryptographicExchange extends Exchange {
   private void receiveClientMessage() throws IOException {
       //the first message received is a hint, telling the us how many messages will be sent
       int messageCount = 0;
-      RangzenMessage exchangeInfo = lengthValueRead(in, RangzenMessage.class);
+      JSONMessage exchangeInfo = lengthValueRead(in, JSONMessage.class);
       if(exchangeInfo != null){
           try {
-              messageCount = Integer.parseInt(exchangeInfo.text);
+              messageCount = new JSONObject(exchangeInfo.jsonString).getInt(MESSAGE_COUNT_KEY);
           } catch (Exception e){}
       }
       //BETA
@@ -294,57 +302,60 @@ public class CryptographicExchange extends Exchange {
       if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
 
       //Define the get single message task
-      class ReceiveSingleMessage implements Callable<String>{
+      class ReceiveSingleMessage implements Callable<ClientMessage> {
 
           @Override
-          public String call() throws Exception {
-              mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
+          public ClientMessage call() throws Exception {
+              ClientMessage mCurrentReceived;
+              mCurrentReceived = lengthValueRead(in, ClientMessage.class);
 
-              if (mRemoteClientMessage == null) {
-                  return "Remote client message not received.";
+              if (mCurrentReceived == null) {
+                  throw new Exception("Remote client message not received.");
               }
 
-              if (mRemoteClientMessage.messages == null) {
-                  return "Remote client messages field was null";
+              if (mCurrentReceived.messages == null) {
+                  throw new Exception("Remote client messages field was null");
               }
-              //Add everything passed in the wrapper to the pool
-              mMessagesReceived.addAll(mRemoteClientMessage.messages);
-              return null;
+              return mCurrentReceived;
           }
       }
 
       //read from the stream until either times out or get all the messages
       ExecutorService executor = Executors.newSingleThreadExecutor();
       while(mMessagesReceived.size() < messageCount) {
+          watch.start();
+          Future<ClientMessage> task = executor.submit(new ReceiveSingleMessage());
           try {
-              //BETA
-              watch.start();
-              String exception = executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
-              // BETA
+              mRemoteClientMessage = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
+              //Add everything passed in the wrapper to the pool
+              for(JSONMessage message : mRemoteClientMessage.messages) {
+                  mMessagesReceived.add(RangzenMessage.fromJSON(message.jsonString));
+              }
               watch.stop();
               JSONObject report = ReportsMaker.getMessageExchangeReport(System.currentTimeMillis(), getPartnerId(), mThisDeviceUUID, mMessagesReceived.get(mMessagesReceived.size()-1).text,mMessagesReceived.get(mMessagesReceived.size()-1).mId, mMessagesReceived.get(mMessagesReceived.size()-1).priority, 0, ""+watch.getElapsedTime());
               exchangeReports.add(report);
-              //BETA END
-              if (exception != null && !exception.isEmpty()) {
-                  executor.shutdown();
-                  if (mMessagesReceived.isEmpty()) {
-                      setExchangeStatus(Status.ERROR);
-                  } else {
-                      setExchangeStatus(Status.ERROR_RECOVERABLE);
-                  }
-                  setErrorMessage(exception);
-                  throw new IOException(exception);
-              }
-          } catch (InterruptedException |ExecutionException | TimeoutException e) {
+          } catch (ExecutionException ex){
               executor.shutdown();
               if (mMessagesReceived.isEmpty()) {
                   setExchangeStatus(Status.ERROR);
               } else {
                   setExchangeStatus(Status.ERROR_RECOVERABLE);
               }
+              task.cancel(true);
+              setErrorMessage(ex.getMessage());
+              throw new IOException(ex.getMessage());
+          } catch (InterruptedException | TimeoutException e) {
+              executor.shutdown();
+              if (mMessagesReceived.isEmpty()) {
+                  setExchangeStatus(Status.ERROR);
+              } else {
+                  setExchangeStatus(Status.ERROR_RECOVERABLE);
+              }
+              task.cancel(true);
               setErrorMessage("Message receiving timed out");
               throw new IOException ("Message receiving timed out");
           }
+          watch.stop();
       }
       executor.shutdown();
   }

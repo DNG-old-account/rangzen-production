@@ -358,29 +358,31 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      */
     public void showFragment(int position) {
         Fragment needAdd = null;
-        if (position == 0) {
-            needAdd = new FeedFragment();
-        } else if (position == 1) {
-            Intent intent = new Intent();
-            intent.setClass(this, PostActivity.class);
-            startActivityForResult(intent, Message);
-            return;
-        /*} else if (position == 2) {
-            Intent intent = new Intent("com.google.zxing.client.android.SCAN");
-            intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-            // startActivityForResult(intent, 0);
-            startActivityForResult(intent, 0);
-            startActivityForResult(intent, QR);
-            return;*/
-        } else if (position == 2) {
-            Intent intent = new Intent(this,DebugActivity.class);
-            startActivity(intent);
-            return;
-        } else {
-            needAdd = new FragmentOrganizer();
-            Bundle b = new Bundle();
-            b.putSerializable("whichScreen", FragmentType.SECONDABOUT);
-            needAdd.setArguments(b);
+        switch(position){
+            case 0:
+                needAdd = new FeedFragment();
+                break;
+            case 1:
+                Intent postIntent = new Intent();
+                postIntent.setClass(this, PostActivity.class);
+                startActivityForResult(postIntent, Message);
+                return;
+            case 2:
+                Intent qrIntent = new Intent("com.google.zxing.client.android.SCAN");
+                qrIntent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+                // startActivityForResult(intent, 0);
+                startActivityForResult(qrIntent, QR);
+                return;
+            case 3:
+                Intent settingsIntent = new Intent(this, SettingsActivity.class);
+                startActivity(settingsIntent);
+                return;
+            default:
+                needAdd = new FragmentOrganizer();
+                Bundle b = new Bundle();
+                b.putSerializable("whichScreen", FragmentType.SECONDABOUT);
+                needAdd.setArguments(b);
+                break;
         }
         makeTitleBold(position);
         FragmentManager fragmentManager = getSupportFragmentManager();

@@ -144,7 +144,9 @@ public class NetworkHandler {
      * If client wasn't initialized yet it will be initialized when calling this function.
       * @return the database which can run queries and interact with the application or null.
      */
-    public static MongoDatabase getDatabase(){
+    private static MongoDatabase getDatabase(){
+        if(true) return null; //TODO remove this line, also make calls asnycronous
+
         if(db != null) return  db;
 
         MongoClientURI uri = new MongoClientURI(CONNECTION_STRING);

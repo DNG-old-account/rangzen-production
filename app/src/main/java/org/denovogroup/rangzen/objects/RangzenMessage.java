@@ -10,6 +10,9 @@ import com.squareup.wire.ProtoField;
 import java.util.Random;
 import java.util.UUID;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import static com.squareup.wire.Message.Datatype.DOUBLE;
 import static com.squareup.wire.Message.Datatype.STRING;
 import static com.squareup.wire.Message.Label.REQUIRED;
@@ -22,6 +25,10 @@ public final class RangzenMessage extends Message {
   public static final String DEFAULT_TEXT = "";
   public static final Double DEFAULT_PRIORITY = 0D;
   public static final String DEFAULT_ID = "";
+
+    public static final String TEXT_KEY = "text";
+    public static final String PRIORITY_KEY = "priority";
+    public static final String MID_KEY = "mId"; // BETA
 
   /**
    * The message's text, as a String.
@@ -51,6 +58,35 @@ public final class RangzenMessage extends Message {
     this(builder.text, builder.priority, builder.mId);
     setBuilder(builder);
   }
+
+    public static RangzenMessage fromJSON(JSONObject json){
+        return new RangzenMessage(json.optString(TEXT_KEY, ""),
+                json.optDouble(PRIORITY_KEY, 0.01), json.optString(MID_KEY, ""));
+    }
+
+    public static RangzenMessage fromJSON(String jsonString){
+        JSONObject json;
+        try {
+            json = new JSONObject(jsonString);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            json = new JSONObject();
+        }
+        return new RangzenMessage(json.optString(TEXT_KEY, ""),
+                json.optDouble(PRIORITY_KEY, 0.01), json.optString(MID_KEY, ""));
+    }
+
+    public JSONObject toJSON(){
+        JSONObject result = new JSONObject();
+        try {
+            result.put(TEXT_KEY, this.text);
+            result.put(PRIORITY_KEY, this.priority);
+            result.put(MID_KEY, this.mId);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 
   @Override
   public boolean equals(Object other) {

@@ -18,6 +18,8 @@ import com.parse.ParsePush;
 import com.parse.ParseQuery;
 
 import io.fabric.sdk.android.Fabric;
+
+import org.denovogroup.rangzen.BuildConfig;
 import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.ReadStateTracker;
@@ -42,7 +44,10 @@ public class RangzenApplication extends Application{
     @Override
     public final void onCreate() {
         super.onCreate();
-        Fabric.with(this, new Crashlytics());
+
+        if(!BuildConfig.DEBUG) {
+            Fabric.with(this, new Crashlytics());
+        }
 
         /** Initialize Parse */
         Parse.enableLocalDatastore(getApplicationContext());
