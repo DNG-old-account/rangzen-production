@@ -2,14 +2,19 @@
 // Source file: /Users/barathraghavan/code/rangzen/rangzen/buck-out/gen/proto-repo/compile_protobufs__srcs/RangzenMessage.proto
 package org.denovogroup.rangzen.objects;
 
+import android.util.Log;
+
 import com.squareup.wire.Message;
 import com.squareup.wire.ProtoField;
 
+import org.denovogroup.rangzen.backend.*;
+import org.denovogroup.rangzen.backend.SecurityManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import static com.squareup.wire.Message.Datatype.DOUBLE;
 import static com.squareup.wire.Message.Datatype.STRING;
+import static com.squareup.wire.Message.Label.OPTIONAL;
 import static com.squareup.wire.Message.Label.REQUIRED;
 
 /**
@@ -18,10 +23,12 @@ import static com.squareup.wire.Message.Label.REQUIRED;
 public final class RangzenMessage extends Message {
 
   public static final String DEFAULT_TEXT = "";
-  public static final Double DEFAULT_PRIORITY = 0D;
+  public static final Double DEFAULT_PRIORITY = 0.01D;
+    public static final String DEFAULT_PSEUDONYM = "";
 
     public static final String TEXT_KEY = "text";
     public static final String PRIORITY_KEY = "priority";
+    public static final String PSEUDONYM_KEY = "pseudonym";
 
   /**
    * The message's text, as a String.
@@ -35,19 +42,36 @@ public final class RangzenMessage extends Message {
   @ProtoField(tag = 2, type = DOUBLE, label = REQUIRED)
   public final Double priority;
 
-  public RangzenMessage(String text, Double priority) {
+    /**
+     * The message's sender name, as a String.
+     */
+    @ProtoField(tag = 3, type = STRING, label = OPTIONAL)
+    public final String pseudonym;
+
+  public RangzenMessage(String text, Double priority, String pseudonym) {
     this.text = text;
     this.priority = priority;
+      this.pseudonym = pseudonym;
   }
 
+    public RangzenMessage(String text, Double priority) {
+        this.text = text;
+        this.priority = priority;
+        this.pseudonym = "";
+    }
+
   private RangzenMessage(Builder builder) {
-    this(builder.text, builder.priority);
+    this(builder.text, builder.priority, builder.pseudonym);
     setBuilder(builder);
   }
 
     public static RangzenMessage fromJSON(JSONObject json){
-        return new RangzenMessage(json.optString(TEXT_KEY, ""),
-                json.optDouble(PRIORITY_KEY, 0.01));
+        return new RangzenMessage(
+                json.optString(TEXT_KEY, DEFAULT_TEXT),
+                json.optDouble(PRIORITY_KEY, DEFAULT_PRIORITY),
+                json.optString(PSEUDONYM_KEY, DEFAULT_PSEUDONYM)
+                );
+                //TODO opt location
     }
 
     public static RangzenMessage fromJSON(String jsonString){
@@ -58,15 +82,22 @@ public final class RangzenMessage extends Message {
             e.printStackTrace();
             json = new JSONObject();
         }
-        return new RangzenMessage(json.optString(TEXT_KEY, ""),
-                json.optDouble(PRIORITY_KEY, 0.01));
+        return fromJSON(json);
     }
 
-    public JSONObject toJSON(){
+    /** convert the message into a json object using the supplied security profile restrictions */
+    public JSONObject toJSON(int securityProfile){
         JSONObject result = new JSONObject();
         try {
             result.put(TEXT_KEY, this.text);
-            result.put(PRIORITY_KEY, this.priority);
+            result.put(PRIORITY_KEY, this.priority + Utils.makeNoise(0d, 0.003d));
+
+            SecurityProfile profile = SecurityManager.getProfile(securityProfile);
+
+            //put optional items based on security profile settings
+            if(profile.isPseudonyms()) result.put(PSEUDONYM_KEY, this.pseudonym);
+            //if(profile.isShareLocation()) result.put(TEXT_KEY, this.location); //TODO location
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -97,6 +128,7 @@ public final class RangzenMessage extends Message {
 
     public String text;
     public Double priority;
+      public String pseudonym;
 
     public Builder() {
     }
@@ -106,6 +138,7 @@ public final class RangzenMessage extends Message {
       if (message == null) return;
       this.text = message.text;
       this.priority = message.priority;
+      this.pseudonym = message.pseudonym;
     }
 
     /**
@@ -123,6 +156,14 @@ public final class RangzenMessage extends Message {
       this.priority = priority;
       return this;
     }
+
+      /**
+       * The message's sender name, as a string.
+       */
+      public Builder pseudonym(String pseudonym) {
+          this.pseudonym = pseudonym;
+          return this;
+      }
 
     @Override
     public RangzenMessage build() {

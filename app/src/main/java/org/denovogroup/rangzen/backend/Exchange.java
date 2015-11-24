@@ -33,13 +33,11 @@ package org.denovogroup.rangzen.backend;
 import com.squareup.wire.Wire;
 import com.squareup.wire.Message;
 
-import android.content.Context;
 import android.util.Log;
 
 import org.denovogroup.rangzen.objects.CleartextFriends;
 import org.denovogroup.rangzen.objects.CleartextMessages;
 import org.denovogroup.rangzen.objects.RangzenMessage;
-import org.denovogroup.rangzen.ui.RangzenApplication;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -92,7 +90,7 @@ public class Exchange implements Runnable {
   private CleartextFriends mFriendsReceived;
 
   /** Send up to this many messages (top priority) from the message store. */
-  private static final int NUM_MESSAGES_TO_SEND = 100;
+  public static final int NUM_MESSAGES_TO_EXCHANGE = 100;
 
   /** Minimum trust multiplier in the case of 0 shared friends. */
   public static final double EPSILON_TRUST = .001;
@@ -214,14 +212,14 @@ public class Exchange implements Runnable {
   }
 
   /**
-   * Retrieve at most NUM_MESSAGES_TO_SEND messages from the message store and
+   * Retrieve at most NUM_MESSAGES_TO_EXCHANGE messages from the message store and
    * return them. If no messages, returns a empty list.
    *
-   * @return The top NUM_MESSAGES_TO_SEND in the MessageStore.
+   * @return The top NUM_MESSAGES_TO_EXCHANGE in the MessageStore.
    */
   /* package */ List<RangzenMessage> getMessages() { 
     List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
-    List<MessageStore.Message> messagesFromStore = MessageStore.getInstance().getMessages(false, NUM_MESSAGES_TO_SEND);
+    List<MessageStore.Message> messagesFromStore = MessageStore.getInstance().getMessages(false, NUM_MESSAGES_TO_EXCHANGE);
       if (messagesFromStore != null) {
           for (MessageStore.Message message :messagesFromStore) {
               if(message != null){
@@ -294,7 +292,7 @@ public class Exchange implements Runnable {
       RangzenMessage exchangeInfo = lengthValueRead(in, RangzenMessage.class);
       if(exchangeInfo != null){
           try {
-              messageCount = Integer.parseInt(exchangeInfo.text);
+              messageCount = Math.min(NUM_MESSAGES_TO_EXCHANGE, Integer.parseInt(exchangeInfo.text));
           } catch (Exception e){}
       }
 

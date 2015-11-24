@@ -36,7 +36,15 @@ import android.util.Log;
 
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 
+import java.io.IOException;
 import java.lang.IllegalArgumentException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -238,7 +246,8 @@ public class FriendStore {
       AsymmetricCipherKeyPair keypair = Crypto.generateUserID();
       privateDeviceID = bytesToBase64(Crypto.generatePrivateID(keypair));
       publicDeviceID = bytesToBase64(Crypto.generatePublicID(keypair));
-      store.put(DEVICE_PRIVATE_ID_KEY, privateDeviceID);
+
+        store.put(DEVICE_PRIVATE_ID_KEY, privateDeviceID);
       store.put(DEVICE_PUBLIC_ID_KEY, publicDeviceID);
     }
   }

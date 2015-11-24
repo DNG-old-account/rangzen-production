@@ -9,16 +9,16 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.backend.PrivacyManager;
+import org.denovogroup.rangzen.backend.SecurityManager;
 
 /**
  * Created by Liran on 11/17/2015.
  *
- * An Activity which enable the user to set his own preferences such as privacy
+ * An Activity which enable the user to set his own preferences such as security
  */
 public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSeekBarChangeListener{
 
-    private int privacy_scheme;
+    private int security_profiles;
     private float priority_threshold;
 
     SeekBar privacySeeker;
@@ -44,10 +44,10 @@ public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSee
         getStoredSettings();
     }
 
-    /** build the dynamic view parts such as the privacy scheme seeker */
+    /** build the dynamic view parts such as the security profile seeker */
     private void initView() {
         privacySeeker.setOnSeekBarChangeListener(this);
-        profiles = PrivacyManager.getInstance().getSchemes();
+        profiles = SecurityManager.getInstance().getProfiles();
 
         seekerTitles.removeAllViews();
         for(int i=0; i<profiles.length; i++){
@@ -78,9 +78,9 @@ public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSee
                     int newProgress = (int) getPrivacySeekerSectionSize() * position;
 
                     seekBar.setProgress(newProgress);
-                    privacyDetailsTv.setText(PrivacyManager.getInstance().getScheme(position).getDescription());
+                    privacyDetailsTv.setText(SecurityManager.getInstance().getProfile(position).getDescription());
 
-                    privacy_scheme = position;
+                    security_profiles = position;
                 }
                 break;
             case R.id.priorityThresholdSeekBar:
@@ -107,21 +107,21 @@ public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSee
     public void onStopTrackingTouch(SeekBar seekBar) {
         switch (seekBar.getId()) {
             case R.id.privacySeekBar:
-                PrivacyManager.setCurrentScheme(this, privacy_scheme);
-                priorityThresholdSeeker.setEnabled(PrivacyManager.getInstance().getScheme(privacy_scheme).isAutodelete());
+                SecurityManager.setCurrentProfile(this, security_profiles);
+                priorityThresholdSeeker.setEnabled(SecurityManager.getInstance().getProfile(security_profiles).isAutodelete());
                 break;
             case R.id.priorityThresholdSeekBar:
-                PrivacyManager.setCurrentAutodeleteThreshold(this, seekBar.getProgress() / 100f);
+                SecurityManager.setCurrentAutodeleteThreshold(this, seekBar.getProgress() / 100f);
                 break;
         }
     }
 
     public void getStoredSettings(){
-        privacy_scheme = PrivacyManager.getCurrentScheme(this);
-        privacySeeker.setProgress((int) Math.round(getPrivacySeekerSectionSize() * privacy_scheme));
+        security_profiles = SecurityManager.getCurrentProfile(this);
+        privacySeeker.setProgress((int) Math.round(getPrivacySeekerSectionSize() * security_profiles));
         onProgressChanged(privacySeeker, privacySeeker.getProgress(), true);
 
-        priority_threshold = PrivacyManager.getCurrentAutodeleteThreshold(this);
+        priority_threshold = SecurityManager.getCurrentAutodeleteThreshold(this);
         priorityThresholdSeeker.setProgress(Math.round(priority_threshold * 100));
     }
 }

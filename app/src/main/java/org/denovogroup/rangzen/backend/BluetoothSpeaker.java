@@ -282,6 +282,7 @@ public class BluetoothSpeaker {
     Log.i(TAG, "Accepted socket from " + mSocket.getRemoteDevice());
     Log.i(TAG, "Accepted socket connected? " + mSocket.isConnected());
     mExchange = new CryptographicExchange(
+                            SecurityManager.getCurrentProfile(mContext),
                             mSocket.getRemoteDevice().getAddress(),
                             mSocket.getInputStream(),
                              mSocket.getOutputStream(),

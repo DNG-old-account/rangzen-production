@@ -7,10 +7,12 @@ import org.denovogroup.rangzen.ui.SettingsActivity;
 /**
  * Created by Liran on 11/17/2015.
  *
- * A simple object representing a privacy scheme and its properties
+ * A simple object representing a security profile and its properties
  */
-public class PrivacyScheme {
-    /** scheme display name*/
+public class SecurityProfile {
+    /** profile security strength*/
+    int strength;
+    /** profile display name*/
     String name;
     /** allow display/storage of timestamps*/
     boolean timestamp;
@@ -29,7 +31,8 @@ public class PrivacyScheme {
     /** Minimum shared contacts for message exchange */
     int minSharedContacts;
 
-    public PrivacyScheme(String name, boolean timestamp, boolean pseudonyms, int feedSize, boolean friendsViaBook, boolean friendsViaQR, boolean autodelete, boolean shareLocation, int minSharedContacts) {
+    public SecurityProfile(int strength, String name, boolean timestamp, boolean pseudonyms, int feedSize, boolean friendsViaBook, boolean friendsViaQR, boolean autodelete, boolean shareLocation, int minSharedContacts) {
+        this.strength = strength;
         this.name = name;
         this.timestamp = timestamp;
         this.pseudonyms = pseudonyms;
@@ -52,6 +55,10 @@ public class PrivacyScheme {
                         "Share locations: "+booleanToText(shareLocation)+"\n"+
                         "Minimum shared contacts for exchange: "+ (minSharedContacts > 0 ? minSharedContacts : "unlimited");
         return desc;
+    }
+
+    public int getStrength(){
+        return strength;
     }
 
     public String getName() {

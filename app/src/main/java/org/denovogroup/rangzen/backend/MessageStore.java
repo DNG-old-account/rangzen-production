@@ -272,14 +272,16 @@ public class MessageStore extends SQLiteOpenHelper {
      * @return Returns true if the message was added. If message already exists, update its values
      */
     public boolean addMessage(String message, double priority, boolean enforceLimit){
+
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
-
             if (enforceLimit) {
                 priority = streamlinePriority(priority);
             } else {
                 checkPriority(priority);
             }
+
+            if(message.length() > MAX_MESSAGE_SIZE) message = message.substring(0, MAX_MESSAGE_SIZE);
 
             if(containsOrRemoved(message)) {
                 db.execSQL("UPDATE "+TABLE+" SET "+COL_PRIORITY+"="+priority+","+COL_DELETED+"="+FALSE+

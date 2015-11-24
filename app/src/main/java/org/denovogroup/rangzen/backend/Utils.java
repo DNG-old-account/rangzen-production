@@ -10,12 +10,20 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.TimeZone;
 
 /**
  * Created by Liran on 9/2/2015.
  */
 public class Utils {
+
+    private static Utils instance;
+    private static Random random = new Random();
+
+    private Utils(){
+        random = new Random();
+    }
 
     /** Convert a timestemp in milliseconds into a human readable string format
      *
@@ -104,5 +112,16 @@ public class Utils {
             text = text.substring(hashtagStart + hashtag.length());
         }
         return hashtags;
+    }
+
+    /** create a gaussian noise around supplied mean value based on supplied standardDiviation
+     *
+     * @param mean The value that most values will tend to cluster around
+     * @param standardDiviation The value representing the top and bottom limit of approximately 70% of
+     *                 the results (i.e 70% of the results will be between -standardDiviation and standardDiviation)
+     * @return random noise value
+     */
+    public static synchronized double makeNoise(double mean, double standardDiviation){
+        return random.nextGaussian()*Math.sqrt(standardDiviation) + mean;
     }
 }

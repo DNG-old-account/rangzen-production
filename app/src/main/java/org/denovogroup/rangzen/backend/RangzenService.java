@@ -355,6 +355,7 @@ public class RangzenService extends Service {
           Log.i(TAG, "Socket connected, attempting exchange");
           try {
             mExchange = new CryptographicExchange(
+                    SecurityManager.getCurrentProfile(RangzenService.this),
                     socket.getRemoteDevice().getAddress(),
                 socket.getInputStream(),
                 socket.getOutputStream(),
