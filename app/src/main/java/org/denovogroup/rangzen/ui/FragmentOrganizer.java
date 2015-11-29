@@ -65,8 +65,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.backend.MessageStore;
-import org.denovogroup.rangzen.backend.StorageBase;
+import org.denovogroup.rangzen.backend.*;
+import org.denovogroup.rangzen.backend.SecurityManager;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -330,8 +330,10 @@ public class FragmentOrganizer extends Fragment {
                 MessageStore messageStore = MessageStore.getInstance(getActivity());
                 String message = ((TextView) getActivity().findViewById(
                         R.id.editText1)).getText().toString();
-                float priority = 1.0f;
-                messageStore.addMessage(message, priority, true);
+                float trust = 1.0f;
+                int priority = 0;
+                String pseudonym = SecurityManager.getCurrentPseudonym(getActivity());
+                messageStore.addMessage(message, trust, priority, pseudonym,true);
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 getActivity().setResult(Activity.RESULT_OK);

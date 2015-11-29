@@ -425,23 +425,23 @@ public class RangzenService extends Service {
         Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
           Set<String> myFriends = mFriendStore.getAllFriends();
         for (RangzenMessage message : newMessages) {
-          double stored = mMessageStore.getPriority(message.text);
-          double remote = message.priority;
-          double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
+          double stored = mMessageStore.getTrust(message.text);
+          double remote = message.trust;
+          double newTrust = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
           try {
             if (mMessageStore.containsOrRemoved(message.text)){
                 //update existing message priority unless its marked as removed by user
-                mMessageStore.updatePriority(message.text, newPriority, true);
+                mMessageStore.updateTrust(message.text, newTrust, true);
             } else {
                 hasNew = true;
-                mMessageStore.addMessage(message.text, newPriority, true);
+                mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym ,true);
                 //mark this message as unread
                 ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
             }
           } catch (IllegalArgumentException e) {
-            Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
+            Log.e(TAG, String.format("Attempted to add/update message %s with trust (%f/%f)" +
                                     ", %d friends, %d friends in common",
-                                    message.text, newPriority, message.priority, 
+                                    message.text, newTrust, message.priority,
                                     myFriends.size(), friendOverlap));
           }
         }
@@ -480,23 +480,23 @@ public class RangzenService extends Service {
             if(newMessages != null) {
                 for (RangzenMessage message : newMessages) {
                     Set<String> myFriends = mFriendStore.getAllFriends();
-                    double stored = mMessageStore.getPriority(message.text);
+                    double stored = mMessageStore.getTrust(message.text);
                     double remote = message.priority;
-                    double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
+                    double newTrust = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
                     try {
                         if (mMessageStore.containsOrRemoved(message.text)){
                             //update existing message priority unless its marked as removed by user
-                            mMessageStore.updatePriority(message.text, newPriority, true);
+                            mMessageStore.updateTrust(message.text, newTrust, true);
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(message.text, newPriority, true);
+                            mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, true);
                             //mark this message as unread
                             ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
                         }
                     } catch (IllegalArgumentException e) {
-                        Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
+                        Log.e(TAG, String.format("Attempted to add/update message %s with trust (%f/%f)" +
                                         ", %d friends, %d friends in common",
-                                message.text, newPriority, message.priority,
+                                message.text, newTrust, message.priority,
                                 myFriends.size(), friendOverlap));
                     }
                 }

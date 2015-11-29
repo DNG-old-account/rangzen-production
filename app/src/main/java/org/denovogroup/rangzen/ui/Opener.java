@@ -48,12 +48,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -73,6 +73,9 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import java.util.List;
 import java.util.Random;
@@ -96,7 +99,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     private static boolean mFirstTime = true;
     private static final String TAG = "Opener";
     private static final int MAX_NEW_MESSAGES_DISPLAY = 99;
-    private AsyncTask<?,?,?> searchTask;
     private MenuItem pendingNewMessagesMenuItem;
 
     // Create reciever object
@@ -179,12 +181,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         if(mFirstTime){
             //Start the read state tracker to tell what messages are not read yet
             ReadStateTracker.initTracker(getApplicationContext());
-
-            //put first message into the feed
-            MessageStore messageStore = MessageStore.getInstance(this);
-            messageStore.addMessage(
-                    "This is the Rangzen message feed. Messages in the ether will appear here.",
-                    1L, true);
         }
     }
 
@@ -306,14 +302,14 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
         // Check whether the activity that returned was the QR code activity,
         // and whether it succeeded.
-        if (requestCode == QR && resultCode == RESULT_OK) {
+        IntentResult intentResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
+        if(intentResult != null){
             // Grab the string extra containing the QR code that was scanned.
             FriendStore fs = new FriendStore(this,
                     StorageBase.ENCRYPTION_DEFAULT);
-            String code = intent
-                    .getStringExtra("barcode_data");
+            String code = intentResult.getContents();
             // Convert the code into a public Rangzen ID.
-            byte[] publicIDBytes = FriendStore.getPublicIDFromQR(code);
+            byte[] publicIDBytes = intentResult.getRawBytes();
             Log.i(TAG, "In Opener, received intent with code " + code);
 
             // Try to add the friend to the FriendStore, if they're not null.
@@ -366,10 +362,11 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                 startActivityForResult(postIntent, Message);
                 return;
             case 2:
-                Intent qrIntent = new Intent("com.google.zxing.client.android.SCAN");
-                qrIntent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-                // startActivityForResult(intent, 0);
-                startActivityForResult(qrIntent, QR);
+                IntentIntegrator integrator = new IntentIntegrator(this);
+                integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+                integrator.setPrompt("Scan a barcode");
+                integrator.setBeepEnabled(false);
+                integrator.initiateScan();
                 return;
             case 3:
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
@@ -469,7 +466,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      * Request currently displayed fragment to refresh its view if its utilizing the Refreshable interface
      * @param items List of objects to be used by the refreshed adapter or null to invoke default list of items
      */
-    private void notifyDataSetChanged(List<?> items) {
+    private void notifyDataSetChanged(Cursor items) {
         Fragment fragment = getSupportFragmentManager().findFragmentById(
                 R.id.mainContent);
         if (fragment instanceof Refreshable) {
@@ -558,29 +555,11 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                AsyncTask<String, Void, List<MessageStore.Message>> runQuery = new AsyncTask<String, Void, List<MessageStore.Message>>() {
+                Fragment frag = getSupportFragmentManager().findFragmentById(R.id.mainContent);
 
-                    @Override
-                    protected List<MessageStore.Message> doInBackground(String... params) {
-                        MessageStore store = MessageStore.getInstance(Opener.this);
-                        return store.getMessagesContaining(params[0], false, -1);
-                    }
-
-                    @Override
-                    protected void onPostExecute(List<MessageStore.Message> messages) {
-                        super.onPostExecute(messages);
-
-                        if (messages != null) {
-                            notifyDataSetChanged(messages);
-                        }
-                    }
-                };
-
-                if (searchTask != null) {
-                    searchTask.cancel(true);
-                    searchTask = null;
+                if(frag != null && frag instanceof FeedFragment){
+                    ((FeedFragment)frag).setQuery(query);
                 }
-                runQuery.execute(query);
                 return false;
             }
 

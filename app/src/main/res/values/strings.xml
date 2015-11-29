@@ -64,5 +64,7 @@
     <string name="privacy_scheme_title">Privacy scheme</string>
     <string name="scheme_details_title">Scheme detail</string>
     <string name="priority_threshold_title">Priority threshold</string>
+    <string name="pseudonym_title">Pseudonym</string>
+    <string name="my_qr_title">My QR id</string>
 
 </resources>

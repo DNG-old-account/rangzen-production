@@ -33,6 +33,16 @@
             android:text="100"
             android:textColor="@android:color/black" />
 
+        <TextView
+            android:id="@+id/trustView"
+            android:layout_width="50dp"
+            android:layout_height="fill_parent"
+            android:gravity="center"
+            android:paddingEnd="13dp"
+            android:paddingStart="13dp"
+            android:text="0.01"
+            android:textColor="@android:color/black" />
+
         <LinearLayout
             android:id="@+id/hashtagHolder"
             android:layout_weight="1"

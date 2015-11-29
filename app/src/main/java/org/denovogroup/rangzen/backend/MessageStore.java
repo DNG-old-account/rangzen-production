@@ -38,8 +38,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import org.denovogroup.rangzen.objects.RangzenMessage;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListResourceBundle;
 import java.util.UUID;
 
 /**
@@ -60,17 +63,21 @@ public class MessageStore extends SQLiteOpenHelper {
     private static final int FALSE = 0;
 
     //messages properties
-    private static final double MIN_PRIORITY_VALUE = 0.01f;
+    private static final double MIN_TRUST = 0.01f;
     private static final double MAX_PRIORITY_VALUE = 1.0f;
     private static final int MAX_MESSAGE_SIZE = 140;
+    private static final double DEFAULT_PRIORITY = 0;
 
     private static final String DATABASE_NAME = "MessageStore.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE = "Messages";
     private static final String COL_ROWID = "_id";
-    private static final String COL_MESSAGE = "message";
-    private static final String COL_PRIORITY = "priority";
+    private static final String COL_MESSAGE_ID = "messageId";
+    public static final String COL_MESSAGE = "message";
+    public static final String COL_TRUST = "trust";
+    public static final String COL_PRIORITY = "priority";
+    public static final String COL_PSEUDONYM = "pseudonym";
     private static final String COL_DELETED = "deleted";
 
     /** Get the current instance of MessageStore and create one if necessary.
@@ -97,8 +104,11 @@ public class MessageStore extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE + " ("
                 + COL_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                //+ COL_MESSAGE_ID + " VARCHAR(255) NOT NULL,"
                 + COL_MESSAGE + " VARCHAR(" + MAX_MESSAGE_SIZE + ") NOT NULL,"
-                + COL_PRIORITY + " REAL NOT NULL DEFAULT " + MIN_PRIORITY_VALUE + ","
+                + COL_TRUST + " REAL NOT NULL DEFAULT " + MIN_TRUST + ","
+                + COL_PRIORITY + " INT NOT NULL DEFAULT " + DEFAULT_PRIORITY + ","
+                + COL_PSEUDONYM + " VARCHAR(255) NOT NULL,"
                 + COL_DELETED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_DELETED + " IN(" + TRUE + "," + FALSE + "))"
                 + ");");
     }
@@ -117,22 +127,22 @@ public class MessageStore extends SQLiteOpenHelper {
     }
 
     /**
-     * Check that the given priority value is in range.
+     * Check that the given trust value is in range.
      * @throws IllegalArgumentException if value is outside of range
      */
-    private static void checkPriority(double priority) throws IllegalArgumentException{
-        if (priority < MIN_PRIORITY_VALUE || priority > MAX_PRIORITY_VALUE) {
+    private static void checkTrust(double priority) throws IllegalArgumentException{
+        if (priority < MIN_TRUST || priority > MAX_PRIORITY_VALUE) {
             throw new IllegalArgumentException("Priority " + priority
-                    + " is outside valid range of ["+MIN_PRIORITY_VALUE+","+MAX_PRIORITY_VALUE+"]");
+                    + " is outside valid range of ["+ MIN_TRUST +","+MAX_PRIORITY_VALUE+"]");
         }
     }
 
     /**
-     * Check check that the given priority value is in range and return nearest limit if not.
+     * Check check that the given trust value is in range and return nearest limit if not.
      */
-    private static double streamlinePriority(double priority){
-        if (priority < MIN_PRIORITY_VALUE){
-            return MIN_PRIORITY_VALUE;
+    private static double streamlineTrust(double priority){
+        if (priority < MIN_TRUST){
+            return MIN_TRUST;
 
         } else if(priority > MAX_PRIORITY_VALUE) {
             return MAX_PRIORITY_VALUE;
@@ -146,19 +156,23 @@ public class MessageStore extends SQLiteOpenHelper {
      * @param cursor Cursor data returned from SQLite database
      * @return list of Message items contained by the cursor or an empty list if cursor was empty
      */
-    private List<Message> convertToMessages(Cursor cursor){
+    private List<RangzenMessage> convertToMessages(Cursor cursor){
 
-        List<Message> messages = new ArrayList<>();
+        List<RangzenMessage> messages = new ArrayList<>();
         cursor.moveToFirst();
 
+        int trustColIndex = cursor.getColumnIndex(COL_TRUST);
         int priorityColIndex = cursor.getColumnIndex(COL_PRIORITY);
         int messageColIndex = cursor.getColumnIndex(COL_MESSAGE);
+        int pseudonymColIndex = cursor.getColumnIndex(COL_PSEUDONYM);
 
         if (cursor.getCount() > 0) {
             while (!cursor.isAfterLast()){
-                messages.add(new Message(
-                        cursor.getDouble(priorityColIndex),
-                        cursor.getString(messageColIndex)
+                messages.add(new RangzenMessage(
+                        cursor.getString(messageColIndex),
+                        cursor.getDouble(trustColIndex),
+                        cursor.getInt(priorityColIndex),
+                        cursor.getString(pseudonymColIndex)
                 ));
                 cursor.moveToNext();
             }
@@ -167,22 +181,35 @@ public class MessageStore extends SQLiteOpenHelper {
         return messages;
     }
 
+    /** Return a cursor pointing to messages sorted by according their priority and deleted state
+     * @param getDeleted whether or not results should include deleted items
+     * @param limit Maximum number of items to return or -1 for unlimited
+     * @return Cursor with Message items based on database items matching conditions
+     */
+    public Cursor getMessagesCursor(boolean getDeleted, int limit){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null) {
+            String query = "SELECT * FROM " + TABLE
+                    + (!getDeleted ? " WHERE " + COL_DELETED + "=" + FALSE : "")
+                    + " ORDER BY " + COL_DELETED + ", " + COL_TRUST + " DESC"
+                    + (limit > 0 ? " LIMIT " + limit : "")
+                    + ";";
+            return db.rawQuery(query, null);
+        }
+        return null;
+    }
+
     /** Return an array of messages sorted by according their priority and deleted state
      * @param getDeleted whether or not results should include deleted items
      * @param limit Maximum number of items to return or -1 for unlimited
      * @return List of Message items based on database items matching conditions
      */
-    public List<Message> getMessages(boolean getDeleted, int limit){
+    public List<RangzenMessage> getMessages(boolean getDeleted, int limit){
         SQLiteDatabase db = getWritableDatabase();
         if(db != null){
-            String query = "SELECT * FROM " + TABLE
-                    +(!getDeleted ? " WHERE "+COL_DELETED+"="+FALSE : "")
-                    +" ORDER BY "+COL_DELETED+", "+COL_PRIORITY+" DESC"
-                    +(limit > 0 ? " LIMIT "+limit : "")
-                    +";";
-            Cursor cursor = db.rawQuery(query, null);
-            if(cursor.getCount() > 0){
-                List<Message> result = convertToMessages(cursor);
+            Cursor cursor = getMessagesCursor(getDeleted, limit);
+            if(cursor != null && cursor.getCount() > 0){
+                List<RangzenMessage> result = convertToMessages(cursor);
                 cursor.close();
                 return result;
             }
@@ -191,24 +218,39 @@ public class MessageStore extends SQLiteOpenHelper {
         return new ArrayList<>();
     }
 
+    /** Return a cursor pointing to messages sorted by according their priority and deleted state
+     * @param getDeleted whether or not results should include deleted items
+     * @param limit Maximum number of items to return or -1 for unlimited
+     * @return Cursor of Message items based on database items matching conditions
+     */
+    public Cursor getMessagesContainingCursor(String message, boolean getDeleted, int limit){
+        if(message == null) message = "";
+
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null) {
+            String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + " LIKE '%" + message + "%'"
+                    + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
+                    + " ORDER BY " + COL_DELETED + ", " + COL_TRUST + " DESC"
+                    + (limit > 0 ? " LIMIT " + limit : "")
+                    + ";";
+            return db.rawQuery(query, null);
+        }
+        return null;
+    }
+
     /** Return an array of messages sorted by according their priority and deleted state
      * @param getDeleted whether or not results should include deleted items
      * @param limit Maximum number of items to return or -1 for unlimited
      * @return List of Message items based on database items matching conditions
      */
-    public List<Message> getMessagesContaining(String message, boolean getDeleted, int limit){
+    public List<RangzenMessage> getMessagesContaining(String message, boolean getDeleted, int limit){
         if(message == null) message = "";
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null){
-            String query = "SELECT * FROM " + TABLE+" WHERE "+COL_MESSAGE+" LIKE '%"+message+"%'"
-                    +(!getDeleted ? " AND "+COL_DELETED+"="+FALSE : "")
-                    +" ORDER BY "+COL_DELETED+", "+COL_PRIORITY+" DESC"
-                    +(limit > 0 ? " LIMIT "+limit : "")
-                    +";";
-            Cursor cursor = db.rawQuery(query, null);
-            if(cursor.getCount() > 0){
-                List<Message> result = convertToMessages(cursor);
+            Cursor cursor = getMessagesContainingCursor(message, getDeleted, limit);
+            if(cursor != null && cursor.getCount() > 0){
+                List<RangzenMessage> result = convertToMessages(cursor);
                 cursor.close();
                 return result;
             }
@@ -221,7 +263,7 @@ public class MessageStore extends SQLiteOpenHelper {
      * @param getDeleted whether or not results should include deleted items
      * @return A Message item based on database item matching conditions or null
      */
-    private Message getMessage(String message, boolean getDeleted) throws IllegalArgumentException{
+    private Cursor getMessageCursor(String message, boolean getDeleted) throws IllegalArgumentException{
         if(message == null || message.isEmpty()) throw new IllegalArgumentException("Message cannot be empty or null ["+message+"].");
 
         SQLiteDatabase db = getWritableDatabase();
@@ -229,9 +271,23 @@ public class MessageStore extends SQLiteOpenHelper {
             String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + message + "'"
                     +(!getDeleted ? " AND "+COL_DELETED+"="+FALSE : "")
                     +" LIMIT 1;";
-            Cursor cursor = db.rawQuery(query, null);
+            return db.rawQuery(query, null);
+        }
+        return null;
+    }
+
+    /** Return a single message matching supplied text or null if no match can be found.
+     * @param getDeleted whether or not results should include deleted items
+     * @return A Message item based on database item matching conditions or null
+     */
+    private RangzenMessage getMessage(String message, boolean getDeleted) throws IllegalArgumentException{
+        if(message == null || message.isEmpty()) throw new IllegalArgumentException("Message cannot be empty or null ["+message+"].");
+
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+            Cursor cursor = getMessageCursor(message, getDeleted);
             if(cursor.getCount() > 0){
-                Message result = convertToMessages(cursor).get(0);
+                RangzenMessage result = convertToMessages(cursor).get(0);
                 cursor.close();
                 return result;
             }
@@ -252,45 +308,53 @@ public class MessageStore extends SQLiteOpenHelper {
     }
 
     /** return the message in position K from the database. K position is calculated
-     * after sorting results based on priority. removed messages do not count.
+     * after sorting results based on trust. removed messages do not count.
      * @param position position of the message to be returned
      * @return Message in the K position based on priority or null if position too high
      */
-    public Message getKthMessage(int position){
-        List<Message> result = getMessages(false, position + 1);
+    public RangzenMessage getKthMessage(int position){
+        List<RangzenMessage> result = getMessages(false, position + 1);
         return (result.size() > position) ? result.get(position) : null;
     }
 
     /**
      * Adds the given message with the given priority.
      *
-     * @param message      The message to add.
-     * @param priority The priority to associate with the message. The priority must
+     * @param message The message to add.
+     * @param trust The trust to associate with the message. The trust must
      *                 be [0,1].
-     * @param enforceLimit whether or not the priority should be streamlined to the limits
+     * @param priority The priority to associate with the message.
+     * @param pseudonym The senders pseudonym.
+     * @param enforceLimit whether or not the trust should be streamlined to the limits
      *                     if set to false and value is outside of limit, an exception is thrown
      * @return Returns true if the message was added. If message already exists, update its values
      */
-    public boolean addMessage(String message, double priority, boolean enforceLimit){
+    public boolean addMessage(String message, double trust, double priority, String pseudonym,boolean enforceLimit){
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
             if (enforceLimit) {
-                priority = streamlinePriority(priority);
+                trust = streamlineTrust(trust);
             } else {
-                checkPriority(priority);
+                checkTrust(trust);
             }
 
             if(message.length() > MAX_MESSAGE_SIZE) message = message.substring(0, MAX_MESSAGE_SIZE);
 
             if(containsOrRemoved(message)) {
-                db.execSQL("UPDATE "+TABLE+" SET "+COL_PRIORITY+"="+priority+","+COL_DELETED+"="+FALSE+
+                db.execSQL("UPDATE "+TABLE+" SET "
+                        +COL_TRUST+"="+trust+","
+                        +COL_DELETED+"="+FALSE+","
+                        +COL_PRIORITY+"="+priority+","
+                        +COL_PSEUDONYM+"='"+pseudonym+"'"+
                         " WHERE " + COL_MESSAGE + "='" + message + "';");
                 Log.d(TAG, "Message was already in store and was simply updated.");
             } else {
                 ContentValues content = new ContentValues();
                 content.put(COL_MESSAGE, message);
+                content.put(COL_TRUST, trust);
                 content.put(COL_PRIORITY, priority);
+                content.put(COL_PSEUDONYM, pseudonym);
                 db.insert(TABLE, null, content);
                 Log.d(TAG, "Message added to store.");
             }
@@ -347,6 +411,19 @@ public class MessageStore extends SQLiteOpenHelper {
         return 0;
     }
 
+    /** return the trust of the given message or 0 if message not exists**/
+    public double getTrust(String message){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+            Cursor cursor = db.rawQuery("SELECT "+COL_TRUST+" FROM "+TABLE+" WHERE "+COL_MESSAGE+"='"+message+"';", null);
+            if(cursor.getCount() > 0){
+                cursor.moveToFirst();
+                return cursor.getDouble(cursor.getColumnIndex(COL_TRUST));
+            }
+        }
+        return 0;
+    }
+
     /** return the priority of the given message or 0 if message not exists**/
     public double getPriority(String message){
         SQLiteDatabase db = getWritableDatabase();
@@ -354,7 +431,7 @@ public class MessageStore extends SQLiteOpenHelper {
             Cursor cursor = db.rawQuery("SELECT "+COL_PRIORITY+" FROM "+TABLE+" WHERE "+COL_MESSAGE+"='"+message+"';", null);
             if(cursor.getCount() > 0){
                 cursor.moveToFirst();
-                return cursor.getDouble(cursor.getColumnIndex(COL_PRIORITY));
+                return cursor.getInt(cursor.getColumnIndex(COL_PRIORITY));
             }
         }
         return 0;
@@ -364,20 +441,60 @@ public class MessageStore extends SQLiteOpenHelper {
      * Update the priority of a message, if it exists in the store
      *
      * @param message      The message whose priority should be changed.
-     * @param priority The new priority to set.
+     * @param trust The new trust to set.
      * @param enforceLimit whether or not the new priority should be streamlined to limits
      *                      if set to false and priority is outside of limit an exception is thrown
      * @return True if the message was in the store (and its priority was changed),
      * false otherwise.
      */
-    public boolean updatePriority(String message, double priority, boolean enforceLimit) {
+    public boolean updateTrust(String message, double trust, boolean enforceLimit) {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
             if(enforceLimit){
-                priority = streamlinePriority(priority);
+                trust = streamlineTrust(trust);
             } else {
-                checkPriority(priority);
+                checkTrust(trust);
             }
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_TRUST+"="+trust+" WHERE "+COL_MESSAGE+"='"+message+"';");
+
+            Log.d(TAG, "Message trust changed in the store.");
+            return true;
+        }
+        Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
+        return false;
+    }
+
+    /**
+     * Update the priority of a message, if it exists in the store
+     *
+     * @param message      The message whose priority should be changed.
+     * @param priority The new priority to set.
+     * @return True if the message was in the store (and its priority was changed),
+     * false otherwise.
+     */
+    public boolean updateTrust(String message, int priority) {
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_PRIORITY+"="+priority+" WHERE "+COL_MESSAGE+"='"+message+"';");
+
+            Log.d(TAG, "Message priority changed in the store.");
+            return true;
+        }
+        Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
+        return false;
+    }
+
+    /**
+     * Update the priority of a message, if it exists in the store
+     *
+     * @param message      The message whose priority should be changed.
+     * @param priority The new priority to set.
+     * @return True if the message was in the store (and its priority was changed),
+     * false otherwise.
+     */
+    public boolean updatePriority(String message, int priority) {
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
             db.execSQL("UPDATE "+TABLE+" SET "+COL_PRIORITY+"="+priority+" WHERE "+COL_MESSAGE+"='"+message+"';");
 
             Log.d(TAG, "Message priority changed in the store.");
@@ -399,39 +516,4 @@ public class MessageStore extends SQLiteOpenHelper {
         storeVersion = UUID.randomUUID().toString();
     }
 
-    /**
-     * Message Object that contains the message's priority and the contents of
-     * the message.
-     *
-     * @author Jesus Garcia
-     */
-    public class Message {
-        /**
-         * The priority of the message.
-         */
-        private double mPriority;
-        /**
-         * The contents of the message.
-         */
-        private String mMessage;
-
-        public Message(double priority, String message) {
-            mPriority = priority;
-            mMessage = message;
-        }
-
-        public String getMessage() {
-            return mMessage;
-        }
-
-        public double getPriority() {
-            return mPriority;
-        }
-
-        /**this method is used for temporary displayed item update purposes and should not be used
-         * for actual stored data manipulation */
-        public void setPriority(double priority){
-            mPriority = priority;
-        }
-    }
 }

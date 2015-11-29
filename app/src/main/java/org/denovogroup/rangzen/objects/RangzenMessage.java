@@ -2,8 +2,6 @@
 // Source file: /Users/barathraghavan/code/rangzen/rangzen/buck-out/gen/proto-repo/compile_protobufs__srcs/RangzenMessage.proto
 package org.denovogroup.rangzen.objects;
 
-import android.util.Log;
-
 import com.squareup.wire.Message;
 import com.squareup.wire.ProtoField;
 
@@ -13,6 +11,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import static com.squareup.wire.Message.Datatype.DOUBLE;
+import static com.squareup.wire.Message.Datatype.INT32;
 import static com.squareup.wire.Message.Datatype.STRING;
 import static com.squareup.wire.Message.Label.OPTIONAL;
 import static com.squareup.wire.Message.Label.REQUIRED;
@@ -23,7 +22,8 @@ import static com.squareup.wire.Message.Label.REQUIRED;
 public final class RangzenMessage extends Message {
 
   public static final String DEFAULT_TEXT = "";
-  public static final Double DEFAULT_PRIORITY = 0.01D;
+  public static final Double DEFAULT_TRUST = 0.01D;
+    public static final int DEFAULT_PRIORITY = 0;
     public static final String DEFAULT_PSEUDONYM = "";
 
     public static final String TEXT_KEY = "text";
@@ -37,38 +37,47 @@ public final class RangzenMessage extends Message {
   public final String text;
 
   /**
-   * The message's priority, as a double.
+   * The message's trust, as a double.
    */
   @ProtoField(tag = 2, type = DOUBLE, label = REQUIRED)
-  public final Double priority;
+  public final Double trust;
+
+    /**
+     * The message's priority, as a double.
+     */
+    @ProtoField(tag = 3, type = INT32, label = OPTIONAL)
+    public final Integer priority;
 
     /**
      * The message's sender name, as a String.
      */
-    @ProtoField(tag = 3, type = STRING, label = OPTIONAL)
+    @ProtoField(tag = 4, type = STRING, label = OPTIONAL)
     public final String pseudonym;
 
-  public RangzenMessage(String text, Double priority, String pseudonym) {
+  public RangzenMessage(String text, Double trust, Integer priority, String pseudonym) {
     this.text = text;
+    this.trust = trust;
     this.priority = priority;
       this.pseudonym = pseudonym;
   }
 
-    public RangzenMessage(String text, Double priority) {
+    public RangzenMessage(String text, Double trust) {
         this.text = text;
-        this.priority = priority;
-        this.pseudonym = "";
+        this.trust = trust;
+        this.priority = DEFAULT_PRIORITY;
+        this.pseudonym = DEFAULT_PSEUDONYM;
     }
 
   private RangzenMessage(Builder builder) {
-    this(builder.text, builder.priority, builder.pseudonym);
+    this(builder.text, builder.trust, builder.priority, builder.pseudonym);
     setBuilder(builder);
   }
 
     public static RangzenMessage fromJSON(JSONObject json){
         return new RangzenMessage(
                 json.optString(TEXT_KEY, DEFAULT_TEXT),
-                json.optDouble(PRIORITY_KEY, DEFAULT_PRIORITY),
+                DEFAULT_TRUST,
+                json.optInt(PRIORITY_KEY, DEFAULT_PRIORITY),
                 json.optString(PSEUDONYM_KEY, DEFAULT_PSEUDONYM)
                 );
                 //TODO opt location
@@ -127,7 +136,8 @@ public final class RangzenMessage extends Message {
   public static final class Builder extends Message.Builder<RangzenMessage> {
 
     public String text;
-    public Double priority;
+    public Double trust;
+      public Integer priority;
       public String pseudonym;
 
     public Builder() {
@@ -137,6 +147,7 @@ public final class RangzenMessage extends Message {
       super(message);
       if (message == null) return;
       this.text = message.text;
+        this.trust = message.trust;
       this.priority = message.priority;
       this.pseudonym = message.pseudonym;
     }
@@ -149,10 +160,18 @@ public final class RangzenMessage extends Message {
       return this;
     }
 
+      /**
+       * The message's trust, as a double.
+       */
+      public Builder trust(Double trust) {
+          this.trust = trust;
+          return this;
+      }
+
     /**
-     * The message's priority, as a double.
+     * The message's priority, as an integer.
      */
-    public Builder priority(Double priority) {
+    public Builder priority(Integer priority) {
       this.priority = priority;
       return this;
     }

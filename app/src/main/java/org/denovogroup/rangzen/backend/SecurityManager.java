@@ -1,6 +1,7 @@
 package org.denovogroup.rangzen.backend;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,12 +32,16 @@ public class SecurityManager {
     public static final String SECURITY_KEY = "security";
     /** the key under which priority threshold is set in the file*/
     public static final String PRIORITY_THRESHOLD_KEY = "priority_threshold";
+    /** the key under which use pseudonym is set in the file*/
+    public static final String PSEUDONYM_KEY = "pseudonym";
 
 
     /** Default security profile value if none is stored */
     public static final int DEFAULT_SECURITY_PROFILE = SECURITY_MEDIUM;
     /** Default priority threshold value if none is stored */
     public static final float DEFAULT_PRIORITY_THRESHOLD = 0f;
+    /** Default pseudonym value if none is stored */
+    public static final String DEFAULT_PSEUDONYM = "John snow";
 
     /** initiate the managers parameters such as the profiles list */
     private void init(){
@@ -107,6 +112,23 @@ public class SecurityManager {
     public static void setCurrentAutodeleteThreshold(Context context, float threshold){
         context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE).edit()
                 .putFloat(PRIORITY_THRESHOLD_KEY, threshold)
+                .commit();
+    }
+
+    /** read the currently set user pseudonym from local storage */
+    public static String getCurrentPseudonym(Context context){
+        SharedPreferences pref = context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE);
+
+        if(!pref.contains(PSEUDONYM_KEY)){
+            setCurrentPseudonym(context, DEFAULT_PSEUDONYM+(System.nanoTime()/System.currentTimeMillis()));
+        }
+        return pref.getString(PSEUDONYM_KEY, DEFAULT_PSEUDONYM);
+    }
+
+    /** write the supplied pseudonym to local storage */
+    public static void setCurrentPseudonym(Context context, String name){
+        context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE).edit()
+                .putString(PSEUDONYM_KEY, name)
                 .commit();
     }
 

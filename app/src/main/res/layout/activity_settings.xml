@@ -1,57 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-                android:padding="@dimen/activity_horizontal_margin">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/privacy_scheme_title"
-        android:layout_marginBottom="10dp"/>
-
-    <SeekBar
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/privacySeekBar"
-        android:layout_gravity="center_horizontal"/>
-
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
     <LinearLayout
-        android:id="@+id/seekbarTitles"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp">
+                  android:orientation="vertical"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:padding="@dimen/activity_horizontal_margin"
+                  android:descendantFocusability="beforeDescendants"
+                  android:focusableInTouchMode="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/privacy_scheme_title"
+            android:layout_marginBottom="10dp"/>
+
+        <SeekBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/privacySeekBar"
+            android:layout_gravity="center_horizontal"/>
+
+        <LinearLayout
+            android:id="@+id/seekbarTitles"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp">
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_marginBottom="7dp"
+            android:text="@string/scheme_details_title"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="todo"
+            android:id="@+id/schemeDetails"/>
+
+        <TextView
+            android:id="@+id/priorityThresholdTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/priority_threshold_title"
+            android:layout_marginBottom="10dp"/>
+
+        <SeekBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/priorityThresholdSeekBar"
+            android:layout_gravity="center_horizontal"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/pseudonym_title"
+            android:layout_marginBottom="10dp"/>
+
+        <EditText
+            android:id="@+id/psedudonymText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/my_qr_title"
+            android:layout_marginBottom="10dp"/>
+
+        <ImageView
+            android:id="@+id/qrCode"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:scaleType="centerInside"/>
     </LinearLayout>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:layout_marginBottom="7dp"
-        android:text="@string/scheme_details_title"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="todo"
-        android:id="@+id/schemeDetails"/>
-
-    <TextView
-        android:id="@+id/priorityThresholdTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/priority_threshold_title"
-        android:layout_marginBottom="10dp"/>
-
-    <SeekBar
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/priorityThresholdSeekBar"
-        android:layout_gravity="center_horizontal"/>
-</LinearLayout>
+</ScrollView>

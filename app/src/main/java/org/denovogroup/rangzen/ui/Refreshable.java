@@ -1,6 +1,6 @@
 package org.denovogroup.rangzen.ui;
 
-import java.util.List;
+import android.database.Cursor;
 
 /**
  * Created by Liran on 9/12/2015.
@@ -9,5 +9,5 @@ import java.util.List;
  */
 public interface Refreshable  {
 
-    public void refreshView(List<?> items);
+    public void refreshView(Cursor items);
 }
