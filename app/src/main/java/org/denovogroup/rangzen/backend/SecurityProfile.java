@@ -77,6 +77,14 @@ public class SecurityProfile {
         this.pseudonyms = pseudonyms;
     }
 
+    public boolean isTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(boolean timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public int getFeedSize() {
         return feedSize;
     }

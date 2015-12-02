@@ -184,8 +184,8 @@ public class CryptographicExchange extends Exchange {
                     Log.w(TAG, "Received unknown security profile from peer, falling back to most secure profile");
                     serverProfile = SecurityManager.SECURITY_HIGH;
                 }
-                securityProfile = SecurityManager.getMostSecureProfile(serverProfile, securityProfile);
-                Log.d(TAG, "Security profile selected: " + SecurityManager.getProfile(securityProfile).getName());
+                securityProfile = SecurityManager.getInstance().getMostSecureProfile(serverProfile, securityProfile);
+                Log.d(TAG, "Security profile selected: " + SecurityManager.getInstance().getProfile(securityProfile).getName());
                 return;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -309,7 +309,7 @@ public class CryptographicExchange extends Exchange {
               mRemoteClientMessage = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
               //Add everything passed in the wrapper to the pool
               for(JSONMessage message : mRemoteClientMessage.messages) {
-                  mMessagesReceived.add(RangzenMessage.fromJSON(message.jsonString));
+                  mMessagesReceived.add(RangzenMessage.fromJSON(securityProfile, message.jsonString));
               }
           } catch (ExecutionException ex){
               executor.shutdown();

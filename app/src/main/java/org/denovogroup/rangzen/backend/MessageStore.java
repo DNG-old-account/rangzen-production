@@ -69,7 +69,7 @@ public class MessageStore extends SQLiteOpenHelper {
     private static final double DEFAULT_PRIORITY = 0;
 
     private static final String DATABASE_NAME = "MessageStore.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 1;
 
     private static final String TABLE = "Messages";
     private static final String COL_ROWID = "_id";
@@ -78,6 +78,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public static final String COL_TRUST = "trust";
     public static final String COL_PRIORITY = "priority";
     public static final String COL_PSEUDONYM = "pseudonym";
+    public static final String COL_TIMESTAMP = "timestamp";
     private static final String COL_DELETED = "deleted";
 
     /** Get the current instance of MessageStore and create one if necessary.
@@ -106,6 +107,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 + COL_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 //+ COL_MESSAGE_ID + " VARCHAR(255) NOT NULL,"
                 + COL_MESSAGE + " VARCHAR(" + MAX_MESSAGE_SIZE + ") NOT NULL,"
+                + COL_TIMESTAMP + " TEXT NOT NULL,"
                 + COL_TRUST + " REAL NOT NULL DEFAULT " + MIN_TRUST + ","
                 + COL_PRIORITY + " INT NOT NULL DEFAULT " + DEFAULT_PRIORITY + ","
                 + COL_PSEUDONYM + " VARCHAR(255) NOT NULL,"
@@ -165,6 +167,7 @@ public class MessageStore extends SQLiteOpenHelper {
         int priorityColIndex = cursor.getColumnIndex(COL_PRIORITY);
         int messageColIndex = cursor.getColumnIndex(COL_MESSAGE);
         int pseudonymColIndex = cursor.getColumnIndex(COL_PSEUDONYM);
+        int timestampColIndex = cursor.getColumnIndex(COL_TIMESTAMP);
 
         if (cursor.getCount() > 0) {
             while (!cursor.isAfterLast()){
@@ -172,7 +175,8 @@ public class MessageStore extends SQLiteOpenHelper {
                         cursor.getString(messageColIndex),
                         cursor.getDouble(trustColIndex),
                         cursor.getInt(priorityColIndex),
-                        cursor.getString(pseudonymColIndex)
+                        cursor.getString(pseudonymColIndex),
+                        cursor.getString(timestampColIndex)
                 ));
                 cursor.moveToNext();
             }
@@ -329,7 +333,7 @@ public class MessageStore extends SQLiteOpenHelper {
      *                     if set to false and value is outside of limit, an exception is thrown
      * @return Returns true if the message was added. If message already exists, update its values
      */
-    public boolean addMessage(String message, double trust, double priority, String pseudonym,boolean enforceLimit){
+    public boolean addMessage(String message, double trust, double priority, String pseudonym, String timestamp,boolean enforceLimit){
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
@@ -346,8 +350,9 @@ public class MessageStore extends SQLiteOpenHelper {
                         +COL_TRUST+"="+trust+","
                         +COL_DELETED+"="+FALSE+","
                         +COL_PRIORITY+"="+priority+","
-                        +COL_PSEUDONYM+"='"+pseudonym+"'"+
-                        " WHERE " + COL_MESSAGE + "='" + message + "';");
+                        +COL_PSEUDONYM+"='"+pseudonym+"'"
+                        +COL_TIMESTAMP+"='"+timestamp+"'"
+                        +" WHERE " + COL_MESSAGE + "='" + message + "';");
                 Log.d(TAG, "Message was already in store and was simply updated.");
             } else {
                 ContentValues content = new ContentValues();
@@ -355,6 +360,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 content.put(COL_TRUST, trust);
                 content.put(COL_PRIORITY, priority);
                 content.put(COL_PSEUDONYM, pseudonym);
+                content.put(COL_TIMESTAMP, timestamp);
                 db.insert(TABLE, null, content);
                 Log.d(TAG, "Message added to store.");
             }

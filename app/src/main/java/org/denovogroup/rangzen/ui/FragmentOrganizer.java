@@ -332,8 +332,12 @@ public class FragmentOrganizer extends Fragment {
                         R.id.editText1)).getText().toString();
                 float trust = 1.0f;
                 int priority = 0;
-                String pseudonym = SecurityManager.getCurrentPseudonym(getActivity());
-                messageStore.addMessage(message, trust, priority, pseudonym,true);
+                int currentProfile = SecurityManager.getCurrentProfile(getActivity());
+                String pseudonym = SecurityManager.getInstance().getProfile(currentProfile).isPseudonyms() ?
+                        SecurityManager.getCurrentPseudonym(getActivity()) : "";
+                String timestamp = SecurityManager.getInstance().getProfile(currentProfile).isTimestamp() ?
+                        Utils.convertTimestampToDateString(false, System.currentTimeMillis()) :"";
+                messageStore.addMessage(message, trust, priority, pseudonym, timestamp, true);
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 getActivity().setResult(Activity.RESULT_OK);

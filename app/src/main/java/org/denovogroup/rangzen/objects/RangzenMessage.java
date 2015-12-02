@@ -25,6 +25,7 @@ public final class RangzenMessage extends Message {
   public static final Double DEFAULT_TRUST = 0.01D;
     public static final int DEFAULT_PRIORITY = 0;
     public static final String DEFAULT_PSEUDONYM = "";
+    public static final String DEFAULT_TIMESTAMP = "";
 
     public static final String TEXT_KEY = "text";
     public static final String PRIORITY_KEY = "priority";
@@ -54,36 +55,55 @@ public final class RangzenMessage extends Message {
     @ProtoField(tag = 4, type = STRING, label = OPTIONAL)
     public final String pseudonym;
 
-  public RangzenMessage(String text, Double trust, Integer priority, String pseudonym) {
+    /**
+     * The message's timestamp, as a String.
+     */
+    @ProtoField(tag = 5, type = STRING, label = OPTIONAL)
+    public final String timestamp;
+
+  public RangzenMessage(String text, Double trust, Integer priority, String pseudonym, String timestamp) {
     this.text = text;
     this.trust = trust;
     this.priority = priority;
       this.pseudonym = pseudonym;
+      this.timestamp = timestamp;
   }
+
+    public RangzenMessage(String text, Double trust, Integer priority, String pseudonym) {
+        this.text = text;
+        this.trust = trust;
+        this.priority = priority;
+        this.pseudonym = pseudonym;
+        this.timestamp = DEFAULT_TIMESTAMP;
+    }
 
     public RangzenMessage(String text, Double trust) {
         this.text = text;
         this.trust = trust;
         this.priority = DEFAULT_PRIORITY;
         this.pseudonym = DEFAULT_PSEUDONYM;
+        this.timestamp = DEFAULT_TIMESTAMP;
     }
 
   private RangzenMessage(Builder builder) {
-    this(builder.text, builder.trust, builder.priority, builder.pseudonym);
+    this(builder.text, builder.trust, builder.priority, builder.pseudonym, builder.timestamp);
     setBuilder(builder);
   }
 
-    public static RangzenMessage fromJSON(JSONObject json){
+    public static RangzenMessage fromJSON(int securityProfile, JSONObject json){
+
         return new RangzenMessage(
                 json.optString(TEXT_KEY, DEFAULT_TEXT),
                 DEFAULT_TRUST,
                 json.optInt(PRIORITY_KEY, DEFAULT_PRIORITY),
-                json.optString(PSEUDONYM_KEY, DEFAULT_PSEUDONYM)
+                json.optString(PSEUDONYM_KEY, DEFAULT_PSEUDONYM),
+                SecurityManager.getInstance().getProfile(securityProfile).isTimestamp() ?
+                        Utils.convertTimestampToDateString(false, System.currentTimeMillis()) : ""
                 );
                 //TODO opt location
     }
 
-    public static RangzenMessage fromJSON(String jsonString){
+    public static RangzenMessage fromJSON(int securityProfile, String jsonString){
         JSONObject json;
         try {
             json = new JSONObject(jsonString);
@@ -91,7 +111,7 @@ public final class RangzenMessage extends Message {
             e.printStackTrace();
             json = new JSONObject();
         }
-        return fromJSON(json);
+        return fromJSON(securityProfile, json);
     }
 
     /** convert the message into a json object using the supplied security profile restrictions */
@@ -101,7 +121,7 @@ public final class RangzenMessage extends Message {
             result.put(TEXT_KEY, this.text);
             result.put(PRIORITY_KEY, this.priority + Utils.makeNoise(0d, 0.003d));
 
-            SecurityProfile profile = SecurityManager.getProfile(securityProfile);
+            SecurityProfile profile = SecurityManager.getInstance().getProfile(securityProfile);
 
             //put optional items based on security profile settings
             if(profile.isPseudonyms()) result.put(PSEUDONYM_KEY, this.pseudonym);
@@ -139,6 +159,7 @@ public final class RangzenMessage extends Message {
     public Double trust;
       public Integer priority;
       public String pseudonym;
+      public String timestamp;
 
     public Builder() {
     }
@@ -150,6 +171,7 @@ public final class RangzenMessage extends Message {
         this.trust = message.trust;
       this.priority = message.priority;
       this.pseudonym = message.pseudonym;
+        this.timestamp = message.timestamp;
     }
 
     /**
@@ -181,6 +203,14 @@ public final class RangzenMessage extends Message {
        */
       public Builder pseudonym(String pseudonym) {
           this.pseudonym = pseudonym;
+          return this;
+      }
+
+      /**
+       * The message's timestamp, as a string.
+       */
+      public Builder timestamp(String timestamp) {
+          this.timestamp = timestamp;
           return this;
       }
 

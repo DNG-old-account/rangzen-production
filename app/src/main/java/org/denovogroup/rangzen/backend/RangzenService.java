@@ -434,7 +434,7 @@ public class RangzenService extends Service {
                 mMessageStore.updateTrust(message.text, newTrust, true);
             } else {
                 hasNew = true;
-                mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym ,true);
+                mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true);
                 //mark this message as unread
                 ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
             }
@@ -489,7 +489,7 @@ public class RangzenService extends Service {
                             mMessageStore.updateTrust(message.text, newTrust, true);
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, true);
+                            mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true);
                             //mark this message as unread
                             ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
                         }

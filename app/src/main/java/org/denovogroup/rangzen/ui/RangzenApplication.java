@@ -3,6 +3,8 @@ package org.denovogroup.rangzen.ui;
 import android.app.Application;
 import android.content.Context;
 import android.support.multidex.MultiDex;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 
 /**
  * Created by Liran on 9/1/2015.

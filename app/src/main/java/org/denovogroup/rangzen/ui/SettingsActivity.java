@@ -23,6 +23,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.FriendStore;
 import org.denovogroup.rangzen.backend.SecurityManager;
+import org.denovogroup.rangzen.backend.SecurityProfile;
 import org.denovogroup.rangzen.backend.StorageBase;
 import org.denovogroup.rangzen.backend.Utils;
 
@@ -32,9 +33,6 @@ import org.denovogroup.rangzen.backend.Utils;
  * An Activity which enable the user to set his own preferences such as security
  */
 public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSeekBarChangeListener, TextView.OnEditorActionListener {
-
-    private int security_profiles;
-    private float priority_threshold;
 
     SeekBar privacySeeker;
     SeekBar priorityThresholdSeeker;
@@ -61,16 +59,21 @@ public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSee
 
         initView();
 
-        getStoredSettings();
         updateView();
     }
 
     /** build the dynamic view parts such as the security profile seeker */
     private void initView() {
+        profiles = SecurityManager.getInstance().getProfiles();
+
+        privacyDetailsTv.setText(SecurityManager.getInstance().getProfile(SecurityManager.getCurrentProfile(this)).getDescription());
+
         pseudonymTv.setText(SecurityManager.getCurrentPseudonym(this));
         pseudonymTv.setOnEditorActionListener(this);
+        privacySeeker.setProgress((int) (getPrivacySeekerSectionSize() * SecurityManager.getCurrentProfile(this)));
         privacySeeker.setOnSeekBarChangeListener(this);
-        profiles = SecurityManager.getInstance().getProfiles();
+        priorityThresholdSeeker.setProgress((int) (100 * SecurityManager.getCurrentAutodeleteThreshold(this)));
+        priorityThresholdSeeker.setOnSeekBarChangeListener(this);
 
         seekerTitles.removeAllViews();
         for(int i=0; i<profiles.length; i++){
@@ -89,10 +92,7 @@ public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSee
             seekerTitles.addView(tv);
         }
 
-        priorityThresholdSeeker.setOnSeekBarChangeListener(this);
-
         QRCodeWriter writer = new QRCodeWriter();
-        float density = getResources().getDisplayMetrics().density;
         int qrSizeInDp = Utils.dpToPx(250, this);
 
         try {
@@ -131,7 +131,7 @@ public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSee
                     seekBar.setProgress(newProgress);
                     privacyDetailsTv.setText(SecurityManager.getInstance().getProfile(position).getDescription());
 
-                    security_profiles = position;
+                    SecurityManager.setCurrentProfile(this, position);
                     updateView();
                 }
                 break;
@@ -159,7 +159,6 @@ public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSee
     public void onStopTrackingTouch(SeekBar seekBar) {
         switch (seekBar.getId()) {
             case R.id.privacySeekBar:
-                SecurityManager.setCurrentProfile(this, security_profiles);
                 updateView();
                 break;
             case R.id.priorityThresholdSeekBar:
@@ -168,16 +167,10 @@ public class SettingsActivity extends ActionBarActivity implements SeekBar.OnSee
         }
     }
 
-    public void getStoredSettings(){
-        security_profiles = SecurityManager.getCurrentProfile(this);
-        onProgressChanged(privacySeeker, privacySeeker.getProgress(), true);
-        priority_threshold = SecurityManager.getCurrentAutodeleteThreshold(this);
-    }
-
     private void updateView(){
-        privacySeeker.setProgress((int) Math.round(getPrivacySeekerSectionSize() * security_profiles));
-        priorityThresholdSeeker.setProgress(Math.round(priority_threshold * 100));
-        priorityThresholdSeeker.setEnabled(SecurityManager.getInstance().getProfile(security_profiles).isAutodelete());
+        priorityThresholdSeeker.setProgress(Math.round(SecurityManager.getCurrentAutodeleteThreshold(this) * 100));
+        priorityThresholdSeeker.setEnabled(SecurityManager.getInstance()
+                .getProfile(SecurityManager.getCurrentProfile(this)).isAutodelete());
     }
 
     @Override

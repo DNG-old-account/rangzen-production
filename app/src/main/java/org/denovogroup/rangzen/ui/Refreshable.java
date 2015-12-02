@@ -9,5 +9,5 @@ import android.database.Cursor;
  */
 public interface Refreshable  {
 
-    public void refreshView(Cursor items);
+    public void refreshView(Cursor items, boolean retainScroll);
 }

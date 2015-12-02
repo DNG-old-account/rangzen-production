@@ -14,11 +14,13 @@
         android:layout_height="fill_parent"
         android:background="#60000000" />
 
-    <com.baoyz.swipemenulistview.SwipeMenuListView
+    <ListView
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:dividerHeight="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         android:divider="@android:color/transparent"
         android:headerDividersEnabled="true"
         android:footerDividersEnabled="true"/>

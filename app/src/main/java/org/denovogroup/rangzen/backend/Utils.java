@@ -27,14 +27,15 @@ public class Utils {
 
     /** Convert a timestemp in milliseconds into a human readable string format
      *
+     * @param useUTC whether or not to use UTC timezone for creating the string
      * @param milli time in milliseconds to be converted
      * @return human readable string representation of the time stamp using UTC timezone
      * and formatted as yyyy-MM-dd HH:mm:ss
      */
-    public static String convertTimestampToDateString(long milli){
+    public static String convertTimestampToDateString(boolean useUTC, long milli){
         Date date = new Date(milli);
         SimpleDateFormat sourceFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        sourceFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        sourceFormat.setTimeZone(useUTC ? TimeZone.getTimeZone("UTC") : TimeZone.getDefault());
         return sourceFormat.format(date);
     }
 

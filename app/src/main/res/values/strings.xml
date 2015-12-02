@@ -66,5 +66,9 @@
     <string name="priority_threshold_title">Priority threshold</string>
     <string name="pseudonym_title">Pseudonym</string>
     <string name="my_qr_title">My QR id</string>
+    <string name="add_friend_dialog_title">Add friends</string>
+    <string name="add_friend_dialog_body">Select method</string>
+    <string name="add_friend_qrcode">QR-code</string>
+    <string name="add_friend_phonebook">Phonebook</string>
 
 </resources>

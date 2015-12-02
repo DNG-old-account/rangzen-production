@@ -32,12 +32,9 @@
 package org.denovogroup.rangzen.ui;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.backend.ReadStateTracker;
-import org.denovogroup.rangzen.backend.Utils;
+import org.denovogroup.rangzen.backend.*;
+import org.denovogroup.rangzen.backend.SecurityManager;
 import org.denovogroup.rangzen.ui.FragmentOrganizer.FragmentType;
-import org.denovogroup.rangzen.backend.FriendStore;
-import org.denovogroup.rangzen.backend.MessageStore;
-import org.denovogroup.rangzen.backend.StorageBase;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -52,8 +49,8 @@ import android.database.Cursor;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -109,6 +106,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
     private final static int QR = 10;
     private final static int Message = 20;
+    private final static int PICK_CONTACT =30;
 
     /** Initialize the contents of the activities menu. */
     @Override
@@ -336,8 +334,39 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                 Toast.makeText(this, "Invalid Friend Code", Toast.LENGTH_SHORT)
                         .show();
             }
-        } else if(requestCode == Message && resultCode == RESULT_OK){
-            notifyDataSetChanged(null);
+        } else {
+            if(requestCode == Message && resultCode == RESULT_OK) {
+                notifyDataSetChanged(null);
+
+            } else if(requestCode == PICK_CONTACT && resultCode == RESULT_OK && intent.getData() != null){
+                Uri contactItemUri = intent.getData();
+                Cursor contactCursor = getContentResolver().query(contactItemUri, null, null, null, null);
+                if(contactCursor != null && contactCursor.getCount() > 0){
+                    contactCursor.moveToFirst();
+                    String contactName = contactCursor.getString(contactCursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                    Log.d("liran","processing :"+contactName);
+                    if(contactCursor.getInt(contactCursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)) > 0){
+                        String id = contactCursor.getString(contactCursor.getColumnIndex(ContactsContract.Contacts._ID));
+                        Cursor phoneCursor = getContentResolver().query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                null,
+                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID +" = ?",
+                                new String[]{id}, null);
+
+                        if(phoneCursor != null){
+                            phoneCursor.moveToFirst();
+                            while(!phoneCursor.isAfterLast()){
+                                Log.d("liran","has number:"+phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)));
+                                phoneCursor.moveToNext();
+                            }
+                        }
+                        if(phoneCursor != null) contactCursor.close();
+                    } else {
+                        //TODO show toast that a contact does not have a phone number
+                    }
+                }
+                if(contactCursor != null) contactCursor.close();
+            }
         }
     }
 
@@ -362,11 +391,33 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                 startActivityForResult(postIntent, Message);
                 return;
             case 2:
-                IntentIntegrator integrator = new IntentIntegrator(this);
-                integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
-                integrator.setPrompt("Scan a barcode");
-                integrator.setBeepEnabled(false);
-                integrator.initiateScan();
+                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this)
+                        .setTitle(R.string.add_friend_dialog_title)
+                        .setMessage(R.string.add_friend_dialog_body)
+                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                if(SecurityManager.getInstance().getProfile(SecurityManager.getCurrentProfile(this)).isFriendsViaQR()){
+                    dialogBuilder.setNeutralButton(R.string.add_friend_qrcode, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            openScanner();
+                        }
+                    });
+                }
+                if(SecurityManager.getInstance().getProfile(SecurityManager.getCurrentProfile(this)).isFriendsViaBook()){
+                    dialogBuilder.setPositiveButton(R.string.add_friend_phonebook, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            openPhonebook();
+                        }
+                    });
+                }
+                dialogBuilder.show();
+
                 return;
             case 3:
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
@@ -470,7 +521,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         Fragment fragment = getSupportFragmentManager().findFragmentById(
                 R.id.mainContent);
         if (fragment instanceof Refreshable) {
-            ((Refreshable) fragment).refreshView(items);
+            ((Refreshable) fragment).refreshView(items, false);
         }
     }
 
@@ -557,8 +608,8 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             public boolean onQueryTextSubmit(String query) {
                 Fragment frag = getSupportFragmentManager().findFragmentById(R.id.mainContent);
 
-                if(frag != null && frag instanceof FeedFragment){
-                    ((FeedFragment)frag).setQuery(query);
+                if (frag != null && frag instanceof FeedFragment) {
+                    ((FeedFragment) frag).setQuery(query, false);
                 }
                 return false;
             }
@@ -604,5 +655,18 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             }
 
         }
+    }
+
+    private void openScanner(){
+        IntentIntegrator integrator = new IntentIntegrator(this);
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+        integrator.setPrompt("Scan a barcode");
+        integrator.setBeepEnabled(false);
+        integrator.initiateScan();
+    }
+
+    private void openPhonebook(){
+        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+        startActivityForResult(intent, PICK_CONTACT);
     }
 }

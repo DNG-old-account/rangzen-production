@@ -77,7 +77,7 @@ public class SecurityManager {
     }
 
     /** return the SecurityProfile object located in the i position in the profiles list of this adapter */
-    public static SecurityProfile getProfile(int i){
+    public SecurityProfile getProfile(int i){
         return profiles.get(i);
     }
 
@@ -133,7 +133,7 @@ public class SecurityManager {
     }
 
     /** compare the supplied profiles and return the index of the most secure one of the two */
-    public static int getMostSecureProfile(int profileA, int profileB){
+    public int getMostSecureProfile(int profileA, int profileB){
         SecurityProfile profA = getProfile(profileA);
         SecurityProfile profB = getProfile(profileB);
 
