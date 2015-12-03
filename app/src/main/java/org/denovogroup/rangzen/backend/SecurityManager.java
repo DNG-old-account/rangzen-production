@@ -2,6 +2,7 @@ package org.denovogroup.rangzen.backend;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,36 +21,48 @@ public class SecurityManager {
     private static List<SecurityProfile> profiles;
 
     /**an index for the position of the LOW security profile in the list */
-    public static final int SECURITY_LOW = 0;
+    public static final int SECURITY_CUSTOM = 0;
+    /**an index for the position of the LOW security profile in the list */
+    public static final int SECURITY_LOW = 1;
     /**an index for the position of the MEDIUM security profile in the list */
-    public static final int SECURITY_MEDIUM = 1;
+    public static final int SECURITY_MEDIUM = 2;
     /**an index for the position of the HIGH security profile in the list */
-    public static final int SECURITY_HIGH = 2;
+    public static final int SECURITY_HIGH = 3;
 
     /** the shared preference file where security settings are stored */
     public static final String SETTINGS_FILE = "Settings";
-    /** the key under which security profile is set in the file*/
-    public static final String SECURITY_KEY = "security";
-    /** the key under which priority threshold is set in the file*/
-    public static final String PRIORITY_THRESHOLD_KEY = "priority_threshold";
+    /** the key under which trust threshold is set in the file*/
+    public static final String TRUST_THRESHOLD_KEY = "priority_threshold";
     /** the key under which use pseudonym is set in the file*/
     public static final String PSEUDONYM_KEY = "pseudonym";
+
+    // profile settings
+    public static final String CUSTOM_PROFILE_NAME = "Custom";
+    private static final String PROFILE_NAME_KEY = "name";
+    private static final String PROFILE_TIMESTAMP_KEY = "useTimestamp";
+    private static final String PROFILE_PSEUDONYM_KEY = "usePseudonym";
+    private static final String PROFILE_FEED_SIZE_KEY = "maxFeedSize";
+    private static final String PROFILE_FRIEND_VIA_BOOK_KEY = "addFromBook";
+    private static final String PROFILE_FRIEND_VIA_QR_KEY = "addFromQR";
+    private static final String PROFILE_AUTO_DELETE_KEY = "useAutoDecay";
+    private static final String PROFILE_SHARE_LOCATIONS_KEY = "shareLocations";
+    private static final String PROFILE_MIN_SHARED_CONTACTS_KEY = "minSharedContacts";
+    private static final String PROFILE_MAX_MESSAGES_KEY = "maxMessagesPerExchange";
 
 
     /** Default security profile value if none is stored */
     public static final int DEFAULT_SECURITY_PROFILE = SECURITY_MEDIUM;
-    /** Default priority threshold value if none is stored */
-    public static final float DEFAULT_PRIORITY_THRESHOLD = 0f;
+    /** Default trust threshold value if none is stored */
+    public static final float DEFAULT_TRUST_THRESHOLD = 0.01f;
     /** Default pseudonym value if none is stored */
     public static final String DEFAULT_PSEUDONYM = "John snow";
 
     /** initiate the managers parameters such as the profiles list */
     private void init(){
         profiles = new ArrayList<>();
-
-        profiles.add(new SecurityProfile(0,"Low", true, true, -1, true, true, false, true, -1));
-        profiles.add(new SecurityProfile(1,"Medium", true, false, 1000, true, true, true, true, 3));
-        profiles.add(new SecurityProfile(2,"High", false, false, 500, false, true, true, false, 5));
+        profiles.add(new SecurityProfile(1,"Low", true, true, 999999999, true, true, false, true, 0, 300));
+        profiles.add(new SecurityProfile(2,"Medium", true, false, 1000, true, true, true, true, 3, 200));
+        profiles.add(new SecurityProfile(3,"High", false, false, 500, false, true, true, false, 5, 100));
     }
 
     /** return the existing instance of the manager if exists. create new if not*/
@@ -58,7 +71,6 @@ public class SecurityManager {
             instance = new SecurityManager();
             instance.init();
         }
-
         return instance;
     }
 
@@ -68,9 +80,10 @@ public class SecurityManager {
 
     /** Return the names of available profiles managed by this manager */
     public String[] getProfiles(){
-        String[] names = new String[profiles.size()];
-        for(int i=0; i<names.length; i++){
-            names[i] = profiles.get(i).getName();
+        String[] names = new String[profiles.size()+1];
+        names[0] = CUSTOM_PROFILE_NAME;
+        for(int i=1; i<names.length; i++){
+            names[i] = profiles.get(i-1).getName();
         }
 
         return names;
@@ -81,42 +94,101 @@ public class SecurityManager {
         return profiles.get(i);
     }
 
-    /** return the SecurityProfile object with the supplied name in the profiles list of this adapter  or null*/
+    /** return the SecurityProfile object with the supplied name in the profiles list of this adapter or null if using custom profile*/
     public SecurityProfile getProfile(String name){
 
         for(SecurityProfile profile : profiles) {
-            if(profile.name.equals(name)) return profile;
+            if(profile.name.equals(name)) return profile.clone();
         }
         return null;
     }
 
     /** read the currently set privacy profile from local storage */
-    public static int getCurrentProfile(Context context){
-        return context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE).getInt(SECURITY_KEY, DEFAULT_SECURITY_PROFILE);
+    public static SecurityProfile getCurrentProfile(Context context){
+        if(instance == null) getInstance();
+
+        SharedPreferences pref = context.getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE);
+
+        String profile_name = pref.getString(PROFILE_NAME_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getName());
+
+        if(profile_name != CUSTOM_PROFILE_NAME){
+            for(SecurityProfile profile : profiles) {
+                if(profile.name.equals(profile_name)){
+                    return profile.clone();
+                }
+            }
+        }
+
+        SecurityProfile customProfile = new SecurityProfile(
+                0,
+                CUSTOM_PROFILE_NAME,
+                pref.getBoolean(PROFILE_TIMESTAMP_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isTimestamp()),
+                pref.getBoolean(PROFILE_PSEUDONYM_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isPseudonyms()),
+                pref.getInt(PROFILE_FEED_SIZE_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getFeedSize()),
+                pref.getBoolean(PROFILE_FRIEND_VIA_BOOK_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).friendsViaBook),
+                pref.getBoolean(PROFILE_FRIEND_VIA_QR_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).friendsViaQR),
+                pref.getBoolean(PROFILE_AUTO_DELETE_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isAutodelete()),
+                pref.getBoolean(PROFILE_SHARE_LOCATIONS_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isShareLocation()),
+                pref.getInt(PROFILE_MIN_SHARED_CONTACTS_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getMinSharedContacts()),
+                pref.getInt(PROFILE_MAX_MESSAGES_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getMaxMessages())
+        );
+
+        return customProfile;
+    }
+
+    /** write the properties of specified profile as the current profile in the local storage.
+     * return true if specified name recognized and saved, false otherwise */
+    public static boolean setCurrentProfile(Context context, String profileName){
+        if(instance == null) getInstance();
+
+        for(SecurityProfile profile : profiles){
+            if(profile.getName().equals(profileName)){
+                setCurrentProfile(context, profile);
+                return true;
+            }
+        }
+        return false;
     }
 
     /** write the supplied privacy profile to local storage */
-    public static void setCurrentProfile(Context context, int profile){
-        context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE).edit()
-            .putInt(SECURITY_KEY, profile)
-            .commit();
+    public static void setCurrentProfile(Context context, SecurityProfile profile){
+        if(instance == null) getInstance();
+
+        SharedPreferences.Editor pref = context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE).edit();
+            pref.putString(PROFILE_NAME_KEY, profile.getName());
+            pref.putBoolean(PROFILE_TIMESTAMP_KEY, profile.isTimestamp());
+            pref.putBoolean(PROFILE_PSEUDONYM_KEY, profile.isPseudonyms());
+            pref.putInt(PROFILE_FEED_SIZE_KEY, profile.getFeedSize());
+            pref.putBoolean(PROFILE_FRIEND_VIA_BOOK_KEY, profile.friendsViaBook);
+            pref.putBoolean(PROFILE_FRIEND_VIA_QR_KEY, profile.friendsViaQR);
+            pref.putBoolean(PROFILE_AUTO_DELETE_KEY, profile.isAutodelete());
+            pref.putBoolean(PROFILE_SHARE_LOCATIONS_KEY, profile.isShareLocation());
+            pref.putInt(PROFILE_MIN_SHARED_CONTACTS_KEY, profile.getMinSharedContacts());
+            pref.putInt(PROFILE_MAX_MESSAGES_KEY, profile.getMaxMessages());
+            pref.commit();
     }
 
-    /** read the currently set priority threshold for autodelete from local storage */
+    /** read the currently set trust threshold for autodelete from local storage */
     public static float getCurrentAutodeleteThreshold(Context context){
+        if(instance == null) getInstance();
+
         return context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE)
-                .getFloat(PRIORITY_THRESHOLD_KEY, DEFAULT_PRIORITY_THRESHOLD);
+                .getFloat(TRUST_THRESHOLD_KEY, DEFAULT_TRUST_THRESHOLD);
     }
 
-    /** write the supplied priority threshold for autodelete to local storage */
+    /** write the supplied trust threshold for autodelete to local storage */
     public static void setCurrentAutodeleteThreshold(Context context, float threshold){
+        if(instance == null) getInstance();
+
         context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE).edit()
-                .putFloat(PRIORITY_THRESHOLD_KEY, threshold)
+                .putFloat(TRUST_THRESHOLD_KEY, threshold)
                 .commit();
     }
 
     /** read the currently set user pseudonym from local storage */
     public static String getCurrentPseudonym(Context context){
+        if(instance == null) getInstance();
+
         SharedPreferences pref = context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE);
 
         if(!pref.contains(PSEUDONYM_KEY)){
@@ -127,6 +199,8 @@ public class SecurityManager {
 
     /** write the supplied pseudonym to local storage */
     public static void setCurrentPseudonym(Context context, String name){
+        if(instance == null) getInstance();
+
         context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE).edit()
                 .putString(PSEUDONYM_KEY, name)
                 .commit();

@@ -2,6 +2,8 @@
 // Source file: /Users/barathraghavan/code/rangzen/rangzen/buck-out/gen/proto-repo/compile_protobufs__srcs/RangzenMessage.proto
 package org.denovogroup.rangzen.objects;
 
+import android.content.Context;
+
 import com.squareup.wire.Message;
 import com.squareup.wire.ProtoField;
 
@@ -90,20 +92,22 @@ public final class RangzenMessage extends Message {
     setBuilder(builder);
   }
 
-    public static RangzenMessage fromJSON(int securityProfile, JSONObject json){
+    public static RangzenMessage fromJSON(Context context, JSONObject json){
+
+        SecurityProfile securityProfile = SecurityManager.getCurrentProfile(context);
 
         return new RangzenMessage(
                 json.optString(TEXT_KEY, DEFAULT_TEXT),
                 DEFAULT_TRUST,
                 json.optInt(PRIORITY_KEY, DEFAULT_PRIORITY),
                 json.optString(PSEUDONYM_KEY, DEFAULT_PSEUDONYM),
-                SecurityManager.getInstance().getProfile(securityProfile).isTimestamp() ?
+                securityProfile.isTimestamp() ?
                         Utils.convertTimestampToDateString(false, System.currentTimeMillis()) : ""
                 );
                 //TODO opt location
     }
 
-    public static RangzenMessage fromJSON(int securityProfile, String jsonString){
+    public static RangzenMessage fromJSON(Context context, String jsonString){
         JSONObject json;
         try {
             json = new JSONObject(jsonString);
@@ -111,17 +115,17 @@ public final class RangzenMessage extends Message {
             e.printStackTrace();
             json = new JSONObject();
         }
-        return fromJSON(securityProfile, json);
+        return fromJSON(context, json);
     }
 
-    /** convert the message into a json object using the supplied security profile restrictions */
-    public JSONObject toJSON(int securityProfile){
+    /** convert the message into a json based on current security profile settings */
+    public JSONObject toJSON(Context context){
         JSONObject result = new JSONObject();
         try {
             result.put(TEXT_KEY, this.text);
             result.put(PRIORITY_KEY, this.priority + Utils.makeNoise(0d, 0.003d));
 
-            SecurityProfile profile = SecurityManager.getInstance().getProfile(securityProfile);
+            SecurityProfile profile = SecurityManager.getCurrentProfile(context);
 
             //put optional items based on security profile settings
             if(profile.isPseudonyms()) result.put(PSEUDONYM_KEY, this.pseudonym);

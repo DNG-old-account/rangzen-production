@@ -1,9 +1,5 @@
 package org.denovogroup.rangzen.backend;
 
-import android.content.Context;
-
-import org.denovogroup.rangzen.ui.SettingsActivity;
-
 /**
  * Created by Liran on 11/17/2015.
  *
@@ -30,8 +26,10 @@ public class SecurityProfile {
     boolean shareLocation;
     /** Minimum shared contacts for message exchange */
     int minSharedContacts;
+    /** Maximum messages for message exchange */
+    int maxMessages;
 
-    public SecurityProfile(int strength, String name, boolean timestamp, boolean pseudonyms, int feedSize, boolean friendsViaBook, boolean friendsViaQR, boolean autodelete, boolean shareLocation, int minSharedContacts) {
+    public SecurityProfile(int strength, String name, boolean timestamp, boolean pseudonyms, int feedSize, boolean friendsViaBook, boolean friendsViaQR, boolean autodelete, boolean shareLocation, int minSharedContacts, int maxMessages) {
         this.strength = strength;
         this.name = name;
         this.timestamp = timestamp;
@@ -42,19 +40,7 @@ public class SecurityProfile {
         this.autodelete = autodelete;
         this.shareLocation = shareLocation;
         this.minSharedContacts = minSharedContacts;
-    }
-
-    public String getDescription() {
-        String desc =
-                "Timestamp: "+booleanToText(timestamp)+"\n"+
-                        "Pseudonym: "+booleanToText(pseudonyms)+"\n"+
-                        "Live feed size: "+(feedSize > 0 ? feedSize : "unlimited")+"\n"+
-                        "Add friends from phonebook: "+booleanToText(friendsViaBook)+"\n"+
-                        "Add friends using QR code: "+booleanToText(friendsViaQR)+"\n"+
-                        "Auto delete after decay using threshold: "+booleanToText(autodelete)+"\n"+
-                        "Share locations: "+booleanToText(shareLocation)+"\n"+
-                        "Minimum shared contacts for exchange: "+ (minSharedContacts > 0 ? minSharedContacts : "unlimited");
-        return desc;
+        this.maxMessages = maxMessages;
     }
 
     public int getStrength(){
@@ -133,7 +119,26 @@ public class SecurityProfile {
         this.minSharedContacts = minSharedContacts;
     }
 
-    private String booleanToText(boolean b){
-        return b ? "on" : "off";
+    public int getMaxMessages() {
+        return maxMessages;
+    }
+
+    public void setMaxMessages(int maxMessages) {
+        this.maxMessages = maxMessages;
+    }
+
+    public SecurityProfile clone(){
+        return new SecurityProfile(
+                strength,
+                name,
+                timestamp,
+                pseudonyms,
+                feedSize,
+                friendsViaBook,
+                friendsViaQR,
+                autodelete,
+                shareLocation,
+                minSharedContacts,
+                maxMessages);
     }
 }

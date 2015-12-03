@@ -97,7 +97,7 @@
         </activity>
 
         <activity
-            android:name=".ui.SettingsActivity"
+            android:name=".ui.PreferencesActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/rangzen_app_name"
             android:screenOrientation="portrait"

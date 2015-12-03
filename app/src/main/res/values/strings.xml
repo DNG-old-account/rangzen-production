@@ -61,8 +61,7 @@
     <string name="confirm_delete_title">Delete item?</string>
     <string name="confirm_delete">Are you sure you wish to remove this message? similar messages will not be received anymore.</string>
     <string name="include_log">Include log</string>
-    <string name="privacy_scheme_title">Privacy scheme</string>
-    <string name="scheme_details_title">Scheme detail</string>
+    <string name="security_scheme_title">Security profile</string>
     <string name="priority_threshold_title">Priority threshold</string>
     <string name="pseudonym_title">Pseudonym</string>
     <string name="my_qr_title">My QR id</string>
@@ -70,5 +69,25 @@
     <string name="add_friend_dialog_body">Select method</string>
     <string name="add_friend_qrcode">QR-code</string>
     <string name="add_friend_phonebook">Phonebook</string>
+
+    <string name="profile_show_peudo_title">Pseudonym:</string>
+    <string name="profile_show_peudo_desc">todo</string>
+    <string name="profile_feed_size_title">Live feed size:</string>
+    <string name="profile_feed_size_desc">todo</string>
+    <string name="profile_friends_vbook_title">Add friends from phonebook:</string>
+    <string name="profile_friends_vbook_desc">todo</string>
+    <string name="profile_friends_vcode_title">Add friends using QR code:</string>
+    <string name="profile_friends_vcode_desc">todo</string>
+    <string name="profile_autodel_title">Auto delete after decay:</string>
+    <string name="profile_autodel_desc">todo</string>
+    <string name="profile_share_location_title">Share locations:</string>
+    <string name="profile_share_location_desc">todo</string>
+    <string name="profile_min_contacts_title">Minimum contacts for exchange:</string>
+    <string name="profile_min_contacts_desc">todo</string>
+    <string name="profile_max_messages_title">Maximum messages per exchange:</string>
+    <string name="profile_max_messages_desc">todo</string>
+
+    <string name="pager_title_security">Security</string>
+    <string name="pager_title_profile">My profile</string>
 
 </resources>

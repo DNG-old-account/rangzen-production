@@ -400,7 +400,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                                 dialog.dismiss();
                             }
                         });
-                if(SecurityManager.getInstance().getProfile(SecurityManager.getCurrentProfile(this)).isFriendsViaQR()){
+                if(SecurityManager.getCurrentProfile(this).isFriendsViaQR()){
                     dialogBuilder.setNeutralButton(R.string.add_friend_qrcode, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -408,7 +408,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                         }
                     });
                 }
-                if(SecurityManager.getInstance().getProfile(SecurityManager.getCurrentProfile(this)).isFriendsViaBook()){
+                if(SecurityManager.getCurrentProfile(this).isFriendsViaBook()){
                     dialogBuilder.setPositiveButton(R.string.add_friend_phonebook, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -420,7 +420,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
                 return;
             case 3:
-                Intent settingsIntent = new Intent(this, SettingsActivity.class);
+                Intent settingsIntent = new Intent(this, PreferencesActivity.class);
                 startActivity(settingsIntent);
                 return;
             default:

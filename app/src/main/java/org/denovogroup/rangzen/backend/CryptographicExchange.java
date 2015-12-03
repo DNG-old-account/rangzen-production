@@ -52,6 +52,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import android.content.Context;
 import android.util.Log;
 
 import okio.ByteString;
@@ -68,7 +69,7 @@ import okio.ByteString;
  */
 public class CryptographicExchange extends Exchange {
 
-  private int securityProfile;
+    private Context mContext;
 
     /** PSI computation for the half of the exchange where we're the "client". */
   private PrivateSetIntersection mClientPSI;
@@ -113,10 +114,6 @@ public class CryptographicExchange extends Exchange {
       // TODO(lerner): This (initializing PSIs) is costly, so we may want to
       // do this offline if it's making exchanges slow.
       initializePSIObjects();
-        //Send client's security profile
-        sendSecurityProfile();
-        //Receive server's security profile
-        receiveSecurityProfile();
         //Send client's friends
         sendFriends();
         //receive server's friends
@@ -133,6 +130,8 @@ public class CryptographicExchange extends Exchange {
       computeSharedFriends();
       
       setExchangeStatus(Status.SUCCESS);
+
+        mContext = null;
 
       callback.success(this);
     } catch (Exception e) {  // Treat ALL exceptions as fatal.
@@ -167,32 +166,6 @@ public class CryptographicExchange extends Exchange {
       throw e;
     }
   }
-
-    private void sendSecurityProfile(){
-        JSONMessage clientProfileInfo = new JSONMessage("{\""+SECURITY_KEY+"\":"+securityProfile+"}");
-        if(!lengthValueWrite(out, clientProfileInfo)){
-            Log.w(TAG, "Could not send security profile information to peer");
-        }
-    }
-
-    private void receiveSecurityProfile(){
-        JSONMessage serverProfileInfo = lengthValueRead(in, JSONMessage.class);
-        if(serverProfileInfo != null){
-            try {
-                int serverProfile = new JSONObject(serverProfileInfo.jsonString).optInt(SECURITY_KEY);
-                if (SecurityManager.getInstance().getProfile(serverProfile) == null){
-                    Log.w(TAG, "Received unknown security profile from peer, falling back to most secure profile");
-                    serverProfile = SecurityManager.SECURITY_HIGH;
-                }
-                securityProfile = SecurityManager.getInstance().getMostSecureProfile(serverProfile, securityProfile);
-                Log.d(TAG, "Security profile selected: " + SecurityManager.getInstance().getProfile(securityProfile).getName());
-                return;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        Log.w(TAG, "Could not receive security profile information from peer");
-    }
 
     /**
      * Construct and send a ClientMessage to the remote party including
@@ -248,7 +221,7 @@ public class CryptographicExchange extends Exchange {
       } else {
           for (RangzenMessage message : messagesPool) {
               List<JSONMessage> messageWrapper = new ArrayList<>();
-              messageWrapper.add(new JSONMessage(message.toJSON(securityProfile)));
+              messageWrapper.add(new JSONMessage(message.toJSON(mContext)));
               ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
                       .build();
               if (!lengthValueWrite(out, cm)) {
@@ -309,7 +282,7 @@ public class CryptographicExchange extends Exchange {
               mRemoteClientMessage = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
               //Add everything passed in the wrapper to the pool
               for(JSONMessage message : mRemoteClientMessage.messages) {
-                  mMessagesReceived.add(RangzenMessage.fromJSON(securityProfile, message.jsonString));
+                  mMessagesReceived.add(RangzenMessage.fromJSON(mContext, message.jsonString));
               }
           } catch (ExecutionException ex){
               executor.shutdown();
@@ -422,11 +395,11 @@ public class CryptographicExchange extends Exchange {
   /**
    * Pass-through constructor to superclass constructor.
    */
-  public CryptographicExchange(int securityProfile ,String peerAddress, InputStream in, OutputStream out, boolean asInitiator,
+  public CryptographicExchange(Context context, String peerAddress, InputStream in, OutputStream out, boolean asInitiator,
                                FriendStore friendStore, MessageStore messageStore, 
                                ExchangeCallback callback) throws IllegalArgumentException {
     super(peerAddress, in, out, asInitiator, friendStore, messageStore, callback);
 
-      this.securityProfile = securityProfile;
+      mContext = context;
   }
 }

@@ -26,7 +26,7 @@ public class FeedAdapter extends CursorAdapter {
     private int pseudonym_colIndex;
     private int timestamp_colIndex;
 
-    private int currentProfile;
+    private SecurityProfile currentProfile;
 
     /**
      * Holds references to views so that findViewById() is not needed to be
@@ -108,9 +108,9 @@ public class FeedAdapter extends CursorAdapter {
         viewHolder.mPriorityView.setText(cursor.getString(priority_colIndex));
         viewHolder.mTrustView.setText(String.valueOf(cursor.getFloat(trust_colIndex)*100));
         viewHolder.mTextView.setText(cursor.getString(text_colIndex));
-        viewHolder.mPseudonymView.setText(SecurityManager.getInstance().getProfile(currentProfile).isPseudonyms() ?
+        viewHolder.mPseudonymView.setText(currentProfile.isPseudonyms() ?
                 cursor.getString(pseudonym_colIndex) : "");
-        viewHolder.mTimestampView.setText(SecurityManager.getInstance().getProfile(currentProfile).isTimestamp() ?
+        viewHolder.mTimestampView.setText(currentProfile.isTimestamp() ?
                 cursor.getString(timestamp_colIndex) : "");
 
         View.OnClickListener clickListener = new View.OnClickListener() {

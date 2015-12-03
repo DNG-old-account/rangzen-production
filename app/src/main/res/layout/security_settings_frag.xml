@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/activity_horizontal_margin"
+        android:descendantFocusability="beforeDescendants"
+        android:focusableInTouchMode="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/security_scheme_title"
+            android:layout_marginBottom="10dp"/>
+
+        <SeekBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/privacySeekBar"
+            android:layout_gravity="center_horizontal"/>
+
+        <LinearLayout
+            android:id="@+id/seekbarTitles"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp">
+        </LinearLayout>
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!--Pseudonym-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_show_peudo_title"/>
+                <CheckBox
+                    style="@style/Settings_checkbox"
+                    android:id="@+id/checkbox_pseudonym"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_show_peudo_desc"/>
+            </TableRow>
+
+            <!--Live feed size-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_feed_size_title"/>
+                <EditText
+                    android:id="@+id/editText_feedsize"
+                    android:inputType="number"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_feed_size_desc"/>
+            </TableRow>
+
+            <!--Friends via phone book-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_friends_vbook_title"/>
+                <CheckBox
+                    style="@style/Settings_checkbox"
+                    android:id="@+id/checkbox_friends_vphone"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_friends_vbook_desc"/>
+            </TableRow>
+
+            <!--Friends via qr-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_friends_vcode_title"/>
+                <CheckBox
+                    style="@style/Settings_checkbox"
+                    android:id="@+id/checkbox_friends_vcode"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_friends_vcode_desc"/>
+            </TableRow>
+
+            <!--Auto delete-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_autodel_title"/>
+                <CheckBox
+                    style="@style/Settings_checkbox"
+                    android:id="@+id/checkbox_autodel"/>
+            </TableRow>
+            <TableRow>
+                <SeekBar
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/priorityThresholdSeekBar"/>
+
+                <TextView
+                    android:id="@+id/priorityThresholdDisplay"
+                    android:layout_width="70dp"
+                    android:gravity="right"
+                    android:layout_height="wrap_content"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_autodel_desc"/>
+            </TableRow>
+
+            <!--Share location-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_share_location_title"/>
+                <CheckBox
+                    style="@style/Settings_checkbox"
+                    android:id="@+id/checkbox_share_location" />
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_share_location_desc"/>
+            </TableRow>
+
+            <!--Min contacts-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_min_contacts_title"/>
+                <EditText
+                    android:id="@+id/editText_min_contacts"
+                    android:inputType="number"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_min_contacts_desc"/>
+            </TableRow>
+
+            <!--Max messages per exchange-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_max_messages_title"/>
+                <EditText
+                    android:id="@+id/editText_max_messages"
+                    android:inputType="number"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_max_messages_desc"/>
+            </TableRow>
+
+        </TableLayout>
+    </LinearLayout>
+</ScrollView>
