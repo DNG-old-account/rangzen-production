@@ -287,7 +287,7 @@ public class BluetoothSpeaker {
                             mSocket.getInputStream(),
                              mSocket.getOutputStream(),
                              false,
-                             new FriendStore(mContext, StorageBase.ENCRYPTION_DEFAULT),
+                             FriendStore.getInstance(mContext),
                              MessageStore.getInstance(mContext),
                              mContext.mExchangeCallback);
     //mExchange.execute((Boolean) null);
@@ -409,4 +409,8 @@ public class BluetoothSpeaker {
       }
     }
   }
+
+    public void dismissNoBluetoothNotification(){
+        mBluetoothBroadcastReceiver.dismissNoBluetoothNotification(mContext);
+    }
 }

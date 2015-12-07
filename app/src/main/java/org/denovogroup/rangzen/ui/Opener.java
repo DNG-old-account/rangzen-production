@@ -67,6 +67,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -96,6 +98,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     private static boolean mFirstTime = true;
     private static final String TAG = "Opener";
     private static final int MAX_NEW_MESSAGES_DISPLAY = 99;
+    private Menu menu;
     private MenuItem pendingNewMessagesMenuItem;
 
     // Create reciever object
@@ -104,14 +107,15 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     // Set When broadcast event will fire.
     private IntentFilter filter = new IntentFilter(MessageStore.NEW_MESSAGE);
 
-    private final static int QR = 10;
     private final static int Message = 20;
-    private final static int PICK_CONTACT =30;
+    private final static int Search = 30;
 
     /** Initialize the contents of the activities menu. */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
+
+        this.menu = menu;
 
         pendingNewMessagesMenuItem = menu.findItem(R.id.new_post);
 
@@ -119,6 +123,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         MenuItem searchItem = menu.findItem(R.id.search);
         SearchView searchView = (SearchView) searchItem.getActionView();
         setSearhView(searchView);
+        menu.findItem(R.id.advanced).setVisible(false);
 
         //get any hashtag passed data from previous click events
         Uri data = getIntent().getData();
@@ -147,6 +152,10 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
             @Override
             public boolean onOptionsItemSelected(MenuItem item) {
+                if(item.getItemId() == R.id.advanced){
+                    Intent intent = new Intent(Opener.this, SearchActivity.class);
+                    startActivityForResult(intent, Search);
+                }
                 return super.onOptionsItemSelected(item);
             }
 
@@ -166,7 +175,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             public void onClick(View v) {
                 notifyDataSetChanged(null);
                 //mark all the messages as read
-                ReadStateTracker.markAllAsRead(Opener.this);
+                MessageStore.getInstance(Opener.this).setAllAsRead();
                 setPendingUnreadMessagesDisplay();
             }
         });
@@ -175,11 +184,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.LEFT);
-
-        if(mFirstTime){
-            //Start the read state tracker to tell what messages are not read yet
-            ReadStateTracker.initTracker(getApplicationContext());
-        }
     }
 
     /**
@@ -224,7 +228,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         if (item.getItemId() == R.id.new_post) {
             notifyDataSetChanged(null);
             //mark all the messages as read
-            ReadStateTracker.markAllAsRead(this);
+            MessageStore.getInstance(this).setAllAsRead();
             setPendingUnreadMessagesDisplay();
         }
         return super.onOptionsItemSelected(item);
@@ -298,74 +302,20 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         Log.i(TAG, "Got activity result back in Opener!");
 
-        // Check whether the activity that returned was the QR code activity,
-        // and whether it succeeded.
-        IntentResult intentResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
-        if(intentResult != null){
-            // Grab the string extra containing the QR code that was scanned.
-            FriendStore fs = new FriendStore(this,
-                    StorageBase.ENCRYPTION_DEFAULT);
-            String code = intentResult.getContents();
-            // Convert the code into a public Rangzen ID.
-            byte[] publicIDBytes = intentResult.getRawBytes();
-            Log.i(TAG, "In Opener, received intent with code " + code);
+        if(resultCode == RESULT_OK) {
+            switch( requestCode){
+                case Message:
+                    notifyDataSetChanged(null);
+                    break;
+                case Search:
+                    String extra = intent.getStringExtra(SearchActivity.SEARCH_EXTRA);
 
-            // Try to add the friend to the FriendStore, if they're not null.
-            if (publicIDBytes != null) {
-                boolean wasAdded = fs.addFriendBytes(publicIDBytes);
-                Log.i(TAG, "Now have " + fs.getAllFriends().size()
-                        + " friends.");
-                if (wasAdded) {
-                    Toast.makeText(this, "Friend Added", Toast.LENGTH_SHORT)
-                            .show();
-                } else {
-                    Toast.makeText(this, "Already Friends", Toast.LENGTH_SHORT)
-                            .show();
-                }
-            } else {
-                // This can happen if the URI is well-formed (rangzen://<stuff>)
-                // but the
-                // stuff isn't valid base64, since we get here based on the
-                // scheme but
-                // not a check of the contents of the URI.
-                Log.i(TAG,
-                        "Opener got back a supposed rangzen scheme code that didn't process to produce a public id:"
-                                + code);
-                Toast.makeText(this, "Invalid Friend Code", Toast.LENGTH_SHORT)
-                        .show();
-            }
-        } else {
-            if(requestCode == Message && resultCode == RESULT_OK) {
-                notifyDataSetChanged(null);
-
-            } else if(requestCode == PICK_CONTACT && resultCode == RESULT_OK && intent.getData() != null){
-                Uri contactItemUri = intent.getData();
-                Cursor contactCursor = getContentResolver().query(contactItemUri, null, null, null, null);
-                if(contactCursor != null && contactCursor.getCount() > 0){
-                    contactCursor.moveToFirst();
-                    String contactName = contactCursor.getString(contactCursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                    Log.d("liran","processing :"+contactName);
-                    if(contactCursor.getInt(contactCursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)) > 0){
-                        String id = contactCursor.getString(contactCursor.getColumnIndex(ContactsContract.Contacts._ID));
-                        Cursor phoneCursor = getContentResolver().query(
-                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                                null,
-                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID +" = ?",
-                                new String[]{id}, null);
-
-                        if(phoneCursor != null){
-                            phoneCursor.moveToFirst();
-                            while(!phoneCursor.isAfterLast()){
-                                Log.d("liran","has number:"+phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)));
-                                phoneCursor.moveToNext();
-                            }
-                        }
-                        if(phoneCursor != null) contactCursor.close();
-                    } else {
-                        //TODO show toast that a contact does not have a phone number
-                    }
-                }
-                if(contactCursor != null) contactCursor.close();
+                    MenuItem menuItem = menu.findItem(R.id.search);
+                    SearchView searchView = (SearchView) menuItem.getActionView();
+                    menuItem.expandActionView();
+                    searchView.setQuery(extra, true);
+                    searchView.clearFocus();
+                    break;
             }
         }
     }
@@ -391,33 +341,10 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
                 startActivityForResult(postIntent, Message);
                 return;
             case 2:
-                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this)
-                        .setTitle(R.string.add_friend_dialog_title)
-                        .setMessage(R.string.add_friend_dialog_body)
-                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                if(SecurityManager.getCurrentProfile(this).isFriendsViaQR()){
-                    dialogBuilder.setNeutralButton(R.string.add_friend_qrcode, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            openScanner();
-                        }
-                    });
-                }
-                if(SecurityManager.getCurrentProfile(this).isFriendsViaBook()){
-                    dialogBuilder.setPositiveButton(R.string.add_friend_phonebook, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            openPhonebook();
-                        }
-                    });
-                }
-                dialogBuilder.show();
-
+                Intent addFriendIntent = new Intent();
+                addFriendIntent.setClass(this, PreferencesActivity.class);
+                addFriendIntent.setAction(PreferencesActivity.ACTION_ADD_FRIEND);
+                startActivity(addFriendIntent);
                 return;
             case 3:
                 Intent settingsIntent = new Intent(this, PreferencesActivity.class);
@@ -481,7 +408,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     protected void onStop() {
         super.onStop();
         //mark all the messages as read
-        ReadStateTracker.markAllAsRead(getApplicationContext());
+        MessageStore.getInstance(this).setAllAsRead();
     }
 
     /**
@@ -589,15 +516,27 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
     public void setSearhView(SearchView searchView){
 
+        searchView.findViewById(android.support.v7.appcompat.R.id.search_src_text).setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                Fragment frag = getSupportFragmentManager().findFragmentById(R.id.mainContent);
+                if (frag instanceof FeedFragment) {
+                    ((FeedFragment) frag).setAddButtonVisible(!hasFocus);
+                }
+            }
+        });
+
         //Define on close listener which support pre-honycomb devices as well with the app compat
         searchView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
+                menu.findItem(R.id.advanced).setVisible(true);
             }
 
             @Override
             public void onViewDetachedFromWindow(View v) {
                 //reset the list to its normal state
+                menu.findItem(R.id.advanced).setVisible(false);
                 notifyDataSetChanged(null);
             }
         });
@@ -640,10 +579,10 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     /** set a notification at the actionbar letting the user know new unread messages are waiting,
      */
     private void setPendingUnreadMessagesDisplay(){
-        int unreadCount = ReadStateTracker.getUnreadCount(Opener.this);
+        long unreadCount = MessageStore.getInstance(Opener.this).getUnreadCount();
         if(pendingNewMessagesMenuItem != null){
             if(unreadCount > 0) {
-                String countString = (unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? Integer.toString(unreadCount) : "+"+MAX_NEW_MESSAGES_DISPLAY;
+                String countString = (unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? Long.toString(unreadCount) : "+"+MAX_NEW_MESSAGES_DISPLAY;
                 /*pendingNewMessagesMenuItem.setTitle(countString + " " + getString(R.string.new_post));
                 pendingNewMessagesMenuItem.setVisible(true);*/
 
@@ -655,18 +594,5 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             }
 
         }
-    }
-
-    private void openScanner(){
-        IntentIntegrator integrator = new IntentIntegrator(this);
-        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
-        integrator.setPrompt("Scan a barcode");
-        integrator.setBeepEnabled(false);
-        integrator.initiateScan();
-    }
-
-    private void openPhonebook(){
-        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
-        startActivityForResult(intent, PICK_CONTACT);
     }
 }

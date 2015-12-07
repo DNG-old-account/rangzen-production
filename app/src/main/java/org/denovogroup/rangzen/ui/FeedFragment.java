@@ -9,13 +9,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ListView;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
+import org.denovogroup.rangzen.backend.SearchHelper;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 
 import java.util.List;
@@ -31,6 +34,7 @@ public class FeedFragment extends Fragment implements Refreshable{
     private AsyncTask<String, Void, Cursor> searchTask;
     private int itemOffset = 0;
     private int firstItem = 0;
+    private ImageButton addButton;
 
     @Nullable
     @Override
@@ -40,7 +44,8 @@ public class FeedFragment extends Fragment implements Refreshable{
         listView = (ListView) view.findViewById(R.id.list);
         setupListView();
 
-        view.findViewById(R.id.new_post_button).setOnClickListener(new View.OnClickListener() {
+        addButton = (ImageButton) view.findViewById(R.id.new_post_button);
+        addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (getActivity().getClass() == Opener.class) {
@@ -69,7 +74,17 @@ public class FeedFragment extends Fragment implements Refreshable{
             @Override
             protected Cursor doInBackground(String... params) {
                 MessageStore store = MessageStore.getInstance(getActivity());
-                return store.getMessagesContainingCursor(params[0], false, -1);
+                String sqlQuery = SearchHelper.searchToSQL(params[0]);
+
+                Cursor cursor = (sqlQuery != null) ?
+                        store.getMessagesByQuery(sqlQuery) :
+                        store.getMessagesContainingCursor(params[0], false, -1);
+
+                if(cursor == null){
+                    cursor = store.getMessagesContainingCursor("", false, -1);
+                }
+
+                return cursor;
             }
 
             @Override
@@ -92,6 +107,8 @@ public class FeedFragment extends Fragment implements Refreshable{
     private void setupListView(){
         resetListAdapter(null, false);
     }
+
+    AlertDialog deleteManyDialog;
 
     /** set a feed list adapter to the list using the supplied list as source or using the default
      * items set if supplied list is null
@@ -137,6 +154,53 @@ public class FeedFragment extends Fragment implements Refreshable{
                     });
 
                     dialog.show();
+                }
+
+                @Override
+                public void onDeleteMany(final String message, final float trust, final String pseudonym, final int likes) {
+                    if(deleteManyDialog != null && deleteManyDialog.isShowing()) deleteManyDialog.dismiss();
+                    deleteManyDialog = null;
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
+                    dialog.setTitle(R.string.confirm_delete_many_title);
+                    dialog.setMessage(R.string.confirm_delete_many);
+                    dialog.setIcon(R.drawable.ic_bin);
+                    View contentView = getLayoutInflater(null).inflate(R.layout.delete_many_dialog, null);
+                    contentView.findViewById(R.id.button_same_sender).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            MessageStore.getInstance(getActivity()).deleteBySender(pseudonym);
+                            setQuery(query, false);
+                            if(deleteManyDialog != null) deleteManyDialog.dismiss();
+                            deleteManyDialog = null;
+                        }
+                    });
+                    contentView.findViewById(R.id.button_lower_trust).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            MessageStore.getInstance(getActivity()).deleteByTrust(trust);
+                            setQuery(query, false);
+                            if(deleteManyDialog != null) deleteManyDialog.dismiss();
+                            deleteManyDialog = null;
+                        }
+                    });
+                    contentView.findViewById(R.id.button_lower_likes).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            MessageStore.getInstance(getActivity()).deleteByLikes(likes);
+                            setQuery(query, false);
+                            if(deleteManyDialog != null) deleteManyDialog.dismiss();
+                            deleteManyDialog = null;
+                        }
+                    });
+                    dialog.setView(contentView);
+                    dialog.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+
+                    deleteManyDialog = dialog.show();
                 }
 
                 @Override
@@ -210,5 +274,11 @@ public class FeedFragment extends Fragment implements Refreshable{
         }
 
         return sortedList;
+    }
+
+    public void setAddButtonVisible(boolean visible){
+        if(addButton != null){
+            addButton.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        }
     }
 }

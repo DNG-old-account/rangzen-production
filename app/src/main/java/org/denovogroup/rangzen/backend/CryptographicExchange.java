@@ -118,16 +118,19 @@ public class CryptographicExchange extends Exchange {
         sendFriends();
         //receive server's friends
         receiveFriends();
+        // Send server message in response to remote client message.
+        sendServerMessage();
+        // Receive server message.
+        receiveServerMessage();
+
+        computeSharedFriends();
+
+        //TODO perform handshake (send max messages and establish multisession event if required)
+
       // Send client message.
       sendClientMessage();
       // Receive client message.
       receiveClientMessage();
-      // Send server message in response to remote client message.
-      sendServerMessage();
-      // Receive server message.
-      receiveServerMessage();
-
-      computeSharedFriends();
       
       setExchangeStatus(Status.SUCCESS);
 
@@ -307,6 +310,10 @@ public class CryptographicExchange extends Exchange {
           }
       }
       executor.shutdown();
+
+      if (mRemoteClientMessage == null) {
+          throw new IOException("Remote client message was null in sendServerMessage.");
+      }
   }
 
   /**
@@ -315,9 +322,7 @@ public class CryptographicExchange extends Exchange {
    */
   private void sendServerMessage() throws NoSuchAlgorithmException, 
                                           IOException {
-      if (mRemoteClientMessage == null) {
-      throw new IOException("Remote client message was null in sendServerMessage.");
-    } else if (remoteBlindedFriends == null) {
+    if (remoteBlindedFriends == null) {
       throw new IOException("Remove client message blinded friends is null in sendServerMessage.");
     }
 
@@ -372,8 +377,15 @@ public class CryptographicExchange extends Exchange {
    * Compute the number of shared friends from the PSI operation and store
    * that number in an instance variable.
    */
-  private void computeSharedFriends() throws NoSuchAlgorithmException {
+  private void computeSharedFriends() throws NoSuchAlgorithmException, IOException {
     commonFriends = mClientPSI.getCardinality(getSRTFromServerTuple());
+
+      int requiredFriends = SecurityManager.getCurrentProfile(mContext).minSharedContacts;
+      if(requiredFriends > commonFriends){
+          setExchangeStatus(Status.ERROR);
+          setErrorMessage("Session rejected by client due to insufficient common friends with server(required:"+requiredFriends+" found:"+commonFriends+").");
+          throw new IOException("Session rejected by client due to insufficient common friends with server(required:"+requiredFriends+" found:"+commonFriends+").");
+      }
   }
 
   /**

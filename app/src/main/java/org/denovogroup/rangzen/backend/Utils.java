@@ -39,6 +39,20 @@ public class Utils {
         return sourceFormat.format(date);
     }
 
+    /** Convert a timestemp in milliseconds into a human readable string format
+     *
+     * @param useUTC whether or not to use UTC timezone for creating the string
+     * @param milli time in milliseconds to be converted
+     * @return human readable string representation of the time stamp using UTC timezone
+     * and formatted as dd-MM-yyyy
+     */
+    public static String convertTimestampToDateStringCompact(boolean useUTC, long milli){
+        Date date = new Date(milli);
+        SimpleDateFormat sourceFormat = new SimpleDateFormat("dd-MM-yyyy");
+        sourceFormat.setTimeZone(useUTC ? TimeZone.getTimeZone("UTC") : TimeZone.getDefault());
+        return sourceFormat.format(date);
+    }
+
     /** convert numeric value (assumed to represent dp size units) into px units
      * based on the device's screen density.
      * @param dp value in dp to be converted

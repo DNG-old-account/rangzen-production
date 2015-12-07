@@ -3,6 +3,7 @@
 
     <color name="whitish">#D7D7D7</color>
     <color name="purple">#8D44AF</color>
+    <color name="purple_transparent">#008D44AF</color>
     <color name="purpleOld">#6d0094</color>
     <color name="grey">#FFFEFF</color>
 

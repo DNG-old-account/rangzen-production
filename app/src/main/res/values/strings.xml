@@ -15,6 +15,7 @@
     <string name="action_settings">Settings</string>
     <string name="continueButton">Continue</string>
     <string name="action_search">Search</string>
+    <string name="action_advance">Advanced</string>
     <string name="new_post">New message</string>
     <string name="new_posts">New messages</string>
     <string name="open">Navigation Drawer is Open</string>
@@ -60,6 +61,8 @@
 
     <string name="confirm_delete_title">Delete item?</string>
     <string name="confirm_delete">Are you sure you wish to remove this message? similar messages will not be received anymore.</string>
+    <string name="confirm_delete_many_title">Delete similar?</string>
+    <string name="confirm_delete_many">Delete messages with:</string>
     <string name="include_log">Include log</string>
     <string name="security_scheme_title">Security profile</string>
     <string name="priority_threshold_title">Priority threshold</string>
@@ -70,8 +73,14 @@
     <string name="add_friend_qrcode">QR-code</string>
     <string name="add_friend_phonebook">Phonebook</string>
 
+    <string name="conf_friend_dialog_title">Configure friend</string>
+    <string name="conf_friend_dialog_name">Name</string>
+    <string name="conf_friend_dialog_number">Phone</string>
+
     <string name="profile_show_peudo_title">Pseudonym:</string>
     <string name="profile_show_peudo_desc">todo</string>
+    <string name="profile_timestamp_title">Use timestamps:</string>
+    <string name="profile_timestamp_desc">todo</string>
     <string name="profile_feed_size_title">Live feed size:</string>
     <string name="profile_feed_size_desc">todo</string>
     <string name="profile_friends_vbook_title">Add friends from phonebook:</string>
@@ -80,14 +89,32 @@
     <string name="profile_friends_vcode_desc">todo</string>
     <string name="profile_autodel_title">Auto delete after decay:</string>
     <string name="profile_autodel_desc">todo</string>
+    <string name="profile_autodel_trust_desc">Trust</string>
+    <string name="profile_autodel_age_desc">Age (days)</string>
     <string name="profile_share_location_title">Share locations:</string>
     <string name="profile_share_location_desc">todo</string>
     <string name="profile_min_contacts_title">Minimum contacts for exchange:</string>
     <string name="profile_min_contacts_desc">todo</string>
     <string name="profile_max_messages_title">Maximum messages per exchange:</string>
     <string name="profile_max_messages_desc">todo</string>
+    <string name="profile_timebound_title">Timebound messages duration(days):</string>
+    <string name="profile_timebound_desc">todo</string>
+    <string name="profile_cooldown_title">Timeout between exchanges:</string>
+    <string name="profile_cooldown_desc">todo</string>
 
     <string name="pager_title_security">Security</string>
     <string name="pager_title_profile">My profile</string>
+    <string name="pager_title_friends">Friends</string>
+    <string name="search_message_title">Message</string>
+    <string name="search_trust_title">Minimum trust</string>
+    <string name="search_likes_title">Minimum likes</string>
+    <string name="killswitch">Killswitch</string>
+    <string name="rangzen_enabled">Rangzen enabled</string>
+
+    <string name="reset_app">Reset app</string>
+    <string name="reset_dialog_title">Reset application</string>
+    <string name="reset_app_message">Are you sure you wish to reset Rangzen?\nMessages, friends and preferences will erased.</string>
+    <string name="confirm_reset_dialog_title">Confirm reset</string>
+    <string name="confirm_reset_app_message">Click \'yes\' to reset Rangzen.</string>
 
 </resources>

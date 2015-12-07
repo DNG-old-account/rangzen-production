@@ -50,6 +50,21 @@
                     android:text="@string/profile_show_peudo_desc"/>
             </TableRow>
 
+            <!--Timestamp-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_timestamp_title"/>
+                <CheckBox
+                    style="@style/Settings_checkbox"
+                    android:id="@+id/checkbox_timestamp"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_timestamp_desc"/>
+            </TableRow>
+
             <!--Live feed size-->
             <TableRow style="@style/Settings_table_row">
                 <TextView
@@ -106,15 +121,25 @@
                     style="@style/Settings_checkbox"
                     android:id="@+id/checkbox_autodel"/>
             </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_autodel_desc"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_autodel_trust_desc"/>
+            </TableRow>
             <TableRow>
                 <SeekBar
                     android:layout_weight="1"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:id="@+id/priorityThresholdSeekBar"/>
+                    android:id="@+id/trustThresholdSeekBar"/>
 
                 <TextView
-                    android:id="@+id/priorityThresholdDisplay"
+                    android:id="@+id/trustThresholdDisplay"
                     android:layout_width="70dp"
                     android:gravity="right"
                     android:layout_height="wrap_content"/>
@@ -122,7 +147,20 @@
             <TableRow style="@style/Settings_table_row">
                 <TextView
                     style="@style/Settings_checkbox_description"
-                    android:text="@string/profile_autodel_desc"/>
+                    android:text="@string/profile_autodel_age_desc"/>
+            </TableRow>
+            <TableRow>
+                <SeekBar
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/ageThresholdSeekBar"/>
+
+                <TextView
+                    android:id="@+id/ageThresholdDisplay"
+                    android:layout_width="70dp"
+                    android:gravity="right"
+                    android:layout_height="wrap_content"/>
             </TableRow>
 
             <!--Share location-->
@@ -172,6 +210,38 @@
                 <TextView
                     style="@style/Settings_checkbox_description"
                     android:text="@string/profile_max_messages_desc"/>
+            </TableRow>
+
+            <!--Timeout between exchanges -->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_cooldown_title"/>
+                <TextView
+                    android:id="@+id/TextView_cooldown"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_cooldown_desc"/>
+            </TableRow>
+
+            <!--Timebound messages period -->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_timebound_title"/>
+                <TextView
+                    android:id="@+id/TextView_timebound"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"/>
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_timebound_desc"/>
             </TableRow>
 
         </TableLayout>

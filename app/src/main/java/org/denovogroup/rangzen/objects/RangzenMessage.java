@@ -12,8 +12,11 @@ import org.denovogroup.rangzen.backend.SecurityManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Calendar;
+
 import static com.squareup.wire.Message.Datatype.DOUBLE;
 import static com.squareup.wire.Message.Datatype.INT32;
+import static com.squareup.wire.Message.Datatype.INT64;
 import static com.squareup.wire.Message.Datatype.STRING;
 import static com.squareup.wire.Message.Label.OPTIONAL;
 import static com.squareup.wire.Message.Label.REQUIRED;
@@ -27,9 +30,9 @@ public final class RangzenMessage extends Message {
   public static final Double DEFAULT_TRUST = 0.01D;
     public static final int DEFAULT_PRIORITY = 0;
     public static final String DEFAULT_PSEUDONYM = "";
-    public static final String DEFAULT_TIMESTAMP = "";
 
     public static final String TEXT_KEY = "text";
+    public static final String TRUST_KEY = "trust";
     public static final String PRIORITY_KEY = "priority";
     public static final String PSEUDONYM_KEY = "pseudonym";
 
@@ -58,12 +61,12 @@ public final class RangzenMessage extends Message {
     public final String pseudonym;
 
     /**
-     * The message's timestamp, as a String.
+     * The message's timestamp, as a long.
      */
-    @ProtoField(tag = 5, type = STRING, label = OPTIONAL)
-    public final String timestamp;
+    @ProtoField(tag = 5, type = INT64, label = OPTIONAL)
+    public final long timestamp;
 
-  public RangzenMessage(String text, Double trust, Integer priority, String pseudonym, String timestamp) {
+  public RangzenMessage(String text, Double trust, Integer priority, String pseudonym, long timestamp) {
     this.text = text;
     this.trust = trust;
     this.priority = priority;
@@ -76,7 +79,7 @@ public final class RangzenMessage extends Message {
         this.trust = trust;
         this.priority = priority;
         this.pseudonym = pseudonym;
-        this.timestamp = DEFAULT_TIMESTAMP;
+        this.timestamp = 0;
     }
 
     public RangzenMessage(String text, Double trust) {
@@ -84,7 +87,7 @@ public final class RangzenMessage extends Message {
         this.trust = trust;
         this.priority = DEFAULT_PRIORITY;
         this.pseudonym = DEFAULT_PSEUDONYM;
-        this.timestamp = DEFAULT_TIMESTAMP;
+        this.timestamp = 0;
     }
 
   private RangzenMessage(Builder builder) {
@@ -96,13 +99,19 @@ public final class RangzenMessage extends Message {
 
         SecurityProfile securityProfile = SecurityManager.getCurrentProfile(context);
 
+        Calendar currentTime = Calendar.getInstance();
+        currentTime.set(Calendar.MILLISECOND, 0);
+        currentTime.set(Calendar.SECOND, 0);
+        currentTime.set(Calendar.MINUTE,0);
+        currentTime.set(Calendar.HOUR, 0);
+
         return new RangzenMessage(
                 json.optString(TEXT_KEY, DEFAULT_TEXT),
-                DEFAULT_TRUST,
+                json.optDouble(TRUST_KEY,DEFAULT_TRUST),
                 json.optInt(PRIORITY_KEY, DEFAULT_PRIORITY),
                 json.optString(PSEUDONYM_KEY, DEFAULT_PSEUDONYM),
                 securityProfile.isTimestamp() ?
-                        Utils.convertTimestampToDateString(false, System.currentTimeMillis()) : ""
+                        currentTime.getTimeInMillis() : 0
                 );
                 //TODO opt location
     }
@@ -123,7 +132,8 @@ public final class RangzenMessage extends Message {
         JSONObject result = new JSONObject();
         try {
             result.put(TEXT_KEY, this.text);
-            result.put(PRIORITY_KEY, this.priority + Utils.makeNoise(0d, 0.003d));
+            result.put(TRUST_KEY, this.trust + Utils.makeNoise(0d, 0.003d));
+            result.put(PRIORITY_KEY, this.priority);
 
             SecurityProfile profile = SecurityManager.getCurrentProfile(context);
 
@@ -163,7 +173,7 @@ public final class RangzenMessage extends Message {
     public Double trust;
       public Integer priority;
       public String pseudonym;
-      public String timestamp;
+      public long timestamp;
 
     public Builder() {
     }
@@ -213,7 +223,7 @@ public final class RangzenMessage extends Message {
       /**
        * The message's timestamp, as a string.
        */
-      public Builder timestamp(String timestamp) {
+      public Builder timestamp(long timestamp) {
           this.timestamp = timestamp;
           return this;
       }

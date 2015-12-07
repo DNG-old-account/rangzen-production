@@ -41,8 +41,8 @@ import android.util.Log;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
-import java.util.ListResourceBundle;
 import java.util.UUID;
 
 /**
@@ -59,8 +59,8 @@ public class MessageStore extends SQLiteOpenHelper {
     private static MessageStore instance;
     private static final String TAG = "MessageStore";
     //readable true/false operators since SQLite does not support boolean values
-    private static final int TRUE = 1;
-    private static final int FALSE = 0;
+    public static final int TRUE = 1;
+    public static final int FALSE = 0;
 
     //messages properties
     private static final double MIN_TRUST = 0.01f;
@@ -76,10 +76,11 @@ public class MessageStore extends SQLiteOpenHelper {
     private static final String COL_MESSAGE_ID = "messageId";
     public static final String COL_MESSAGE = "message";
     public static final String COL_TRUST = "trust";
-    public static final String COL_PRIORITY = "priority";
+    public static final String COL_LIKES = "likes";
     public static final String COL_PSEUDONYM = "pseudonym";
     public static final String COL_TIMESTAMP = "timestamp";
     private static final String COL_DELETED = "deleted";
+    public static final String COL_READ = "read";
 
     /** Get the current instance of MessageStore and create one if necessary.
      * Implemented as a singleton */
@@ -107,11 +108,12 @@ public class MessageStore extends SQLiteOpenHelper {
                 + COL_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 //+ COL_MESSAGE_ID + " VARCHAR(255) NOT NULL,"
                 + COL_MESSAGE + " VARCHAR(" + MAX_MESSAGE_SIZE + ") NOT NULL,"
-                + COL_TIMESTAMP + " TEXT NOT NULL,"
+                + COL_TIMESTAMP + " INTEGER NOT NULL,"
                 + COL_TRUST + " REAL NOT NULL DEFAULT " + MIN_TRUST + ","
-                + COL_PRIORITY + " INT NOT NULL DEFAULT " + DEFAULT_PRIORITY + ","
+                + COL_LIKES + " INT NOT NULL DEFAULT " + DEFAULT_PRIORITY + ","
                 + COL_PSEUDONYM + " VARCHAR(255) NOT NULL,"
-                + COL_DELETED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_DELETED + " IN(" + TRUE + "," + FALSE + "))"
+                + COL_DELETED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_DELETED + " IN(" + TRUE + "," + FALSE + ")),"
+                + COL_READ + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_READ + " IN(" + TRUE + "," + FALSE + "))"
                 + ");");
     }
 
@@ -164,7 +166,7 @@ public class MessageStore extends SQLiteOpenHelper {
         cursor.moveToFirst();
 
         int trustColIndex = cursor.getColumnIndex(COL_TRUST);
-        int priorityColIndex = cursor.getColumnIndex(COL_PRIORITY);
+        int priorityColIndex = cursor.getColumnIndex(COL_LIKES);
         int messageColIndex = cursor.getColumnIndex(COL_MESSAGE);
         int pseudonymColIndex = cursor.getColumnIndex(COL_PSEUDONYM);
         int timestampColIndex = cursor.getColumnIndex(COL_TIMESTAMP);
@@ -176,7 +178,7 @@ public class MessageStore extends SQLiteOpenHelper {
                         cursor.getDouble(trustColIndex),
                         cursor.getInt(priorityColIndex),
                         cursor.getString(pseudonymColIndex),
-                        cursor.getString(timestampColIndex)
+                        cursor.getLong(timestampColIndex)
                 ));
                 cursor.moveToNext();
             }
@@ -333,7 +335,7 @@ public class MessageStore extends SQLiteOpenHelper {
      *                     if set to false and value is outside of limit, an exception is thrown
      * @return Returns true if the message was added. If message already exists, update its values
      */
-    public boolean addMessage(String message, double trust, double priority, String pseudonym, String timestamp,boolean enforceLimit){
+    public boolean addMessage(String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit){
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
@@ -345,22 +347,28 @@ public class MessageStore extends SQLiteOpenHelper {
 
             if(message.length() > MAX_MESSAGE_SIZE) message = message.substring(0, MAX_MESSAGE_SIZE);
 
+            Calendar reducedTimestamp = Calendar.getInstance();
+            reducedTimestamp.set(Calendar.MILLISECOND, 0);
+            reducedTimestamp.set(Calendar.SECOND, 0);
+            reducedTimestamp.set(Calendar.MINUTE, 0);
+            reducedTimestamp.set(Calendar.HOUR, 0);
+
             if(containsOrRemoved(message)) {
                 db.execSQL("UPDATE "+TABLE+" SET "
                         +COL_TRUST+"="+trust+","
                         +COL_DELETED+"="+FALSE+","
-                        +COL_PRIORITY+"="+priority+","
+                        + COL_LIKES +"="+priority+","
                         +COL_PSEUDONYM+"='"+pseudonym+"'"
-                        +COL_TIMESTAMP+"='"+timestamp+"'"
+                        +COL_TIMESTAMP+"="+reducedTimestamp.getTimeInMillis()
                         +" WHERE " + COL_MESSAGE + "='" + message + "';");
                 Log.d(TAG, "Message was already in store and was simply updated.");
             } else {
                 ContentValues content = new ContentValues();
                 content.put(COL_MESSAGE, message);
                 content.put(COL_TRUST, trust);
-                content.put(COL_PRIORITY, priority);
+                content.put(COL_LIKES, priority);
                 content.put(COL_PSEUDONYM, pseudonym);
-                content.put(COL_TIMESTAMP, timestamp);
+                content.put(COL_TIMESTAMP, reducedTimestamp.getTimeInMillis());
                 db.insert(TABLE, null, content);
                 Log.d(TAG, "Message added to store.");
             }
@@ -400,7 +408,7 @@ public class MessageStore extends SQLiteOpenHelper {
             db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + message + "';");
             return true;
         }
-        Log.d(TAG, "Message not added to store, either message or database is null. [" + message + "]");
+        Log.d(TAG, "Message not deleted from store, either message or database is null. [" + message + "]");
         return false;
     }
 
@@ -434,10 +442,10 @@ public class MessageStore extends SQLiteOpenHelper {
     public double getPriority(String message){
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
-            Cursor cursor = db.rawQuery("SELECT "+COL_PRIORITY+" FROM "+TABLE+" WHERE "+COL_MESSAGE+"='"+message+"';", null);
+            Cursor cursor = db.rawQuery("SELECT "+ COL_LIKES +" FROM "+TABLE+" WHERE "+COL_MESSAGE+"='"+message+"';", null);
             if(cursor.getCount() > 0){
                 cursor.moveToFirst();
-                return cursor.getInt(cursor.getColumnIndex(COL_PRIORITY));
+                return cursor.getInt(cursor.getColumnIndex(COL_LIKES));
             }
         }
         return 0;
@@ -481,7 +489,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public boolean updateTrust(String message, int priority) {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_PRIORITY+"="+priority+" WHERE "+COL_MESSAGE+"='"+message+"';");
+            db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+message+"';");
 
             Log.d(TAG, "Message priority changed in the store.");
             return true;
@@ -501,7 +509,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public boolean updatePriority(String message, int priority) {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_PRIORITY+"="+priority+" WHERE "+COL_MESSAGE+"='"+message+"';");
+            db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+message+"';");
 
             Log.d(TAG, "Message priority changed in the store.");
             return true;
@@ -522,4 +530,103 @@ public class MessageStore extends SQLiteOpenHelper {
         storeVersion = UUID.randomUUID().toString();
     }
 
+    /** set the read state of the supplied message to either read or unread */
+    public boolean setRead(String message, boolean isRead){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+            int read = isRead ? TRUE : FALSE;
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_READ+"="+read+" WHERE "+COL_MESSAGE+"='"+message+"';");
+
+            Log.d(TAG, "Message read state changed in the store.");
+            return true;
+        }
+        Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
+        return false;
+    }
+
+    /** reset the local storage to make all the messages marked as read */
+    public boolean setAllAsRead(){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_READ+"="+TRUE+";");
+
+            Log.d(TAG, "Messages read state changed in the store.");
+            return true;
+        }
+        Log.d(TAG, "Messages not edited, database is null.");
+        return false;
+    }
+
+    public long getUnreadCount(){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+            return DatabaseUtils.queryNumEntries(db, TABLE, COL_READ + "=" + FALSE);
+        }
+        return  0;
+    }
+
+    /** completely delete records from the database below specified citeria
+     *
+     * @param minTrust the trust threshold to delete, all items with trust level equal or bellow will be removed
+     * @param age the age of the message in days, any message older will be deleted
+     */
+    public void deleteOutdatedOrIrrelevant(float minTrust, int age){
+
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return;
+
+        Calendar reducedAge = Calendar.getInstance();
+        reducedAge.set(Calendar.MILLISECOND,0);
+        reducedAge.set(Calendar.SECOND,0);
+        reducedAge.set(Calendar.MINUTE,0);
+        reducedAge.set(Calendar.HOUR,0);
+
+        long ageThreshold = reducedAge.getTimeInMillis() - age * 1000L * 60L *60L * 24L;
+
+        db.execSQL("DELETE FROM "+TABLE+" WHERE "+COL_TRUST+"<="+minTrust+" OR ("+COL_TIMESTAMP+"> 0 AND "+COL_TIMESTAMP+"<"+ageThreshold+");");
+    }
+
+    public Cursor getMessagesByQuery(String query){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null || query == null) return null;
+
+        String pretext = "SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" ";
+        String posttext = " ORDER BY "+COL_TRUST+","+COL_READ+", "+COL_TIMESTAMP+" DESC;";
+
+        try {
+            Cursor cursor = db.rawQuery(pretext + query + posttext, null);
+            return cursor;
+        } catch (Exception e){
+            return null;
+        }
+    }
+
+    public void deleteByLikes(int likes){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null) {
+            db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_LIKES + "<=" + likes + ";");
+        }
+    }
+
+    public void deleteByTrust(float trust){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null) {
+            db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_TRUST + "<=" + trust + ";");
+        }
+    }
+
+    public void deleteBySender(String sender){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null && sender != null && sender.length() > 0) {
+            db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_PSEUDONYM + "='" + sender + "';");
+        }
+    }
+
+    public void purgeStore(){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null) {
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE);
+            onCreate(db);
+        }
+    }
 }

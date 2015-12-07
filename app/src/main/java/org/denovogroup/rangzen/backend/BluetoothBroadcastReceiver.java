@@ -165,7 +165,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
 
     /** dismiss the no bluetooth notification if showing
      */
-    private void dismissNoBluetoothNotification(Context context){
+    public void dismissNoBluetoothNotification(Context context){
         int notificationId = R.string.dialog_no_bluetooth_message;
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

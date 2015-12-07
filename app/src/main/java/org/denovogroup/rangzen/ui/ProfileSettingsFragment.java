@@ -56,8 +56,8 @@ public class ProfileSettingsFragment extends Fragment implements TextView.OnEdit
         int qrSizeInDp = Utils.dpToPx(250, getActivity());
 
         try {
-            FriendStore store = new FriendStore(getActivity() ,StorageBase.ENCRYPTION_DEFAULT);
-            BitMatrix matrix = writer.encode(store.getPublicDeviceIDString(), BarcodeFormat.QR_CODE, qrSizeInDp, qrSizeInDp);
+            FriendStore store = FriendStore.getInstance(getActivity());
+            BitMatrix matrix = writer.encode(store.getPublicDeviceIDString(getActivity(), StorageBase.ENCRYPTION_DEFAULT), BarcodeFormat.QR_CODE, qrSizeInDp, qrSizeInDp);
             int width = matrix.getWidth();
             int height = matrix.getHeight();
             int[] pixels = new int[width * height];

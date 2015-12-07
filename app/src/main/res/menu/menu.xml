@@ -14,4 +14,9 @@
           compat:showAsAction="collapseActionView|always"
           compat:actionViewClass="android.support.v7.widget.SearchView"/>
 
+    <item
+        android:id="@+id/advanced"
+        android:title="@string/action_advance"
+        compat:showAsAction="always"/>
+
 </menu>

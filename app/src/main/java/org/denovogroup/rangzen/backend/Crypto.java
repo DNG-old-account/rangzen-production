@@ -383,4 +383,17 @@ public class Crypto {
     return byteArrays;
   }
 
+    public static byte[] encodeString(String input){
+        if(input == null) return null;
+
+        try {
+            MessageDigest md = MessageDigest.getInstance(HASH_ALGORITHM);
+            md.reset();
+            return md.digest(input.getBytes());
+
+        } catch (NoSuchAlgorithmException e){}
+
+        return null;
+    }
+
 }

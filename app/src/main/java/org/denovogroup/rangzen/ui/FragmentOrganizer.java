@@ -335,8 +335,8 @@ public class FragmentOrganizer extends Fragment {
                 SecurityProfile currentProfile = SecurityManager.getCurrentProfile(getActivity());
                 String pseudonym = currentProfile.isPseudonyms() ?
                         SecurityManager.getCurrentPseudonym(getActivity()) : "";
-                String timestamp = currentProfile.isTimestamp() ?
-                        Utils.convertTimestampToDateString(false, System.currentTimeMillis()) :"";
+                long timestamp = currentProfile.isTimestamp() ?
+                        System.currentTimeMillis() :0;
                 messageStore.addMessage(message, trust, priority, pseudonym, timestamp, true);
                 Toast.makeText(getActivity(), "Message sent!",
                         Toast.LENGTH_SHORT).show();

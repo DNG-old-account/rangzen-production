@@ -21,18 +21,14 @@ public class SecurityManager {
     private static List<SecurityProfile> profiles;
 
     /**an index for the position of the LOW security profile in the list */
-    public static final int SECURITY_CUSTOM = 0;
-    /**an index for the position of the LOW security profile in the list */
-    public static final int SECURITY_LOW = 1;
+    public static final int SECURITY_LOW = 0;
     /**an index for the position of the MEDIUM security profile in the list */
-    public static final int SECURITY_MEDIUM = 2;
+    public static final int SECURITY_MEDIUM = 1;
     /**an index for the position of the HIGH security profile in the list */
-    public static final int SECURITY_HIGH = 3;
+    public static final int SECURITY_HIGH = 2;
 
     /** the shared preference file where security settings are stored */
     public static final String SETTINGS_FILE = "Settings";
-    /** the key under which trust threshold is set in the file*/
-    public static final String TRUST_THRESHOLD_KEY = "priority_threshold";
     /** the key under which use pseudonym is set in the file*/
     public static final String PSEUDONYM_KEY = "pseudonym";
 
@@ -45,9 +41,13 @@ public class SecurityManager {
     private static final String PROFILE_FRIEND_VIA_BOOK_KEY = "addFromBook";
     private static final String PROFILE_FRIEND_VIA_QR_KEY = "addFromQR";
     private static final String PROFILE_AUTO_DELETE_KEY = "useAutoDecay";
+    private static final String PROFILE_AUTO_DELETE_TRUST_KEY = "AutoDecayTrust";
+    private static final String PROFILE_AUTO_DELETE_AGE_KEY = "AutoDecayAge";
     private static final String PROFILE_SHARE_LOCATIONS_KEY = "shareLocations";
     private static final String PROFILE_MIN_SHARED_CONTACTS_KEY = "minSharedContacts";
     private static final String PROFILE_MAX_MESSAGES_KEY = "maxMessagesPerExchange";
+    private static final String PROFILE_COOLDOWN_KEY = "exchangeCooldown";
+    private static final String PROFILE_TIMEBOUND_KEY = "timebound";
 
 
     /** Default security profile value if none is stored */
@@ -60,9 +60,9 @@ public class SecurityManager {
     /** initiate the managers parameters such as the profiles list */
     private void init(){
         profiles = new ArrayList<>();
-        profiles.add(new SecurityProfile(1,"Low", true, true, 999999999, true, true, false, true, 0, 300));
-        profiles.add(new SecurityProfile(2,"Medium", true, false, 1000, true, true, true, true, 3, 200));
-        profiles.add(new SecurityProfile(3,"High", false, false, 500, false, true, true, false, 5, 100));
+        profiles.add(new SecurityProfile(1,"Basic", true, true, 999999999, true, true, false, 0f, 0, true, 0, 300, 5, 60));
+        profiles.add(new SecurityProfile(2,"Moderate", true, false, 1000, true, true, true, 0.01f, 14, true, 3, 200, 15, 30));
+        profiles.add(new SecurityProfile(3,"Strict", false, false, 500, false, true, true, 0.05f, 14, false, 5, 100, 30, 14));
     }
 
     /** return the existing instance of the manager if exists. create new if not*/
@@ -128,9 +128,13 @@ public class SecurityManager {
                 pref.getBoolean(PROFILE_FRIEND_VIA_BOOK_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).friendsViaBook),
                 pref.getBoolean(PROFILE_FRIEND_VIA_QR_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).friendsViaQR),
                 pref.getBoolean(PROFILE_AUTO_DELETE_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isAutodelete()),
+                pref.getFloat(PROFILE_AUTO_DELETE_TRUST_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getAutodeleteTrust()),
+                pref.getInt(PROFILE_AUTO_DELETE_AGE_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getAutodeleteAge()),
                 pref.getBoolean(PROFILE_SHARE_LOCATIONS_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isShareLocation()),
                 pref.getInt(PROFILE_MIN_SHARED_CONTACTS_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getMinSharedContacts()),
-                pref.getInt(PROFILE_MAX_MESSAGES_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getMaxMessages())
+                pref.getInt(PROFILE_MAX_MESSAGES_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getMaxMessages()),
+                pref.getInt(PROFILE_COOLDOWN_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getCooldown()),
+                pref.getInt(PROFILE_TIMEBOUND_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getTimeboundPeriod())
         );
 
         return customProfile;
@@ -154,35 +158,24 @@ public class SecurityManager {
     public static void setCurrentProfile(Context context, SecurityProfile profile){
         if(instance == null) getInstance();
 
-        SharedPreferences.Editor pref = context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE).edit();
+        SharedPreferences.Editor pref = context.getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE).edit();
             pref.putString(PROFILE_NAME_KEY, profile.getName());
             pref.putBoolean(PROFILE_TIMESTAMP_KEY, profile.isTimestamp());
-            pref.putBoolean(PROFILE_PSEUDONYM_KEY, profile.isPseudonyms());
+        pref.putBoolean(PROFILE_PSEUDONYM_KEY, profile.isPseudonyms());
             pref.putInt(PROFILE_FEED_SIZE_KEY, profile.getFeedSize());
             pref.putBoolean(PROFILE_FRIEND_VIA_BOOK_KEY, profile.friendsViaBook);
             pref.putBoolean(PROFILE_FRIEND_VIA_QR_KEY, profile.friendsViaQR);
             pref.putBoolean(PROFILE_AUTO_DELETE_KEY, profile.isAutodelete());
+            pref.putFloat(PROFILE_AUTO_DELETE_TRUST_KEY, profile.getAutodeleteTrust());
+            pref.putInt(PROFILE_AUTO_DELETE_AGE_KEY, profile.getAutodeleteAge());
             pref.putBoolean(PROFILE_SHARE_LOCATIONS_KEY, profile.isShareLocation());
-            pref.putInt(PROFILE_MIN_SHARED_CONTACTS_KEY, profile.getMinSharedContacts());
+        pref.putInt(PROFILE_MIN_SHARED_CONTACTS_KEY, profile.getMinSharedContacts());
             pref.putInt(PROFILE_MAX_MESSAGES_KEY, profile.getMaxMessages());
+            pref.putInt(PROFILE_COOLDOWN_KEY, profile.getCooldown());
+            pref.putInt(PROFILE_TIMEBOUND_KEY, profile.getTimeboundPeriod());
             pref.commit();
-    }
 
-    /** read the currently set trust threshold for autodelete from local storage */
-    public static float getCurrentAutodeleteThreshold(Context context){
-        if(instance == null) getInstance();
-
-        return context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE)
-                .getFloat(TRUST_THRESHOLD_KEY, DEFAULT_TRUST_THRESHOLD);
-    }
-
-    /** write the supplied trust threshold for autodelete to local storage */
-    public static void setCurrentAutodeleteThreshold(Context context, float threshold){
-        if(instance == null) getInstance();
-
-        context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE).edit()
-                .putFloat(TRUST_THRESHOLD_KEY, threshold)
-                .commit();
+        RangzenService.TIME_BETWEEN_EXCHANGES_MILLIS = profile.getCooldown() * 1000;
     }
 
     /** read the currently set user pseudonym from local storage */
@@ -212,5 +205,10 @@ public class SecurityManager {
         SecurityProfile profB = getProfile(profileB);
 
         return (profA.getStrength() > profB.getStrength()) ? profileA : profileB;
+    }
+
+    public void clearProfileData(Context context){
+        SharedPreferences pref = context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE);
+        pref.edit().clear().commit();
     }
 }

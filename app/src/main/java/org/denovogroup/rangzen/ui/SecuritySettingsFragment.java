@@ -2,7 +2,6 @@ package org.denovogroup.rangzen.ui;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -28,9 +27,11 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
         TextView.OnEditorActionListener{
 
     SecurityProfile currentProfile;
-    TextView thresholdDisplay;
+    TextView trustThresholdDisplay;
+    TextView ageThresholdDisplay;
     SeekBar profileSeekBar;
-    SeekBar thresholdSeekBar;
+    SeekBar trustThresholdSeekBar;
+    SeekBar ageThresholdSeekBar;
     String[] availableProfiles = SecurityManager.getInstance().getProfiles();
 
     @Nullable
@@ -72,7 +73,8 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
         switch(buttonView.getId()){
             case R.id.checkbox_autodel:
                 currentProfile.setAutodelete(isChecked);
-                thresholdSeekBar.setEnabled(isChecked);
+                trustThresholdSeekBar.setEnabled(isChecked);
+                ageThresholdSeekBar.setEnabled(isChecked);
                 break;
             case R.id.checkbox_friends_vcode:
                 currentProfile.setFriendsViaQR(isChecked);
@@ -86,6 +88,9 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
             case R.id.checkbox_share_location:
                 currentProfile.setShareLocation(isChecked);
                 break;
+            case R.id.checkbox_timestamp:
+                currentProfile.setTimestamp(isChecked);
+                break;
         }
 
         setCurrentAsCustomProfile();
@@ -94,12 +99,25 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         switch (seekBar.getId()){
-            case R.id.priorityThresholdSeekBar:
+            case R.id.trustThresholdSeekBar:
                 if(fromUser) {
-                    SecurityManager.setCurrentAutodeleteThreshold(getActivity(), progress/100f);
+                    currentProfile.setAutodeleteTrust(progress/100f);
                     setCurrentAsCustomProfile();
                 }
-                thresholdDisplay.setText(String.valueOf(progress));
+                trustThresholdDisplay.setText(String.valueOf(progress));
+                break;
+            case R.id.ageThresholdSeekBar:
+                if(fromUser) {
+                    int minProgress = 1;
+                    if(progress >= minProgress) {
+                        currentProfile.setAutodeleteAge(progress);
+                    } else {
+                        currentProfile.setAutodeleteAge(minProgress);
+                        seekBar.setProgress(minProgress);
+                    }
+                    setCurrentAsCustomProfile();
+                }
+                ageThresholdDisplay.setText(String.valueOf(progress));
                 break;
             case R.id.privacySeekBar:
                 if(fromUser){
@@ -143,9 +161,11 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
     private void refreshView(View v){
         if(v == null) return;
 
-        thresholdDisplay = (TextView) v.findViewById(R.id.priorityThresholdDisplay);
+        trustThresholdDisplay = (TextView) v.findViewById(R.id.trustThresholdDisplay);
+        ageThresholdDisplay = (TextView) v.findViewById(R.id.ageThresholdDisplay);
 
-        thresholdSeekBar =((SeekBar) v.findViewById(R.id.priorityThresholdSeekBar));
+        trustThresholdSeekBar =((SeekBar) v.findViewById(R.id.trustThresholdSeekBar));
+        ageThresholdSeekBar =((SeekBar) v.findViewById(R.id.ageThresholdSeekBar));
         profileSeekBar = ((SeekBar) v.findViewById(R.id.privacySeekBar));
 
         ((CheckBox) v.findViewById(R.id.checkbox_autodel)).setOnCheckedChangeListener(null);
@@ -164,6 +184,10 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
         ((CheckBox) v.findViewById(R.id.checkbox_pseudonym)).setChecked(currentProfile.isPseudonyms());
         ((CheckBox) v.findViewById(R.id.checkbox_pseudonym)).setOnCheckedChangeListener(this);
 
+        ((CheckBox) v.findViewById(R.id.checkbox_timestamp)).setOnCheckedChangeListener(null);
+        ((CheckBox) v.findViewById(R.id.checkbox_timestamp)).setChecked(currentProfile.isTimestamp());
+        ((CheckBox) v.findViewById(R.id.checkbox_timestamp)).setOnCheckedChangeListener(this);
+
         ((CheckBox) v.findViewById(R.id.checkbox_share_location)).setOnCheckedChangeListener(null);
         ((CheckBox) v.findViewById(R.id.checkbox_share_location)).setChecked(currentProfile.isShareLocation());
         ((CheckBox) v.findViewById(R.id.checkbox_share_location)).setOnCheckedChangeListener(this);
@@ -180,9 +204,19 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
         ((EditText) v.findViewById(R.id.editText_max_messages)).setText(String.valueOf(currentProfile.getMaxMessages()));
         ((EditText) v.findViewById(R.id.editText_max_messages)).setOnEditorActionListener(this);
 
-        thresholdSeekBar.setOnSeekBarChangeListener(null);
-        thresholdSeekBar.setOnSeekBarChangeListener(this);
-        thresholdSeekBar.setProgress(Math.round(100 * SecurityManager.getCurrentAutodeleteThreshold(getActivity())));
+        ((TextView) v.findViewById(R.id.TextView_cooldown)).setText(String.valueOf(currentProfile.getCooldown()));
+        ((TextView) v.findViewById(R.id.TextView_timebound)).setText(String.valueOf(currentProfile.getTimeboundPeriod()));
+
+        trustThresholdSeekBar.setOnSeekBarChangeListener(null);
+        trustThresholdSeekBar.setEnabled(currentProfile.isAutodelete());
+        trustThresholdSeekBar.setOnSeekBarChangeListener(this);
+        trustThresholdSeekBar.setProgress(Math.round(100 * currentProfile.getAutodeleteTrust()));
+
+        ageThresholdSeekBar.setOnSeekBarChangeListener(null);
+        ageThresholdSeekBar.setMax(365);
+        ageThresholdSeekBar.setEnabled(currentProfile.isAutodelete());
+        ageThresholdSeekBar.setOnSeekBarChangeListener(this);
+        ageThresholdSeekBar.setProgress(currentProfile.getAutodeleteAge());
 
         profileSeekBar.setOnSeekBarChangeListener(null);
         profileSeekBar.setMax(availableProfiles.length-1);

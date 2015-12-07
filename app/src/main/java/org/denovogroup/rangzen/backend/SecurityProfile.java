@@ -6,6 +6,9 @@ package org.denovogroup.rangzen.backend;
  * A simple object representing a security profile and its properties
  */
 public class SecurityProfile {
+    private float autodeleteTrust;
+    private int autodeleteAge;
+    private int cooldown;
     /** profile security strength*/
     int strength;
     /** profile display name*/
@@ -29,7 +32,23 @@ public class SecurityProfile {
     /** Maximum messages for message exchange */
     int maxMessages;
 
-    public SecurityProfile(int strength, String name, boolean timestamp, boolean pseudonyms, int feedSize, boolean friendsViaBook, boolean friendsViaQR, boolean autodelete, boolean shareLocation, int minSharedContacts, int maxMessages) {
+    int timeboundPeriod;
+
+    public SecurityProfile(int strength,
+                           String name,
+                           boolean timestamp,
+                           boolean pseudonyms,
+                           int feedSize,
+                           boolean friendsViaBook,
+                           boolean friendsViaQR,
+                           boolean autodelete,
+                           float autodeleteTrust,
+                           int autodeleteAge,
+                           boolean shareLocation,
+                           int minSharedContacts,
+                           int maxMessages,
+                           int cooldown,
+                           int timeboundPeriod) {
         this.strength = strength;
         this.name = name;
         this.timestamp = timestamp;
@@ -38,9 +57,13 @@ public class SecurityProfile {
         this.friendsViaBook = friendsViaBook;
         this.friendsViaQR = friendsViaQR;
         this.autodelete = autodelete;
+        this.autodeleteTrust = autodeleteTrust;
+        this.autodeleteAge = autodeleteAge;
         this.shareLocation = shareLocation;
         this.minSharedContacts = minSharedContacts;
         this.maxMessages = maxMessages;
+        this.cooldown = cooldown;
+        this.timeboundPeriod = timeboundPeriod;
     }
 
     public int getStrength(){
@@ -137,8 +160,44 @@ public class SecurityProfile {
                 friendsViaBook,
                 friendsViaQR,
                 autodelete,
+                autodeleteTrust,
+                autodeleteAge,
                 shareLocation,
                 minSharedContacts,
-                maxMessages);
+                maxMessages,
+                cooldown,
+                timeboundPeriod);
+    }
+
+    public float getAutodeleteTrust() {
+        return autodeleteTrust;
+    }
+
+    public int getAutodeleteAge() {
+        return autodeleteAge;
+    }
+
+    public int getCooldown() {
+        return cooldown;
+    }
+
+    public void setAutodeleteTrust(float autodeleteTrust) {
+        this.autodeleteTrust = autodeleteTrust;
+    }
+
+    public void setAutodeleteAge(int autodeleteAge) {
+        this.autodeleteAge = autodeleteAge;
+    }
+
+    public void setCooldown(int cooldown) {
+        this.cooldown = cooldown;
+    }
+
+    public int getTimeboundPeriod() {
+        return timeboundPeriod;
+    }
+
+    public void setTimeboundPeriod(int timeboundPeriod) {
+        this.timeboundPeriod = timeboundPeriod;
     }
 }

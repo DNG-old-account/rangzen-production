@@ -37,6 +37,7 @@ import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.ComponentName;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -50,6 +51,7 @@ import android.os.IBinder;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.ui.Opener;
+import org.denovogroup.rangzen.ui.PreferencesActivity;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -81,6 +83,9 @@ public class RangzenService extends Service {
 
     /** Cancellable scheduling of backgroundTasks. */
     private ScheduledFuture mBackgroundExecution;
+
+    /** Cancellable scheduling of cleanup. */
+    private ScheduledFuture mCleanupExecution;
 
     /** Handle to app's PeerManager. */
     private PeerManager mPeerManager;
@@ -125,7 +130,7 @@ public class RangzenService extends Service {
                             "org.denovogroup.rangzen.LAST_EXCHANGE_TIME_KEY";
 
     /** Time to wait between exchanges, in milliseconds. */
-    private static final int TIME_BETWEEN_EXCHANGES_MILLIS = 0;//10 * 1000;
+    public static int TIME_BETWEEN_EXCHANGES_MILLIS;
 
     /** Android Log Tag. */
     private final static String TAG = "RangzenService";
@@ -177,7 +182,7 @@ public class RangzenService extends Service {
         mStartTime = new Date();
 
         mStore = new StorageBase(this, StorageBase.ENCRYPTION_DEFAULT);
-        mFriendStore = new FriendStore(this, StorageBase.ENCRYPTION_DEFAULT);
+        mFriendStore = FriendStore.getInstance(this);
 
         // Used for a live test.
         // TODO(lerner): Remove this after real tests for cryptographic exchange exist.
@@ -205,6 +210,15 @@ public class RangzenService extends Service {
                 backgroundTasks();
             }
         }, 0, 1, TimeUnit.SECONDS);
+
+        mCleanupExecution = mScheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                cleanupMessageStore();
+            }
+        }, 0, 1, TimeUnit.DAYS);
+
+        TIME_BETWEEN_EXCHANGES_MILLIS = SecurityManager.getCurrentProfile(this).getCooldown() * 1000;
     }
 
     /**
@@ -212,7 +226,14 @@ public class RangzenService extends Service {
      */
     public void onDestroy() {
       mBackgroundExecution.cancel(true);
-      return;
+        SharedPreferences pref = getSharedPreferences(PreferencesActivity.PREF_FILE, Context.MODE_PRIVATE);
+        if(pref.contains(PreferencesActivity.WIFI_NAME) && mWifiDirectSpeaker != null){
+            Log.d(TAG, "Restoring wifi name");
+            mWifiDirectSpeaker.setWifiDirectUserFriendlyName(pref.getString(PreferencesActivity.WIFI_NAME,""));
+        }
+
+        mWifiDirectSpeaker.dismissNoWifiNotification();
+        mBluetoothSpeaker.dismissNoBluetoothNotification();
     }
 
 
@@ -360,7 +381,7 @@ public class RangzenService extends Service {
                 socket.getInputStream(),
                 socket.getOutputStream(),
                 true,
-                new FriendStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT),
+                FriendStore.getInstance(RangzenService.this),
                 MessageStore.getInstance(RangzenService.this),
                 RangzenService.this.mExchangeCallback);
             (new Thread(mExchange)).start();
@@ -436,7 +457,7 @@ public class RangzenService extends Service {
                 hasNew = true;
                 mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true);
                 //mark this message as unread
-                ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
+                mMessageStore.setRead(message.text, false);
             }
           } catch (IllegalArgumentException e) {
             Log.e(TAG, String.format("Attempted to add/update message %s with trust (%f/%f)" +
@@ -491,7 +512,7 @@ public class RangzenService extends Service {
                             hasNew = true;
                             mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true);
                             //mark this message as unread
-                            ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
+                            mMessageStore.setRead(message.text, false);
                         }
                     } catch (IllegalArgumentException e) {
                         Log.e(TAG, String.format("Attempted to add/update message %s with trust (%f/%f)" +
@@ -607,7 +628,7 @@ public class RangzenService extends Service {
         Notification.Builder builder = new Notification.Builder(getApplicationContext());
         builder.setContentIntent(pendingIntent);
         builder.setContentTitle(getString(R.string.unread_notification_title));
-        builder.setContentText(ReadStateTracker.getUnreadCount(this) + " " + getString(R.string.unread_notification_content));
+        builder.setContentText(MessageStore.getInstance(this).getUnreadCount() + " " + getString(R.string.unread_notification_content));
         builder.setSmallIcon(R.drawable.ic_launcher);
         builder.setAutoCancel(true);
         builder.setTicker(getText(R.string.unread_notification_content));
@@ -639,6 +660,13 @@ public class RangzenService extends Service {
     private void setWifiDirectFriendlyName(){
         String btAddress = mBluetoothSpeaker.getAddress();
         if(mWifiDirectSpeaker != null) {
+
+            SharedPreferences pref = getSharedPreferences(PreferencesActivity.PREF_FILE, Context.MODE_PRIVATE);
+            if(!pref.contains(PreferencesActivity.WIFI_NAME)){
+                String oldName = BluetoothAdapter.getDefaultAdapter().getName();
+                pref.edit().putString(PreferencesActivity.WIFI_NAME, oldName).commit();
+            }
+
             mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
             if (mBluetoothSpeaker.getAddress().equals(DUMMY_MAC_ADDRESS)) {
                 Log.w(TAG, "Bluetooth speaker provided a dummy bluetooth" +
@@ -653,4 +681,13 @@ public class RangzenService extends Service {
             }
         }
     }
+
+    private void cleanupMessageStore(){
+        SecurityProfile currentProfile = SecurityManager.getCurrentProfile(this);
+        if(currentProfile.isAutodelete()){
+            MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile.getAutodeleteTrust(), currentProfile.getAutodeleteAge());
+        }
+    }
+
+
 }

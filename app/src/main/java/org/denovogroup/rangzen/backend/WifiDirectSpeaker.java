@@ -46,6 +46,7 @@ import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
 import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Build;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.provider.Settings;
@@ -493,7 +494,7 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
 
     /** dismiss the no wifi notification if showing
      */
-    private void dismissNoWifiNotification(){
+    public void dismissNoWifiNotification(){
 
         if(mContext == null) return;
 

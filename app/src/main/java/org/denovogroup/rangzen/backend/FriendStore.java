@@ -30,11 +30,28 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
+import android.provider.ContactsContract;
 import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
+import org.denovogroup.rangzen.R;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 
 import java.io.IOException;
@@ -53,7 +70,7 @@ import java.util.Set;
 /**
  * Storage for friends that uses StorageBase underneath. 
  */
-public class FriendStore {
+public class FriendStore extends SQLiteOpenHelper{
   /** A handle for the underlying store */
   private StorageBase store;
   
@@ -72,101 +89,24 @@ public class FriendStore {
   /** Tag for Android log messages. */
   private static final String TAG = "FriendStore";
 
-  /**
-   * Creates a Rangzen friend store, with a consistent application of encryption of that stored
-   * data, as specified.
-   *
-   * @param context A context in which to do storage.
-   * @param encryptionMode The encryption mode to use for all calls using this instance.
-   */
-  public FriendStore(Context context, int encryptionMode) throws IllegalArgumentException {
-    store = new StorageBase(context, encryptionMode);
-  }
+    private static FriendStore instance;
 
-  /**
-   * Adds the given friend.
-   *
-   * @param friend The friend to add.
-   *
-   * @return Returns true if the friend was stored, false if the friend was already
-   * stored.
-   */
-  private boolean addFriend(String friend) {
-    Set<String> friends = store.getSet(FRIENDS_STORE_KEY);
-    if (friends == null) {
-      friends = new HashSet<String>();
-    }
-    if (friends.contains(friend)) {
-      // Friend already stored.
-      return false;
-    }
-    friends.add(friend);
-    store.putSet(FRIENDS_STORE_KEY, friends);
-    return true;
-  }
+    private static final String DATABASE_NAME = "FriendStore.db";
+    private static final int DATABASE_VERSION = 2;
+    private static final String TABLE = "Friends";
+    private static final String COL_ROWID = "_id";
+    public static final String COL_DISPLAY_NAME = "name";
+    public static final String COL_PUBLIC_KEY = "key";
+    public static final String COL_ADDED_VIA = "added_via";
+    public static final String COL_NUMBER = "number";
+    public static final String COL_CHECKED = "checked";
 
-  /**
-   * Add the given bytes as a friend, converting them to base64 and storing them
-   * in the FriendStore.
-   *
-   * @param friend The friend to be added.
-   * @return True if the friend was added, false if not since it was already there.
-   */
-  public boolean addFriendBytes(byte[] friend) {
-    if (friend == null) {
-      throw new IllegalArgumentException("Null friend added through addFriendBytes()");
-    }
-    return addFriend(bytesToBase64(friend));
-  }
+    public static final int ADDED_VIA_QR = 0;
+    public static final int ADDED_VIA_PHONE = 1;
 
-  /**
-   * Delete the given friend ID from the friend store, if it exists.
-   *
-   * @param friend The friend ID to delete.
-   *
-   * @return True if the friend existed and was deleted, false otherwise.
-   */
-  private boolean deleteFriend(String friend) {
-    Set<String> friends = store.getSet(FRIENDS_STORE_KEY);
-    if (friends == null) {
-      // No friends known, so deleting a friend should always fail.
-      return false;
-    }
-    // Friend known, so delete it.
-    if (friends.contains(friend)) {
-      friends.remove(friend);
-      store.putSet(FRIENDS_STORE_KEY, friends);
-      return true;
-    }
-    // Friends not empty but given friend to delete not known.
-    return false;
-  }
-
-  /**
-   * Delete the given bytes as a friend.
-   *
-   * @param friend The friend to be deleted.
-   * @return True if the friend was deleted, false if they weren't in the store.
-   */
-  public boolean deleteFriendBytes(byte[] friend) {
-    if (friend == null) {
-      throw new IllegalArgumentException("Null friend deleted through addFriendBytes()");
-    }
-    return deleteFriend(bytesToBase64(friend));
-  }
-
-  /**
-   * Get a list of all friends stored on this device.
-   *
-   * @return A set of friends ids.
-   */
-  public Set<String> getAllFriends() {
-    Set<String> friends = store.getSet(FRIENDS_STORE_KEY);
-    if (friends == null) {
-      return new HashSet<String>();
-    }
-    return friends;
-  }
+    //readable true/false operators since SQLite does not support boolean values
+    public static final int TRUE = 1;
+    public static final int FALSE = 0;
 
   /**
    * Encode a byte array as a base64 string.
@@ -231,7 +171,8 @@ public class FriendStore {
    *
    * If the ID is already stored, this harmlessly does nothing.
    */
-  private void generateAndStoreDeviceID() {
+  private void generateAndStoreDeviceID(Context context, int encryption) {
+      if(store == null) store = new StorageBase(context, encryption);
     String privateDeviceID = store.get(DEVICE_PRIVATE_ID_KEY);
     String publicDeviceID = store.get(DEVICE_PUBLIC_ID_KEY);
     if (privateDeviceID == null || publicDeviceID == null) {
@@ -260,8 +201,8 @@ public class FriendStore {
    * @return A base64 encoded string representing the local device's public ID,
    * or null if something went wrong.
    */
-  public String getPublicDeviceIDString() {
-    generateAndStoreDeviceID();
+  public String getPublicDeviceIDString(Context context, int encryption) {
+    generateAndStoreDeviceID(context, encryption);
     return store.get(DEVICE_PUBLIC_ID_KEY);
   }
 
@@ -292,4 +233,222 @@ public class FriendStore {
     
   }
 
+    /** Get the current instance of FriendStore and create one if necessary.
+     * Implemented as a singleton */
+    public synchronized static FriendStore getInstance(Context context){
+        if(instance == null && context != null){
+            instance = new FriendStore(context);
+        }
+        return instance;
+    }
+
+    private FriendStore(Context context){
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        instance = this;
+    }
+
+    /** Create the table for storing friends, only called for first run of the database */
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE + " ("
+                + COL_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + COL_DISPLAY_NAME + " TEXT NOT NULL,"
+                + COL_ADDED_VIA + " INT NOT NULL,"
+                + COL_PUBLIC_KEY + " TEXT NOT NULL,"
+                + COL_NUMBER + " TEXT,"
+                + COL_CHECKED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_CHECKED + " IN(" + TRUE + "," + FALSE + "))"
+                + ");");
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        /*recreate table on upgrade, this should be better implemented once final data base structure
+          is reached*/
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE);
+        onCreate(db);
+    }
+
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        onUpgrade(db, oldVersion, newVersion);
+    }
+
+    /**
+     * Adds the given friend.
+     *
+     * @param name a display name for the entry
+     * @param key the public key the friend is identified by in exchanges
+     * @param via how the friend's key was retrieved (either ADDED_VIA_PHONE or ADDED_VIA_QR)
+     * @param number optional real phone number to display when user is in edit mode
+     *
+     * @return Returns true if the friend was stored, false if the friend was already
+     * stored.
+     */
+    public boolean addFriend(String name, String key, int via, String number){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return false;
+
+        if(getFriendWithKey(key) != null){
+            Log.d(TAG,"Friend was already in the store, data not changed");
+            return false;
+        }
+
+        ContentValues values = new ContentValues();
+        values.put(COL_DISPLAY_NAME, name);
+        values.put(COL_PUBLIC_KEY, key);
+        values.put(COL_ADDED_VIA, via);
+        values.put(COL_NUMBER, number);
+
+        db.insert(TABLE, null, values);
+        Log.d(TAG, "Friend Added to store");
+        return true;
+    }
+
+    /**
+     * Add the given bytes as a friend, converting them to base64 and storing them
+     * in the FriendStore.
+     *
+     * @param name a display name for the entry
+     * @param key the public key the friend is identified by in exchanges
+     * @param via how the friend's key was retrieved (either ADDED_VIA_PHONE or ADDED_VIA_QR)
+     * @param number optional real phone number to display when user is in edit mode
+     * @return True if the friend was added, false if not since it was already there.
+     */
+    public boolean addFriendBytes(String name, byte[] key, int via, String number){
+        if(key == null){
+            throw new IllegalArgumentException("Null friend added through addFriendBytes()");
+        }
+
+        return  addFriend(name, bytesToBase64(key), via, number);
+    }
+
+    /**
+     * Delete the given friend from the friend store, if it exists.
+     *
+     * @param key The friend public ID to delete.
+     *
+     * @return True if the friend existed and was deleted, false otherwise.
+     */
+    public boolean deleteFriend(String key){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return false;
+
+        if(getFriendWithKey(key) == null){
+            Log.d(TAG,"Friend was not in the store");
+            return false;
+        }
+
+        db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_PUBLIC_KEY + " = '" + key + "';");
+        return true;
+    }
+
+    /**
+     * Delete the given bytes as a friend.
+     *
+     * @param key The friend public id key to be deleted.
+     * @return True if the friend was deleted, false if they weren't in the store.
+     */
+    public boolean deleteFriendBytes(byte[] key){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return false;
+
+        if(key == null){
+            throw new IllegalArgumentException("Null friend deleted through addFriendBytes()");
+        }
+
+        return deleteFriend(bytesToBase64(key));
+    }
+
+    /**
+     * Get a list of all friends stored on this device.
+     *
+     * @return A set of friends ids.
+     */
+    public Set<String> getAllFriends(){
+        Set<String> friends = new HashSet<>();
+
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return friends;
+
+        Cursor cursor = db.rawQuery("SELECT " + COL_PUBLIC_KEY + " FROM " + TABLE + ";", null);
+
+        cursor.moveToFirst();
+
+        int keyColIndex = cursor.getColumnIndex(COL_PUBLIC_KEY);
+
+        while (!cursor.isAfterLast()){
+            friends.add(cursor.getString(keyColIndex));
+            cursor.moveToNext();
+        }
+        return friends;
+    }
+
+    public Cursor getFriendsCursor(){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return null;
+
+        return db.rawQuery("SELECT * FROM "+TABLE+";",null);
+    }
+
+    private Cursor getFriendWithKey(String key){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return null;
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE + " WHERE " + COL_PUBLIC_KEY + " = '" + key + "';", null);
+
+        if(cursor.getCount() == 0) return null;
+
+        return cursor;
+    }
+
+    /** edit a friend entry with specified key
+     *
+     * @param key the public id key of the friend to be edited
+     * @param name new name value
+     * @param number new number value or null
+     * @return true if the friend was edited or false if friend could not be edited
+     */
+    public boolean editFriend(String key, String name, String number){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return false;
+
+        db.execSQL("UPDATE "+TABLE+" SET "+COL_DISPLAY_NAME+"='"+name+"',"+COL_NUMBER+"='"+number+"' WHERE "+COL_PUBLIC_KEY+"='"+key+"';");
+        return true;
+    }
+
+    /** edit a friend entry checked state
+     * @param key the public id key of the friend to be edited
+     * @param isChecked the new checked state
+     */
+    public void setChecked(String key, boolean isChecked){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return;
+
+        int checked = isChecked ? TRUE : FALSE;
+        db.execSQL("UPDATE "+TABLE+" SET "+COL_CHECKED+"="+checked+" WHERE "+COL_PUBLIC_KEY+"='"+key+"';");
+    }
+
+    /** set the checked state for all friends entry */
+    public void setCheckedAll(boolean isChecked){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return;
+
+        int checked = isChecked ? TRUE : FALSE;
+        db.execSQL("UPDATE "+TABLE+" SET "+COL_CHECKED+"="+checked+";");
+    }
+
+    public void deleteChecked(){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db == null) return;
+
+        db.execSQL("DELETE FROM "+TABLE+" WHERE "+COL_CHECKED+"="+TRUE+";");
+    }
+
+    public void purgeStore(){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null) {
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE);
+            onCreate(db);
+        }
+    }
 }

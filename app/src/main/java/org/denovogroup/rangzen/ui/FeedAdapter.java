@@ -7,13 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
-import org.denovogroup.rangzen.backend.SecurityManager;
 
 /**
  * Created by Liran on 11/26/2015.
@@ -25,6 +23,7 @@ public class FeedAdapter extends CursorAdapter {
     private int priority_colIndex;
     private int pseudonym_colIndex;
     private int timestamp_colIndex;
+    private int read_colIndex;
 
     private SecurityProfile currentProfile;
 
@@ -39,6 +38,7 @@ public class FeedAdapter extends CursorAdapter {
 
     public interface FeedAdapterCallbacks{
         void onDelete(String message);
+        void onDeleteMany(String message, float trust, String pseudonym, int likes);
         void onUpvote(String message, int oldPriority);
         void onDownvote(String message, int oldPriority);
         void onRetweet(String message);
@@ -57,9 +57,10 @@ public class FeedAdapter extends CursorAdapter {
     private void init(Context context,Cursor cursor){
         text_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_MESSAGE);
         trust_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_TRUST);
-        priority_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_PRIORITY);
+        priority_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_LIKES);
         pseudonym_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_PSEUDONYM);
         timestamp_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_TIMESTAMP);
+        read_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_READ);
         currentProfile = org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(context);
     }
 
@@ -101,17 +102,18 @@ public class FeedAdapter extends CursorAdapter {
 
     private void setProperties(View view, ViewHolder viewHolder, Cursor cursor){
 
-        boolean isRead = ReadStateTracker.isRead(cursor.getString(text_colIndex));
+        boolean isRead = cursor.getInt(read_colIndex) == MessageStore.TRUE;
 
         view.setBackgroundResource(isRead ? R.drawable.feed_item_background_gradient : R.drawable.feed_item_background_gradient_unread);
 
         viewHolder.mPriorityView.setText(cursor.getString(priority_colIndex));
-        viewHolder.mTrustView.setText(String.valueOf(cursor.getFloat(trust_colIndex)*100));
+        viewHolder.mTrustView.setText(String.valueOf(cursor.getFloat(trust_colIndex) * 100));
         viewHolder.mTextView.setText(cursor.getString(text_colIndex));
         viewHolder.mPseudonymView.setText(currentProfile.isPseudonyms() ?
                 cursor.getString(pseudonym_colIndex) : "");
-        viewHolder.mTimestampView.setText(currentProfile.isTimestamp() ?
-                cursor.getString(timestamp_colIndex) : "");
+        long timstamp = currentProfile.isTimestamp() ?
+                cursor.getLong(timestamp_colIndex) : 0;
+        viewHolder.mTimestampView.setText(timstamp > 0 ? Utils.convertTimestampToDateStringCompact(false,timstamp) : "");
 
         View.OnClickListener clickListener = new View.OnClickListener() {
             @Override
@@ -154,7 +156,43 @@ public class FeedAdapter extends CursorAdapter {
             }
         };
 
+        View.OnLongClickListener longClickListener = new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+
+                if(listView == null) return false;
+
+                int containerIndex = -1;
+
+                for(int i=0; i<listView.getChildCount();i++){
+                    if(listView.getChildAt(i).findViewById(v.getId()) == v){
+                        containerIndex = i;
+                        break;
+                    }
+                }
+                if(containerIndex < 0) return false;
+
+                int cursorPosition = getCursor().getPosition();
+                getCursor().moveToPosition(listView.getFirstVisiblePosition()+containerIndex);
+
+                String message = getCursor().getString(text_colIndex);
+                float trust = getCursor().getFloat(trust_colIndex);
+                String pseudoynm = getCursor().getString(pseudonym_colIndex);
+                int likes = getCursor().getInt(priority_colIndex);
+
+                getCursor().moveToPosition(cursorPosition);
+
+                switch(v.getId()){
+                    case R.id.item_delete:
+                        if(callbacks!= null) callbacks.onDeleteMany(message, trust, pseudoynm, likes);
+                        break;
+                }
+                return true;
+            }
+        };
+
         viewHolder.btn_delete.setOnClickListener(clickListener);
+        viewHolder.btn_delete.setOnLongClickListener(longClickListener);
         viewHolder.btn_like.setOnClickListener(clickListener);
         viewHolder.btn_dislike.setOnClickListener(clickListener);
         viewHolder.btn_retweet.setOnClickListener(clickListener);
