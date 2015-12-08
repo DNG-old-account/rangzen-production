@@ -1,5 +1,9 @@
 package org.denovogroup.rangzen.backend;
 
+import android.util.Log;
+
+import java.util.Calendar;
+
 /**
  * Created by Liran on 12/7/2015.
  *
@@ -50,7 +54,12 @@ public abstract class SearchHelper {
         } else if(label.equals(MessageStore.COL_LIKES)){
             return MessageStore.COL_LIKES +" >= "+value;
         } else if(label.equals(MessageStore.COL_TIMESTAMP)){
-            return MessageStore.COL_TIMESTAMP+" >= "+value;
+            try {
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(Utils.convertDateStringCompactToTimstamp(value));
+                long timestamp = Utils.reduceCalendar(calendar).getTimeInMillis();
+                return MessageStore.COL_TIMESTAMP+" <= "+timestamp;
+            } catch (Exception e){}
         }
 
         return null;

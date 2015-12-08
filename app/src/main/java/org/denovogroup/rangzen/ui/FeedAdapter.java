@@ -2,6 +2,7 @@ package org.denovogroup.rangzen.ui;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +22,7 @@ public class FeedAdapter extends CursorAdapter {
     private int text_colIndex;
     private int trust_colIndex;
     private int priority_colIndex;
+    private int liked_colIndex;
     private int pseudonym_colIndex;
     private int timestamp_colIndex;
     private int read_colIndex;
@@ -42,6 +44,7 @@ public class FeedAdapter extends CursorAdapter {
         void onUpvote(String message, int oldPriority);
         void onDownvote(String message, int oldPriority);
         void onRetweet(String message);
+        void onShare(String message);
     }
 
     public FeedAdapter(Context context, Cursor c, boolean autoRequery) {
@@ -58,6 +61,7 @@ public class FeedAdapter extends CursorAdapter {
         text_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_MESSAGE);
         trust_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_TRUST);
         priority_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_LIKES);
+        liked_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_LIKED);
         pseudonym_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_PSEUDONYM);
         timestamp_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_TIMESTAMP);
         read_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_READ);
@@ -90,6 +94,8 @@ public class FeedAdapter extends CursorAdapter {
                 .findViewById(R.id.item_dislike);
         mViewHolder.btn_retweet = (ImageButton) convertView
                 .findViewById(R.id.item_retweet);
+        mViewHolder.btn_share = (ImageButton) convertView
+                .findViewById(R.id.item_share);
         convertView.setTag(mViewHolder);
         return convertView;
     }
@@ -144,13 +150,16 @@ public class FeedAdapter extends CursorAdapter {
                         if(callbacks!= null) callbacks.onDelete(message);
                         break;
                     case R.id.item_like:
-                        if(callbacks!= null) callbacks.onUpvote(message,priority);
+                        if(callbacks!= null) callbacks.onUpvote(message, priority);
                         break;
                     case R.id.item_dislike:
-                        if(callbacks!= null) callbacks.onDownvote(message,priority);
+                        if(callbacks!= null) callbacks.onDownvote(message, priority);
                         break;
                     case R.id.item_retweet:
                         if(callbacks!= null) callbacks.onRetweet(message);
+                        break;
+                    case R.id.item_share:
+                        if(callbacks!= null) callbacks.onShare(message);
                         break;
                 }
             }
@@ -191,11 +200,16 @@ public class FeedAdapter extends CursorAdapter {
             }
         };
 
+        boolean isLiked = cursor.getInt(liked_colIndex) == MessageStore.TRUE;
+
         viewHolder.btn_delete.setOnClickListener(clickListener);
         viewHolder.btn_delete.setOnLongClickListener(longClickListener);
         viewHolder.btn_like.setOnClickListener(clickListener);
+        viewHolder.btn_like.setVisibility(isLiked ? View.GONE : View.VISIBLE);
         viewHolder.btn_dislike.setOnClickListener(clickListener);
+        viewHolder.btn_dislike.setVisibility(isLiked ? View.VISIBLE : View.GONE);
         viewHolder.btn_retweet.setOnClickListener(clickListener);
+        viewHolder.btn_share.setOnClickListener(clickListener);
     }
 
     /**
@@ -238,6 +252,10 @@ public class FeedAdapter extends CursorAdapter {
          * The view object that act as retween button.
          */
         private ImageButton btn_retweet;
+        /**
+         * The view object that act as share button.
+         */
+        private ImageButton btn_share;
     }
 
     public void setAdapterCallbacks(FeedAdapterCallbacks callbacks){

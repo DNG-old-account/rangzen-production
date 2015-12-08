@@ -116,5 +116,14 @@
     <string name="reset_app_message">Are you sure you wish to reset Rangzen?\nMessages, friends and preferences will erased.</string>
     <string name="confirm_reset_dialog_title">Confirm reset</string>
     <string name="confirm_reset_app_message">Click \'yes\' to reset Rangzen.</string>
+    <string name="search_date_title">received</string>
+    <string name="select_date">Select date</string>
+    <string name="trust">Trust</string>
+    <string name="received">Received</string>
+    <string name="share_using">Share using</string>
+    <string name="export_feed">Export feed</string>
+    <string name="export">Exporting....</string>
+    <string name="export_message">Please wait...</string>
+    <string name="export_explain">Exported file is saved in the documents folder of your device</string>
 
 </resources>

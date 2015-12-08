@@ -69,7 +69,7 @@ public class MessageStore extends SQLiteOpenHelper {
     private static final double DEFAULT_PRIORITY = 0;
 
     private static final String DATABASE_NAME = "MessageStore.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE = "Messages";
     private static final String COL_ROWID = "_id";
@@ -77,16 +77,22 @@ public class MessageStore extends SQLiteOpenHelper {
     public static final String COL_MESSAGE = "message";
     public static final String COL_TRUST = "trust";
     public static final String COL_LIKES = "likes";
+    public static final String COL_LIKED = "liked";
     public static final String COL_PSEUDONYM = "pseudonym";
     public static final String COL_TIMESTAMP = "timestamp";
     private static final String COL_DELETED = "deleted";
     public static final String COL_READ = "read";
+
+    private static final String[] defaultSort = new String[]{COL_DELETED,COL_READ};
+
+    private String sortOption;
 
     /** Get the current instance of MessageStore and create one if necessary.
      * Implemented as a singleton */
     public synchronized static MessageStore getInstance(Context context){
         if(instance == null && context != null){
             instance = new MessageStore(context);
+            instance.setSortOption(new String[]{COL_TIMESTAMP}, false);
         }
         return instance;
     }
@@ -112,6 +118,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 + COL_TRUST + " REAL NOT NULL DEFAULT " + MIN_TRUST + ","
                 + COL_LIKES + " INT NOT NULL DEFAULT " + DEFAULT_PRIORITY + ","
                 + COL_PSEUDONYM + " VARCHAR(255) NOT NULL,"
+                + COL_LIKED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_LIKED + " IN(" + TRUE + "," + FALSE + ")),"
                 + COL_DELETED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_DELETED + " IN(" + TRUE + "," + FALSE + ")),"
                 + COL_READ + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_READ + " IN(" + TRUE + "," + FALSE + "))"
                 + ");");
@@ -197,7 +204,7 @@ public class MessageStore extends SQLiteOpenHelper {
         if(db != null) {
             String query = "SELECT * FROM " + TABLE
                     + (!getDeleted ? " WHERE " + COL_DELETED + "=" + FALSE : "")
-                    + " ORDER BY " + COL_DELETED + ", " + COL_TRUST + " DESC"
+                    + " " + sortOption
                     + (limit > 0 ? " LIMIT " + limit : "")
                     + ";";
             return db.rawQuery(query, null);
@@ -236,7 +243,7 @@ public class MessageStore extends SQLiteOpenHelper {
         if(db != null) {
             String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + " LIKE '%" + message + "%'"
                     + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
-                    + " ORDER BY " + COL_DELETED + ", " + COL_TRUST + " DESC"
+                    + " "+sortOption
                     + (limit > 0 ? " LIMIT " + limit : "")
                     + ";";
             return db.rawQuery(query, null);
@@ -347,11 +354,9 @@ public class MessageStore extends SQLiteOpenHelper {
 
             if(message.length() > MAX_MESSAGE_SIZE) message = message.substring(0, MAX_MESSAGE_SIZE);
 
-            Calendar reducedTimestamp = Calendar.getInstance();
-            reducedTimestamp.set(Calendar.MILLISECOND, 0);
-            reducedTimestamp.set(Calendar.SECOND, 0);
-            reducedTimestamp.set(Calendar.MINUTE, 0);
-            reducedTimestamp.set(Calendar.HOUR, 0);
+            Calendar tempCal = Calendar.getInstance();
+            tempCal.setTimeInMillis(timestamp);
+            Calendar reducedTimestamp = Utils.reduceCalendar(tempCal);
 
             if(containsOrRemoved(message)) {
                 db.execSQL("UPDATE "+TABLE+" SET "
@@ -518,6 +523,30 @@ public class MessageStore extends SQLiteOpenHelper {
         return false;
     }
 
+    /** Updating the priority of a message by either +1 or -1 and set the message state as liked or not liked
+     *
+     * @param message the message to edit
+     * @param like if to set the like status of the message to true or false
+     * @return true if message was found and edited, false otherwise (false is also returned if message was already in the liked status
+     */
+    public boolean likeMessage(String message, boolean like){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+            int likedStatus = like ? FALSE : TRUE;
+            Cursor c = db.rawQuery("SELECT "+COL_LIKES+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_LIKED+"="+likedStatus+" AND "+COL_MESSAGE+" ='"+message+"';",null);
+            c.moveToFirst();
+            if(c.getCount() > 0){
+                int likes = c.getInt(c.getColumnIndex(COL_LIKES)) + (like ? 1 : -1);
+                c.close();
+                likes = Math.max(0, likes);
+                db.execSQL("UPDATE "+TABLE+" SET "+COL_LIKED+"="+(like ? TRUE : FALSE)+","+COL_LIKES +"="+likes+" WHERE "+COL_DELETED+" ="+FALSE+" AND "+COL_LIKED+"="+likedStatus+" AND "+COL_MESSAGE+" ='"+message+"';");
+                return true;
+            }
+        }
+        Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
+        return false;
+    }
+
     /** Return the current version of the store */
     public String getStoreVersion(){
         if(storeVersion == null) updateStoreVersion();
@@ -575,11 +604,7 @@ public class MessageStore extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         if(db == null) return;
 
-        Calendar reducedAge = Calendar.getInstance();
-        reducedAge.set(Calendar.MILLISECOND,0);
-        reducedAge.set(Calendar.SECOND,0);
-        reducedAge.set(Calendar.MINUTE,0);
-        reducedAge.set(Calendar.HOUR,0);
+        Calendar reducedAge = Utils.reduceCalendar(Calendar.getInstance());
 
         long ageThreshold = reducedAge.getTimeInMillis() - age * 1000L * 60L *60L * 24L;
 
@@ -591,7 +616,7 @@ public class MessageStore extends SQLiteOpenHelper {
         if(db == null || query == null) return null;
 
         String pretext = "SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" ";
-        String posttext = " ORDER BY "+COL_TRUST+","+COL_READ+", "+COL_TIMESTAMP+" DESC;";
+        String posttext = " "+sortOption;
 
         try {
             Cursor cursor = db.rawQuery(pretext + query + posttext, null);
@@ -628,5 +653,25 @@ public class MessageStore extends SQLiteOpenHelper {
             db.execSQL("DROP TABLE IF EXISTS " + TABLE);
             onCreate(db);
         }
+    }
+
+    public void setSortOption(String[] columns, boolean ascending){
+        String options = "";
+        for (int i = 0; i < defaultSort.length; i++) {
+            options += defaultSort[i];
+            if (i < defaultSort.length - 1 ||columns != null) {
+                options += ",";
+            }
+        }
+
+        if(columns != null) {
+            for (int i = 0; i < columns.length; i++) {
+                options += columns[i];
+                if (i < columns.length - 1) {
+                    options += ",";
+                }
+            }
+        }
+        sortOption = "ORDER BY "+options+(ascending ? " ASC" : " DESC");
     }
 }

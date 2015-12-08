@@ -35,6 +35,24 @@
             android:layout_gravity="center_horizontal"
             android:layout_width="250dp"
             android:layout_height="250dp"
-            android:scaleType="centerInside"/>
+            android:scaleType="centerInside"
+            android:layout_marginBottom="10dp"/>
+
+        <Button
+            android:id="@+id/export_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/export_feed"
+            android:drawableLeft="@drawable/ic_action_save"
+            android:background="@android:color/transparent"/>
+
+        <TextView
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="@string/export_explain"/>
+
     </LinearLayout>
 </ScrollView>

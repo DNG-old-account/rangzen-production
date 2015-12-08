@@ -50,6 +50,7 @@ import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -86,7 +87,7 @@ public class FragmentOrganizer extends Fragment {
 	private static final String TAG = "FragmentOrganizer";
 
 	enum FragmentType {
-		FIRSTINTRO, SECONDINTRO, THIRDINTRO, SECONDABOUT, TRANSPARENT, POST, QRWrite
+		FIRSTINTRO, SECONDINTRO, THIRDINTRO, SECONDABOUT, TRANSPARENT, QRWrite
 	}
 
 	/**
@@ -154,9 +155,6 @@ public class FragmentOrganizer extends Fragment {
 					container, false);
 			view6.setSoundEffectsEnabled(false);
 			return view6;
-
-		case POST:
-			return post(inflater, container);
 			
 		case QRWrite:
 			return makeQRWrite(inflater, container);
@@ -287,112 +285,6 @@ public class FragmentOrganizer extends Fragment {
 
 		return view2;
 	}
-
-	/**
-	 * This will create the fragment for "create post" page.
-	 * 
-	 * @param inflater
-	 *            LayoutInflater object that creates a java object from xml.
-	 * @param container
-	 *            The parent ViewGroup to the current view.
-	 * @return Completed, formatted view (what the fragment will look like).
-	 */
-	private View post(LayoutInflater inflater, ViewGroup container) {
-		View view7 = inflater.inflate(R.layout.makepost, container, false);
-		EditText messageBox = (EditText) view7.findViewById(R.id.editText1);
-		InputMethodManager imm = (InputMethodManager) getActivity()
-                .getSystemService(Context.INPUT_METHOD_SERVICE);
-		imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,
-                InputMethodManager.HIDE_IMPLICIT_ONLY);
-		Button cancel = (Button) view7.findViewById(R.id.button1);
-		cancel.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                EditText message = (EditText) getActivity().findViewById(
-                        R.id.editText1);
-                message.setText("");
-            }
-        });
-		final Button send = (Button) view7.findViewById(R.id.button2);
-		send.setOnClickListener(new View.OnClickListener() {
-
-            /**
-             * Stores the text of the TextView in the MessageStore with
-             * default priority 1.0f. Displays a Toast upon completion and
-             * exits the Activity.
-             *
-             * @param v
-             *            The view which is clicked - in this case, the Button.
-             */
-            @Override
-            public void onClick(View v) {
-                MessageStore messageStore = MessageStore.getInstance(getActivity());
-                String message = ((TextView) getActivity().findViewById(
-                        R.id.editText1)).getText().toString();
-                float trust = 1.0f;
-                int priority = 0;
-                SecurityProfile currentProfile = SecurityManager.getCurrentProfile(getActivity());
-                String pseudonym = currentProfile.isPseudonyms() ?
-                        SecurityManager.getCurrentPseudonym(getActivity()) : "";
-                long timestamp = currentProfile.isTimestamp() ?
-                        System.currentTimeMillis() :0;
-                messageStore.addMessage(message, trust, priority, pseudonym, timestamp, true);
-                Toast.makeText(getActivity(), "Message sent!",
-                        Toast.LENGTH_SHORT).show();
-                getActivity().setResult(Activity.RESULT_OK);
-                getActivity().finish();
-            }
-
-        });
-        messageBox.addTextChangedListener(new TextWatcher() {
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count,
-                                          int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before,
-                                      int count) {
-                TextView characterCount = (TextView) getActivity()
-                        .findViewById(R.id.characterCount);
-                EditText textBox = (EditText) getActivity().findViewById(
-                        R.id.editText1);
-                characterCount.setText(String.valueOf(140 - textBox.getText()
-                        .length()));
-
-                if (isTextValid(s.toString())) {
-                    send.setEnabled(true);
-                    send.setAlpha(1);
-                } else {
-                    send.setEnabled(false);
-                    send.setAlpha(0.5f);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-
-        });
-
-        send.setEnabled(false);
-        send.setAlpha(0.5f);
-
-		return view7;
-	}
-
-    private boolean isTextValid(String text){
-        boolean valid = false;
-        for(char c : text.toCharArray()){
-            if((c != ' ') && (c != '\n')){
-                valid = true;
-                break;
-            }
-        }
-        return valid;
-    }
 
 	/**
 	 * This takes the image, caches it, resizes it and then adds it to the

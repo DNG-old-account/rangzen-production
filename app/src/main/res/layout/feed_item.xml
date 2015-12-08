@@ -9,7 +9,7 @@
     android:background="@drawable/feed_item_background_gradient">
 
     <TextView
-        android:id="@+id/item_date"
+        android:id="@+id/item_pseudonym"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:singleLine="true"
@@ -52,7 +52,7 @@
             android:text="message"/>
 
         <TextView
-            android:id="@+id/item_pseudonym"
+            android:id="@+id/item_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/item_text"
@@ -83,6 +83,11 @@
             style="@style/FeedListItemButton"
             android:id="@+id/item_retweet"
             android:src="@drawable/ic_retweet"/>
+
+        <ImageButton
+            style="@style/FeedListItemButton"
+            android:id="@+id/item_share"
+            android:src="@drawable/ic_share"/>
 
         <View
             android:layout_weight="1"

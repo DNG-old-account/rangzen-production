@@ -99,11 +99,7 @@ public final class RangzenMessage extends Message {
 
         SecurityProfile securityProfile = SecurityManager.getCurrentProfile(context);
 
-        Calendar currentTime = Calendar.getInstance();
-        currentTime.set(Calendar.MILLISECOND, 0);
-        currentTime.set(Calendar.SECOND, 0);
-        currentTime.set(Calendar.MINUTE,0);
-        currentTime.set(Calendar.HOUR, 0);
+        Calendar currentTime = Utils.reduceCalendar(Calendar.getInstance());
 
         return new RangzenMessage(
                 json.optString(TEXT_KEY, DEFAULT_TEXT),

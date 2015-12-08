@@ -8,6 +8,7 @@ import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -25,7 +26,7 @@ public class Utils {
         random = new Random();
     }
 
-    /** Convert a timestemp in milliseconds into a human readable string format
+    /** Convert a timestamp in milliseconds into a human readable string format
      *
      * @param useUTC whether or not to use UTC timezone for creating the string
      * @param milli time in milliseconds to be converted
@@ -39,7 +40,7 @@ public class Utils {
         return sourceFormat.format(date);
     }
 
-    /** Convert a timestemp in milliseconds into a human readable string format
+    /** Convert a timestamp in milliseconds into a human readable string format
      *
      * @param useUTC whether or not to use UTC timezone for creating the string
      * @param milli time in milliseconds to be converted
@@ -51,6 +52,37 @@ public class Utils {
         SimpleDateFormat sourceFormat = new SimpleDateFormat("dd-MM-yyyy");
         sourceFormat.setTimeZone(useUTC ? TimeZone.getTimeZone("UTC") : TimeZone.getDefault());
         return sourceFormat.format(date);
+    }
+
+    /** Convert a timestamp in compact format (dd-MM-yyyy) into milliseconds
+     * @param timestring a string in the format of dd-MM-yyyy
+     * @return the amount of milliseconds representing the date in the string
+     */
+    public static long convertDateStringCompactToTimstamp(String timestring) throws NullPointerException, NumberFormatException{
+        int dayOfMonth = Integer.parseInt(timestring.substring(0,2));
+        int month = Integer.parseInt(timestring.substring(3, 5));
+        int year = Integer.parseInt(timestring.substring(6));
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, year);
+        cal.set(Calendar.MONTH, month-1);
+        cal.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        cal = reduceCalendar(cal);
+        return cal.getTimeInMillis();
+    }
+
+    /** sets the supplied calendar object with 0 values for fields lower than days
+     *
+     * @param calendar the calendar to reduce
+     * @return the reduced calendar
+     */
+    public static Calendar reduceCalendar(Calendar calendar){
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.HOUR, 0);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        return calendar;
     }
 
     /** convert numeric value (assumed to represent dp size units) into px units

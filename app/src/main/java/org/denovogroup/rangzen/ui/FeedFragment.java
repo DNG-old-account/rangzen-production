@@ -3,6 +3,7 @@ package org.denovogroup.rangzen.ui;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -13,7 +14,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import org.denovogroup.rangzen.R;
@@ -53,6 +56,38 @@ public class FeedFragment extends Fragment implements Refreshable{
                 }
             }
         });
+
+        final LinearLayout sortOptions = (LinearLayout) view.findViewById(R.id.sort_options);
+
+        View.OnClickListener sortListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //get child index
+                for(int i=0; i<sortOptions.getChildCount();i++) {
+                    View child = sortOptions.getChildAt(i);
+                    if (child instanceof CheckBox){
+                        child.setActivated(child == v);
+                    }
+                }
+                switch (v.getId()){
+                    case R.id.sort_trust:
+                        MessageStore.getInstance(getActivity()).setSortOption(new String[]{MessageStore.COL_TRUST}, ((CheckBox)v).isChecked());
+                        break;
+                    case R.id.sort_date:
+                        MessageStore.getInstance(getActivity()).setSortOption(new String[]{MessageStore.COL_TIMESTAMP}, ((CheckBox) v).isChecked());
+                        break;
+                }
+
+                setQuery(query, false);
+            }
+        };
+
+        for(int i=0; i<sortOptions.getChildCount();i++){
+            View child = sortOptions.getChildAt(i);
+            if(child instanceof CheckBox){
+                child.setOnClickListener(sortListener);
+            }
+        }
 
         return view;
     }
@@ -205,11 +240,9 @@ public class FeedFragment extends Fragment implements Refreshable{
 
                 @Override
                 public void onUpvote(String message, int oldPriority) {
-                    int priorityChange = Math.min(100, oldPriority + 1);
-                    MessageStore.getInstance(getActivity())
-                            .updatePriority(
-                                    message,
-                                    priorityChange);
+                    MessageStore.getInstance(getActivity()).likeMessage(
+                            message,
+                            true);
                     //refresh the listView
                     firstItem = listView.getFirstVisiblePosition();
                     firstItem = listView.getChildAt(0).getTop();
@@ -218,11 +251,9 @@ public class FeedFragment extends Fragment implements Refreshable{
 
                 @Override
                 public void onDownvote(String message, int oldPriority) {
-                    int priorityChange = Math.max(0, oldPriority - 1);
-                    MessageStore.getInstance(getActivity())
-                            .updatePriority(
-                                    message,
-                                    priorityChange);
+                    MessageStore.getInstance(getActivity()).likeMessage(
+                            message,
+                            false);
                     //refresh the listView
                     firstItem = listView.getFirstVisiblePosition();
                     firstItem = listView.getChildAt(0).getTop();
@@ -240,6 +271,15 @@ public class FeedFragment extends Fragment implements Refreshable{
                     firstItem = listView.getFirstVisiblePosition();
                     firstItem = listView.getChildAt(0).getTop();
                     setQuery(query, true);
+                }
+
+                @Override
+                public void onShare(String message) {
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("text/plain");
+                    shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Sent with Rangzen");
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, message);
+                    startActivity(Intent.createChooser(shareIntent, getString(R.string.share_using)));
                 }
             });
             if(keepApperance && listView.getFirstVisiblePosition() > -1) {
