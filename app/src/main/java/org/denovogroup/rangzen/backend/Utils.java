@@ -54,6 +54,20 @@ public class Utils {
         return sourceFormat.format(date);
     }
 
+    /** Calculate time difference between current time and supplied value in days
+     *
+     * @param milli time in milliseconds to be converted
+     * @return the number of days between today and supplied value (always positive)
+     */
+    public static int convertTimestampToRelativeDays(long milli){
+
+        long todaymilli = Calendar.getInstance().getTimeInMillis();
+
+        int days = (int)Math.floor((Math.abs(milli - todaymilli)) / (1000d * 60 * 60 * 24));
+
+        return days;
+    }
+
     /** Convert a timestamp in compact format (dd-MM-yyyy) into milliseconds
      * @param timestring a string in the format of dd-MM-yyyy
      * @return the amount of milliseconds representing the date in the string

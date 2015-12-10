@@ -25,7 +25,9 @@ public class FeedAdapter extends CursorAdapter {
     private int liked_colIndex;
     private int pseudonym_colIndex;
     private int timestamp_colIndex;
+    private int timebound_colIndex;
     private int read_colIndex;
+    private int location_colIndex;
 
     private SecurityProfile currentProfile;
 
@@ -45,6 +47,8 @@ public class FeedAdapter extends CursorAdapter {
         void onDownvote(String message, int oldPriority);
         void onRetweet(String message);
         void onShare(String message);
+        void onTimeboundClick(String message, long timebound);
+        void onNavigate(String message, String latxLon);
     }
 
     public FeedAdapter(Context context, Cursor c, boolean autoRequery) {
@@ -65,6 +69,8 @@ public class FeedAdapter extends CursorAdapter {
         pseudonym_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_PSEUDONYM);
         timestamp_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_TIMESTAMP);
         read_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_READ);
+        timebound_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_EXPIRE);
+        location_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_LATLONG);
         currentProfile = org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(context);
     }
 
@@ -96,6 +102,10 @@ public class FeedAdapter extends CursorAdapter {
                 .findViewById(R.id.item_retweet);
         mViewHolder.btn_share = (ImageButton) convertView
                 .findViewById(R.id.item_share);
+        mViewHolder.timebound_marker = convertView
+                .findViewById(R.id.timebound_marker);
+        mViewHolder.btn_navigate = (ImageButton) convertView
+                .findViewById(R.id.item_navigate);
         convertView.setTag(mViewHolder);
         return convertView;
     }
@@ -119,7 +129,12 @@ public class FeedAdapter extends CursorAdapter {
                 cursor.getString(pseudonym_colIndex) : "");
         long timstamp = currentProfile.isTimestamp() ?
                 cursor.getLong(timestamp_colIndex) : 0;
-        viewHolder.mTimestampView.setText(timstamp > 0 ? Utils.convertTimestampToDateStringCompact(false,timstamp) : "");
+        int age = timstamp > 0 ? Utils.convertTimestampToRelativeDays(timstamp) : -1;
+        if(age >= 0) {
+            viewHolder.mTimestampView.setText(age > 0 ? age+" ago" : "today");
+        } else {
+            viewHolder.mTimestampView.setText("");
+        }
 
         View.OnClickListener clickListener = new View.OnClickListener() {
             @Override
@@ -142,6 +157,8 @@ public class FeedAdapter extends CursorAdapter {
 
                 String message = getCursor().getString(text_colIndex);
                 int priority = getCursor().getInt(priority_colIndex);
+                long timebound = getCursor().getLong(timebound_colIndex);
+                String location = getCursor().getString(location_colIndex);
 
                 getCursor().moveToPosition(cursorPosition);
 
@@ -160,6 +177,12 @@ public class FeedAdapter extends CursorAdapter {
                         break;
                     case R.id.item_share:
                         if(callbacks!= null) callbacks.onShare(message);
+                        break;
+                    case R.id.timebound_marker:
+                        if(callbacks != null) callbacks.onTimeboundClick(message, timebound);
+                        break;
+                    case R.id.item_navigate:
+                        if(callbacks != null) callbacks.onNavigate(message, location);
                         break;
                 }
             }
@@ -201,6 +224,12 @@ public class FeedAdapter extends CursorAdapter {
         };
 
         boolean isLiked = cursor.getInt(liked_colIndex) == MessageStore.TRUE;
+        boolean isTimebound = cursor.getLong(timebound_colIndex) > 0;
+        boolean hasLocation = false;
+        if(currentProfile.isShareLocation()){
+            String location = cursor.getString(location_colIndex);
+            hasLocation = (location != null && location.indexOf("x")> 0);
+        }
 
         viewHolder.btn_delete.setOnClickListener(clickListener);
         viewHolder.btn_delete.setOnLongClickListener(longClickListener);
@@ -210,6 +239,10 @@ public class FeedAdapter extends CursorAdapter {
         viewHolder.btn_dislike.setVisibility(isLiked ? View.VISIBLE : View.GONE);
         viewHolder.btn_retweet.setOnClickListener(clickListener);
         viewHolder.btn_share.setOnClickListener(clickListener);
+        viewHolder.timebound_marker.setOnClickListener(clickListener);
+        viewHolder.timebound_marker.setVisibility(isTimebound ? View.VISIBLE : View.GONE);
+        viewHolder.btn_navigate.setOnClickListener(clickListener);
+        viewHolder.btn_navigate.setVisibility(hasLocation ? View.VISIBLE : View.GONE );
     }
 
     /**
@@ -256,6 +289,14 @@ public class FeedAdapter extends CursorAdapter {
          * The view object that act as share button.
          */
         private ImageButton btn_share;
+        /**
+         * The view object that act as a marker for timebound messages.
+         */
+        private View timebound_marker;
+        /**
+         * The view object that act as navigate button.
+         */
+        private ImageButton btn_navigate;
     }
 
     public void setAdapterCallbacks(FeedAdapterCallbacks callbacks){

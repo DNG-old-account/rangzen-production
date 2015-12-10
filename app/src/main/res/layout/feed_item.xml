@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:singleLine="true"
-        android:text="July 4th 1997"
+        android:text="sender"
         android:textColor="#999999"
         android:textSize="12sp"
         android:layout_gravity="right"/>
@@ -41,6 +41,14 @@
             android:text="85"
             android:singleLine="true"/>
 
+        <ImageButton
+            android:id="@+id/timebound_marker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_timebound"
+            android:layout_below="@id/item_trust"
+            android:background="@android:color/transparent"/>
+
         <TextView
             android:id="@+id/item_text"
             android:layout_width="match_parent"
@@ -60,7 +68,7 @@
             android:layout_marginBottom="20dp"
             android:textColor="#999999"
             android:textSize="12sp"
-            android:text="sender"/>
+            android:text="date"/>
 
     </RelativeLayout>
 
@@ -88,6 +96,11 @@
             style="@style/FeedListItemButton"
             android:id="@+id/item_share"
             android:src="@drawable/ic_share"/>
+
+        <ImageButton
+            style="@style/FeedListItemButton"
+            android:id="@+id/item_navigate"
+            android:src="@drawable/ic_navigate"/>
 
         <View
             android:layout_weight="1"

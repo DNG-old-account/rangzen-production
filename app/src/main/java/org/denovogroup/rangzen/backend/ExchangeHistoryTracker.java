@@ -37,13 +37,15 @@ public class ExchangeHistoryTracker {
      * in the collection will be removed
      * @param availablePeers peers to keep in history. discard the rest
      */
-    public void cleanHistory(Collection<Peer> availablePeers){
+    public void cleanHistory(Collection<Peer> availablePeers) {
         Log.d(TAG, "cleaning history");
         //get a list of peer addresses to cross reference with available history
         List<String> newPeerAddresses = new ArrayList<>();
-        for(Peer peer : availablePeers){
-            if(peer != null && peer.address != null){
-                newPeerAddresses.add(peer.address);
+        if (availablePeers != null){
+            for (Peer peer : availablePeers) {
+                if (peer != null && peer.address != null) {
+                    newPeerAddresses.add(peer.address);
+                }
             }
         }
 

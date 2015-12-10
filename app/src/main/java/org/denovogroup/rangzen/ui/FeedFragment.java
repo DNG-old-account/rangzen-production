@@ -5,6 +5,9 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Location;
+import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,10 +21,10 @@ import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.backend.MessageStore;
-import org.denovogroup.rangzen.backend.SearchHelper;
+import org.denovogroup.rangzen.backend.*;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 
 import java.util.List;
@@ -74,7 +77,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                         MessageStore.getInstance(getActivity()).setSortOption(new String[]{MessageStore.COL_TRUST}, ((CheckBox)v).isChecked());
                         break;
                     case R.id.sort_date:
-                        MessageStore.getInstance(getActivity()).setSortOption(new String[]{MessageStore.COL_TIMESTAMP}, ((CheckBox) v).isChecked());
+                        MessageStore.getInstance(getActivity()).setSortOption(new String[]{MessageStore.COL_ROWID}, ((CheckBox) v).isChecked());
                         break;
                 }
 
@@ -140,6 +143,9 @@ public class FeedFragment extends Fragment implements Refreshable{
      * a list adapter to the feed list view
       */
     private void setupListView(){
+        SecurityProfile currentProfile = org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(getActivity());
+        MessageStore.getInstance(getActivity()).deleteOutdatedOrIrrelevant(currentProfile);
+
         resetListAdapter(null, false);
     }
 
@@ -281,7 +287,31 @@ public class FeedFragment extends Fragment implements Refreshable{
                     shareIntent.putExtra(Intent.EXTRA_TEXT, message);
                     startActivity(Intent.createChooser(shareIntent, getString(R.string.share_using)));
                 }
+
+                @Override
+                public void onTimeboundClick(String message, long timebound) {
+                    int days = Utils.convertTimestampToRelativeDays(timebound);
+                    Toast.makeText(getActivity(), "Message will expire "+
+                            (days > 0 ?
+                                    "in "+days+" days" : "today"),
+                            Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onNavigate(String message, String latxLon) {
+                    double lat = Double.parseDouble(latxLon.substring(0, latxLon.indexOf("x")));
+                    double lon = Double.parseDouble(latxLon.substring(latxLon.indexOf("x") + 1));
+
+                    Uri gmmIntentUri = Uri.parse("geo:"+lat+","+lon);
+                    Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                    mapIntent.setPackage("com.google.android.apps.maps");
+                    if (mapIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                        startActivity(mapIntent);
+                    }
+
+                }
             });
+
             if(keepApperance && listView.getFirstVisiblePosition() > -1) {
                 listView.setSelectionFromTop(position,offset);
             }
@@ -292,28 +322,6 @@ public class FeedFragment extends Fragment implements Refreshable{
     public void refreshView(Cursor items, boolean retainScroll) {
         resetListAdapter(items, retainScroll);
         listView.smoothScrollToPositionFromTop(firstItem, itemOffset, 0);
-    }
-
-    /** Create a copy of the provided list and sort it based on the message priority
-     *
-      * @param list the list to be cloned and sorted
-     * @return a sorted clone of the source list, sorted by priority
-     */
-    private List<RangzenMessage> sortDetachedList(List<RangzenMessage> list){
-        List<RangzenMessage> sortedList = list;
-        for(RangzenMessage m : list){
-            while(sortedList.indexOf(m) > 0 && sortedList.get(sortedList.indexOf(m)-1).trust < m.trust) {
-
-                int position = sortedList.indexOf(m);
-                RangzenMessage m1 = m;
-                RangzenMessage m2 = sortedList.get(sortedList.indexOf(m)-1);
-
-                sortedList.set(position, m2);
-                sortedList.set(position-1, m1);
-            }
-        }
-
-        return sortedList;
     }
 
     public void setAddButtonVisible(boolean visible){

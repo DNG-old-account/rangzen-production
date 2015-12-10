@@ -118,12 +118,12 @@ public class ProfileSettingsFragment extends Fragment implements TextView.OnEdit
                 int likesColIndex = cursor.getColumnIndex(MessageStore.COL_LIKES);
                 int pseudoColIndex = cursor.getColumnIndex(MessageStore.COL_PSEUDONYM);
 
-                File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)+File.separator+"Rangzen exports");
+                File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+File.separator+"Rangzen exports");
                 if(!dir.exists()){
                     dir.mkdirs();
                 }
 
-                File file = new File(dir, "export"+Utils.convertTimestampToDateStringCompact(false, System.currentTimeMillis())+".txt");
+                File file = new File(dir, "export"+Utils.convertTimestampToDateStringCompact(false, System.currentTimeMillis())+".csv");
 
                 try {
                     FileWriter fos = new FileWriter(file);
@@ -131,16 +131,25 @@ public class ProfileSettingsFragment extends Fragment implements TextView.OnEdit
 
                     SecurityProfile profile = SecurityManager.getCurrentProfile(getActivity());
 
-                    final String space = "   ";
                     final String newLine = System.getProperty("line.separator");
 
+                    String colTitlesLine = ""
+                            + (profile.isTimestamp() ? "\""+MessageStore.COL_TIMESTAMP+ "\"," : "")
+                            + "\""+MessageStore.COL_TRUST+"\","
+                            + "\""+MessageStore.COL_LIKES+"\","
+                            + (profile.isPseudonyms() ? "\""+MessageStore.COL_PSEUDONYM +"\"," : "")
+                            + "\"" + MessageStore.COL_MESSAGE+"\"";
+
+                    bos.write(colTitlesLine);
+                    bos.write(newLine);
+
                     while(!cursor.isAfterLast()){
-                        String line = "["
-                                + (profile.isTimestamp() ? Utils.convertTimestampToDateStringCompact(false,cursor.getLong(timestampColIndex))+ space : "")
-                                + "trust:"+(cursor.getFloat(trustColIndex)*100)+","
-                                + "likes:"+(cursor.getInt(likesColIndex))+","
-                                + (profile.isPseudonyms() ? "from:"+(cursor.getString(pseudoColIndex)) : "")
-                                + "]" + space + cursor.getString(messageColIndex);
+                        String line = ""
+                                + (profile.isTimestamp() ? "\""+(Utils.convertTimestampToDateStringCompact(false,cursor.getLong(timestampColIndex))+ "\",") : "")
+                                + "\""+(cursor.getFloat(trustColIndex)*100)+"\","
+                                + "\""+(cursor.getInt(likesColIndex))+"\","
+                                + (profile.isPseudonyms() ? "\""+(cursor.getString(pseudoColIndex)) +"\"," : "")
+                                + "\"" + formatMessageForCSV(cursor.getString(messageColIndex))+"\"";
                         bos.write(line);
                         bos.write(newLine); //due to a bug in windows notepad text will be displayed as a long string instead of multiline, this is a note-pad specific problem
                         cursor.moveToNext();
@@ -178,5 +187,10 @@ public class ProfileSettingsFragment extends Fragment implements TextView.OnEdit
         };
 
         exportTask.execute();
+    }
+
+    private String formatMessageForCSV(String rawString){
+        String csvString = rawString.replaceAll("[\r\n\"]", " ");
+        return csvString;
     }
 }

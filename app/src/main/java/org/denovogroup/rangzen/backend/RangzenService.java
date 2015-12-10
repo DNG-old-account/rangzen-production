@@ -38,6 +38,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.ComponentName;
 import android.content.SharedPreferences;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -455,7 +457,8 @@ public class RangzenService extends Service {
                 mMessageStore.updateTrust(message.text, newTrust, true);
             } else {
                 hasNew = true;
-                mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true);
+
+                mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation());
                 //mark this message as unread
                 mMessageStore.setRead(message.text, false);
             }
@@ -510,7 +513,7 @@ public class RangzenService extends Service {
                             mMessageStore.updateTrust(message.text, newTrust, true);
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true);
+                            mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation());
                             //mark this message as unread
                             mMessageStore.setRead(message.text, false);
                         }
@@ -684,10 +687,6 @@ public class RangzenService extends Service {
 
     private void cleanupMessageStore(){
         SecurityProfile currentProfile = SecurityManager.getCurrentProfile(this);
-        if(currentProfile.isAutodelete()){
-            MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile.getAutodeleteTrust(), currentProfile.getAutodeleteAge());
-        }
+            MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile);
     }
-
-
 }

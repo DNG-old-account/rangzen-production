@@ -217,21 +217,8 @@ public class Exchange implements Runnable {
    *
    * @return The top NUM_MESSAGES_TO_EXCHANGE in the MessageStore.
    */
-  /* package */ List<RangzenMessage> getMessages() { 
-    List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
-    List<RangzenMessage> messagesFromStore = MessageStore.getInstance().getMessages(false, NUM_MESSAGES_TO_EXCHANGE);
-      if (messagesFromStore != null) {
-          for (RangzenMessage message :messagesFromStore) {
-              if(message != null){
-                  messages.add(new RangzenMessage.Builder()
-                          .text(message.text)
-                          .trust(message.trust)
-                          .priority(message.priority)
-                          .build());
-              }
-          }
-      }
-    return messages;
+  /* package */ List<RangzenMessage> getMessages() {
+    return MessageStore.getInstance().getMessages(false, NUM_MESSAGES_TO_EXCHANGE);
   }
 
   /**

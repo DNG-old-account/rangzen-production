@@ -124,6 +124,11 @@
     <string name="export_feed">Export feed</string>
     <string name="export">Exporting....</string>
     <string name="export_message">Please wait...</string>
-    <string name="export_explain">Exported file is saved in the documents folder of your device</string>
+    <string name="export_explain">Exported file is saved in the downloads folder of your device</string>
+    <string name="tag_location">Tage my location</string>
+
+    <string name="not_timebound">Not timebound</string>
+    <string name="unbind">Not time bound</string>
+    <string name="navigate">Navigate</string>
 
 </resources>

@@ -36,6 +36,7 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.location.Location;
 import android.util.Log;
 
 import org.denovogroup.rangzen.objects.RangzenMessage;
@@ -69,10 +70,10 @@ public class MessageStore extends SQLiteOpenHelper {
     private static final double DEFAULT_PRIORITY = 0;
 
     private static final String DATABASE_NAME = "MessageStore.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 1;
 
     private static final String TABLE = "Messages";
-    private static final String COL_ROWID = "_id";
+    public static final String COL_ROWID = "_id";
     private static final String COL_MESSAGE_ID = "messageId";
     public static final String COL_MESSAGE = "message";
     public static final String COL_TRUST = "trust";
@@ -82,6 +83,8 @@ public class MessageStore extends SQLiteOpenHelper {
     public static final String COL_TIMESTAMP = "timestamp";
     private static final String COL_DELETED = "deleted";
     public static final String COL_READ = "read";
+    public static final String COL_EXPIRE = "expire";
+    public static final String COL_LATLONG = "location";
 
     private static final String[] defaultSort = new String[]{COL_DELETED,COL_READ};
 
@@ -92,7 +95,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public synchronized static MessageStore getInstance(Context context){
         if(instance == null && context != null){
             instance = new MessageStore(context);
-            instance.setSortOption(new String[]{COL_TIMESTAMP}, false);
+            instance.setSortOption(new String[]{COL_ROWID}, false);
         }
         return instance;
     }
@@ -115,9 +118,11 @@ public class MessageStore extends SQLiteOpenHelper {
                 //+ COL_MESSAGE_ID + " VARCHAR(255) NOT NULL,"
                 + COL_MESSAGE + " VARCHAR(" + MAX_MESSAGE_SIZE + ") NOT NULL,"
                 + COL_TIMESTAMP + " INTEGER NOT NULL,"
+                + COL_EXPIRE + " INTEGER NOT NULL,"
                 + COL_TRUST + " REAL NOT NULL DEFAULT " + MIN_TRUST + ","
                 + COL_LIKES + " INT NOT NULL DEFAULT " + DEFAULT_PRIORITY + ","
                 + COL_PSEUDONYM + " VARCHAR(255) NOT NULL,"
+                + COL_LATLONG + " TEXT,"
                 + COL_LIKED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_LIKED + " IN(" + TRUE + "," + FALSE + ")),"
                 + COL_DELETED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_DELETED + " IN(" + TRUE + "," + FALSE + ")),"
                 + COL_READ + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_READ + " IN(" + TRUE + "," + FALSE + "))"
@@ -177,6 +182,8 @@ public class MessageStore extends SQLiteOpenHelper {
         int messageColIndex = cursor.getColumnIndex(COL_MESSAGE);
         int pseudonymColIndex = cursor.getColumnIndex(COL_PSEUDONYM);
         int timestampColIndex = cursor.getColumnIndex(COL_TIMESTAMP);
+        int latlongColIndex = cursor.getColumnIndex(COL_LATLONG);
+        int timeboundColIndex = cursor.getColumnIndex(COL_EXPIRE);
 
         if (cursor.getCount() > 0) {
             while (!cursor.isAfterLast()){
@@ -185,7 +192,9 @@ public class MessageStore extends SQLiteOpenHelper {
                         cursor.getDouble(trustColIndex),
                         cursor.getInt(priorityColIndex),
                         cursor.getString(pseudonymColIndex),
-                        cursor.getLong(timestampColIndex)
+                        cursor.getLong(timestampColIndex),
+                        cursor.getString(latlongColIndex),
+                        cursor.getLong(timeboundColIndex)
                 ));
                 cursor.moveToNext();
             }
@@ -342,7 +351,7 @@ public class MessageStore extends SQLiteOpenHelper {
      *                     if set to false and value is outside of limit, an exception is thrown
      * @return Returns true if the message was added. If message already exists, update its values
      */
-    public boolean addMessage(String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit){
+    public boolean addMessage(String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location){
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
@@ -363,8 +372,10 @@ public class MessageStore extends SQLiteOpenHelper {
                         +COL_TRUST+"="+trust+","
                         +COL_DELETED+"="+FALSE+","
                         + COL_LIKES +"="+priority+","
-                        +COL_PSEUDONYM+"='"+pseudonym+"'"
-                        +COL_TIMESTAMP+"="+reducedTimestamp.getTimeInMillis()
+                        +COL_PSEUDONYM+"='"+pseudonym+"',"
+                        + ((location != null) ? (COL_LATLONG+"='"+location.getLatitude()+"x"+location.getLongitude()+"',") : "")
+                        +COL_TIMESTAMP+"="+reducedTimestamp.getTimeInMillis()+","
+                        +COL_EXPIRE+"="+timebound
                         +" WHERE " + COL_MESSAGE + "='" + message + "';");
                 Log.d(TAG, "Message was already in store and was simply updated.");
             } else {
@@ -372,7 +383,9 @@ public class MessageStore extends SQLiteOpenHelper {
                 content.put(COL_MESSAGE, message);
                 content.put(COL_TRUST, trust);
                 content.put(COL_LIKES, priority);
+                if(location != null) content.put(COL_LATLONG, location.getLatitude()+"x"+location.getLongitude());
                 content.put(COL_PSEUDONYM, pseudonym);
+                content.put(COL_EXPIRE, timebound);
                 content.put(COL_TIMESTAMP, reducedTimestamp.getTimeInMillis());
                 db.insert(TABLE, null, content);
                 Log.d(TAG, "Message added to store.");
@@ -594,21 +607,25 @@ public class MessageStore extends SQLiteOpenHelper {
         return  0;
     }
 
-    /** completely delete records from the database below specified citeria
+    /** completely delete records from the database based on passed security profile
      *
-     * @param minTrust the trust threshold to delete, all items with trust level equal or bellow will be removed
-     * @param age the age of the message in days, any message older will be deleted
+     * @param currentProfile
      */
-    public void deleteOutdatedOrIrrelevant(float minTrust, int age){
+    public void deleteOutdatedOrIrrelevant(SecurityProfile currentProfile){
+
+        if(currentProfile == null || !currentProfile.isAutodelete()) return;
 
         SQLiteDatabase db = getWritableDatabase();
         if(db == null) return;
 
         Calendar reducedAge = Utils.reduceCalendar(Calendar.getInstance());
 
-        long ageThreshold = reducedAge.getTimeInMillis() - age * 1000L * 60L *60L * 24L;
+        long ageThreshold = reducedAge.getTimeInMillis() - currentProfile.getAutodeleteAge() * 1000L * 60L *60L * 24L;
 
-        db.execSQL("DELETE FROM "+TABLE+" WHERE "+COL_TRUST+"<="+minTrust+" OR ("+COL_TIMESTAMP+"> 0 AND "+COL_TIMESTAMP+"<"+ageThreshold+");");
+        db.execSQL("DELETE FROM "+TABLE+" WHERE "+COL_TRUST+"<="+currentProfile.getAutodeleteTrust()
+                +" OR ("+COL_TIMESTAMP+"> 0 AND "+COL_TIMESTAMP+"<"+ageThreshold+")"
+                +" OR ("+COL_EXPIRE+"> 0 AND "+COL_EXPIRE+"<"+reducedAge.getTimeInMillis()+");"
+        );
     }
 
     public Cursor getMessagesByQuery(String query){

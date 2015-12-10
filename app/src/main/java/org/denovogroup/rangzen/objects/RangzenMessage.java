@@ -3,6 +3,8 @@
 package org.denovogroup.rangzen.objects;
 
 import android.content.Context;
+import android.location.Location;
+import android.location.LocationManager;
 
 import com.squareup.wire.Message;
 import com.squareup.wire.ProtoField;
@@ -35,6 +37,8 @@ public final class RangzenMessage extends Message {
     public static final String TRUST_KEY = "trust";
     public static final String PRIORITY_KEY = "priority";
     public static final String PSEUDONYM_KEY = "pseudonym";
+    public static final String LATLONG_KEY = "latlang";
+    public static final String TIMEBOUND_KEY = "timebound";
 
   /**
    * The message's text, as a String.
@@ -66,20 +70,36 @@ public final class RangzenMessage extends Message {
     @ProtoField(tag = 5, type = INT64, label = OPTIONAL)
     public final long timestamp;
 
-  public RangzenMessage(String text, Double trust, Integer priority, String pseudonym, long timestamp) {
+    /**
+     * The message's location, as a long.
+     */
+    @ProtoField(tag = 6, type = STRING, label = OPTIONAL)
+    public final String latlong;
+
+    /**
+     * The message's timestamp, as a long.
+     */
+    @ProtoField(tag = 7, type = INT64, label = OPTIONAL)
+    public final long timebound;
+
+  public RangzenMessage(String text, Double trust, Integer priority, String pseudonym, long timestamp, String latlong, long timebound) {
     this.text = text;
     this.trust = trust;
     this.priority = priority;
       this.pseudonym = pseudonym;
       this.timestamp = timestamp;
+      this.latlong = latlong;
+      this.timebound = timebound;
   }
 
-    public RangzenMessage(String text, Double trust, Integer priority, String pseudonym) {
+    public RangzenMessage(String text, Double trust, Integer priority, String pseudonym, String latlong, long timebound) {
         this.text = text;
         this.trust = trust;
         this.priority = priority;
         this.pseudonym = pseudonym;
         this.timestamp = 0;
+        this.latlong = latlong;
+        this.timebound = timebound;
     }
 
     public RangzenMessage(String text, Double trust) {
@@ -88,10 +108,12 @@ public final class RangzenMessage extends Message {
         this.priority = DEFAULT_PRIORITY;
         this.pseudonym = DEFAULT_PSEUDONYM;
         this.timestamp = 0;
+        this.latlong = null;
+        this.timebound = -1;
     }
 
   private RangzenMessage(Builder builder) {
-    this(builder.text, builder.trust, builder.priority, builder.pseudonym, builder.timestamp);
+    this(builder.text, builder.trust, builder.priority, builder.pseudonym, builder.timestamp, builder.latlong, builder.timebound);
     setBuilder(builder);
   }
 
@@ -107,9 +129,11 @@ public final class RangzenMessage extends Message {
                 json.optInt(PRIORITY_KEY, DEFAULT_PRIORITY),
                 json.optString(PSEUDONYM_KEY, DEFAULT_PSEUDONYM),
                 securityProfile.isTimestamp() ?
-                        currentTime.getTimeInMillis() : 0
-                );
-                //TODO opt location
+                        currentTime.getTimeInMillis() : 0L,
+                securityProfile.isShareLocation() ?
+                        json.optString(LATLONG_KEY, null) : null,
+                json.optLong(TIMEBOUND_KEY, -1L)
+        );
     }
 
     public static RangzenMessage fromJSON(Context context, String jsonString){
@@ -130,17 +154,37 @@ public final class RangzenMessage extends Message {
             result.put(TEXT_KEY, this.text);
             result.put(TRUST_KEY, this.trust + Utils.makeNoise(0d, 0.003d));
             result.put(PRIORITY_KEY, this.priority);
+            if(timebound > 0) result.put(TIMEBOUND_KEY, this.timebound);
 
             SecurityProfile profile = SecurityManager.getCurrentProfile(context);
 
             //put optional items based on security profile settings
             if(profile.isPseudonyms()) result.put(PSEUDONYM_KEY, this.pseudonym);
-            //if(profile.isShareLocation()) result.put(TEXT_KEY, this.location); //TODO location
+            if(profile.isShareLocation()) result.put(LATLONG_KEY, this.latlong);
 
         } catch (JSONException e) {
             e.printStackTrace();
         }
         return result;
+    }
+
+    public Location getLocation(){
+        if(latlong == null) return null;
+
+        try {
+            Location location = new Location(LocationManager.GPS_PROVIDER);
+
+            double lat = Double.parseDouble(latlong.substring(0,latlong.indexOf("x")));
+            double lng = Double.parseDouble(latlong.substring(latlong.indexOf("x")+1));
+
+            location.setLatitude(lat);
+            location.setLongitude(lng);
+
+            return location;
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
   @Override
@@ -170,6 +214,8 @@ public final class RangzenMessage extends Message {
       public Integer priority;
       public String pseudonym;
       public long timestamp;
+      public String latlong;
+      public long timebound;
 
     public Builder() {
     }
@@ -182,6 +228,8 @@ public final class RangzenMessage extends Message {
       this.priority = message.priority;
       this.pseudonym = message.pseudonym;
         this.timestamp = message.timestamp;
+        this.latlong = message.latlong;
+        this.timebound = message.timebound;
     }
 
     /**
@@ -217,10 +265,26 @@ public final class RangzenMessage extends Message {
       }
 
       /**
-       * The message's timestamp, as a string.
+       * The message's timestamp, as a long.
        */
       public Builder timestamp(long timestamp) {
           this.timestamp = timestamp;
+          return this;
+      }
+
+      /**
+       * The message's location, as a string.
+       */
+      public Builder latlong(String latlong) {
+          this.latlong = latlong;
+          return this;
+      }
+
+      /**
+       * The message's timebound, as a long.
+       */
+      public Builder timebound(long timebound) {
+          this.timebound = timebound;
           return this;
       }
 

@@ -125,8 +125,6 @@ public class CryptographicExchange extends Exchange {
 
         computeSharedFriends();
 
-        //TODO perform handshake (send max messages and establish multisession event if required)
-
       // Send client message.
       sendClientMessage();
       // Receive client message.
