@@ -185,4 +185,10 @@ public class Utils {
     public static synchronized double makeNoise(double mean, double standardDiviation){
         return random.nextGaussian()*Math.sqrt(standardDiviation) + mean;
     }
+
+    /** escape forbidden sql characters and return the reformed version*/
+    public static String makeTextSafeForSQL(String source){
+        String reformedText = source.replaceAll("'","''");
+        return reformedText;
+    }
 }
