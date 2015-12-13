@@ -44,6 +44,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Typeface;
@@ -191,6 +192,13 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.LEFT);
+
+        //start Rangzen service if necessary
+        SharedPreferences pref = getSharedPreferences(PreferencesActivity.PREF_FILE, Context.MODE_PRIVATE);
+        if(pref.getBoolean(KillswitchFragment.IS_APP_ENABLED, true)){
+            Intent startServiceIntent = new Intent(this, RangzenService.class);
+            startService(startServiceIntent);
+        }
     }
 
     /**

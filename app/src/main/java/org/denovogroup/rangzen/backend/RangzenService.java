@@ -140,7 +140,10 @@ public class RangzenService extends Service {
     private static final int NOTIFICATION_ID = R.string.unread_notification_title;
     private static final int RENAME_DELAY = 1000;
     private static final String DUMMY_MAC_ADDRESS = "02:00:00:00:00:00";
-    private static final int BACKOFF_FOR_ATTEMPT_MILLIES = 20 * 1000;
+    private static final int BACKOFF_FOR_ATTEMPT_MILLIS = 20 * 1000;
+    private static final int BACKOFF_MAX = BACKOFF_FOR_ATTEMPT_MILLIS * 6;
+
+    private static final boolean USE_MINIMAL_LOGGING = true;
 
     /**
      * Called whenever the service is requested to start. If the service is
@@ -231,7 +234,7 @@ public class RangzenService extends Service {
         SharedPreferences pref = getSharedPreferences(PreferencesActivity.PREF_FILE, Context.MODE_PRIVATE);
         if(pref.contains(PreferencesActivity.WIFI_NAME) && mWifiDirectSpeaker != null){
             Log.d(TAG, "Restoring wifi name");
-            mWifiDirectSpeaker.setWifiDirectUserFriendlyName(pref.getString(PreferencesActivity.WIFI_NAME,""));
+            mWifiDirectSpeaker.setWifiDirectUserFriendlyName(pref.getString(PreferencesActivity.WIFI_NAME, ""));
         }
 
         mWifiDirectSpeaker.dismissNoWifiNotification();
@@ -258,9 +261,11 @@ public class RangzenService extends Service {
       } else {
         timeSinceLastOK = true;
       }
-      Log.v(TAG, "Ready to connect? " + (timeSinceLastOK && !getConnecting()));
-      Log.v(TAG, "Connecting: " + getConnecting());
-      Log.v(TAG, "timeSinceLastOK: " + timeSinceLastOK);
+        if(!USE_MINIMAL_LOGGING) {
+            Log.v(TAG, "Ready to connect? " + (timeSinceLastOK && !getConnecting()));
+            Log.v(TAG, "Connecting: " + getConnecting());
+            Log.v(TAG, "timeSinceLastOK: " + timeSinceLastOK);
+        }
       return timeSinceLastOK && !getConnecting(); 
     }
 
@@ -268,7 +273,7 @@ public class RangzenService extends Service {
      * Set the time of the last exchange, kept in storage, to the current time.
      */
     private void setLastExchangeTime() {
-      Log.i(TAG, "Setting last exchange time");
+        if(!USE_MINIMAL_LOGGING) Log.i(TAG, "Setting last exchange time");
       long now = System.currentTimeMillis();
       mStore.putLong(LAST_EXCHANGE_TIME_KEY, now);
     }
@@ -278,7 +283,7 @@ public class RangzenService extends Service {
      * background tasks.
      */
     public void backgroundTasks() {
-        Log.v(TAG, "Background Tasks Started");
+        if(!USE_MINIMAL_LOGGING) Log.v(TAG, "Background Tasks Started");
 
         if(isAppInForeground()){
             cancelUnreadMessagesNotification();
@@ -310,15 +315,15 @@ public class RangzenService extends Service {
 
                 if(hasHistory) {
                     storeVersionChanged = !historyItem.storeVersion.equals(MessageStore.getInstance(RangzenService.this).getStoreVersion());
-                    waitedMuch = historyItem.lastExchangeTime + historyItem.attempts*BACKOFF_FOR_ATTEMPT_MILLIES < System.currentTimeMillis();
+                    waitedMuch = historyItem.lastExchangeTime + Math.min(historyItem.attempts * BACKOFF_FOR_ATTEMPT_MILLIS, BACKOFF_MAX) < System.currentTimeMillis();
                 }
 
-                Log.d(TAG,"has history: "+hasHistory);
-                Log.d(TAG,"storeVersion: " +storeVersionChanged);
-                Log.d(TAG,"waitedMuch: " +waitedMuch);
                 if(!hasHistory || storeVersionChanged || waitedMuch){
                     Log.d(TAG,"Can connect with peer: "+peer);
                     connectTo(peer);
+                } else {
+                    Log.d(TAG,"Backoff from peer: "+peer+
+                            " [previously interacted:"+hasHistory+", store ready:"+storeVersionChanged+" ,backoff timeout:"+waitedMuch+"]");
                 }
             }
           } catch (NoSuchAlgorithmException e) {
@@ -480,8 +485,15 @@ public class RangzenService extends Service {
               } else {
                   showUnreadMessagesNotification();
               }
-          } else {
+          } else if(ExchangeHistoryTracker.getInstance().getHistoryItem(exchange.getPeerAddress()) != null){
+              // Has history, should increment the attempts counter
               ExchangeHistoryTracker.getInstance().updateAttemptsHistory(exchange.getPeerAddress());
+              Log.d(TAG,"Exchange finished without receiving new messages, back-off timeout increased to:"+
+                    Math.min(BACKOFF_MAX , BACKOFF_FOR_ATTEMPT_MILLIS*ExchangeHistoryTracker.getInstance().getHistoryItem(exchange.getPeerAddress()).attempts));
+          } else {
+              // No history file, create one
+              Log.d(TAG, "Exchange finished without receiving new messages from new peer, creating history track");
+              ExchangeHistoryTracker.getInstance().updateHistory(RangzenService.this, exchange.getPeerAddress());
           }
 
         RangzenService.this.cleanupAfterExchange();
