@@ -130,5 +130,6 @@
     <string name="not_timebound">Not timebound</string>
     <string name="unbind">Not time bound</string>
     <string name="navigate">Navigate</string>
+    <string name="beta_tools">Beta tools</string>
 
 </resources>

@@ -42,13 +42,16 @@ import java.io.IOException;
  */
 public class ProfileSettingsFragment extends Fragment implements TextView.OnEditorActionListener{
 
+    EditText nameTextView;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View v = inflater.inflate(R.layout.profile_settings_frag, container, false);
 
-        ((EditText) v.findViewById(R.id.psedudonymText)).setText(SecurityManager.getCurrentPseudonym(getActivity()));
+        nameTextView = (EditText) v.findViewById(R.id.psedudonymText);
+        nameTextView.setText(SecurityManager.getCurrentPseudonym(getActivity()));
         ((EditText) v.findViewById(R.id.psedudonymText)).setOnEditorActionListener(this);
 
         ((ImageView) v.findViewById(R.id.qrCode)).setImageBitmap(getQRCodeFromPublicId());
@@ -61,6 +64,12 @@ public class ProfileSettingsFragment extends Fragment implements TextView.OnEdit
         });
 
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        nameTextView.setText(SecurityManager.getCurrentPseudonym(getActivity()));
     }
 
     @Override

@@ -73,7 +73,7 @@ public class Utils {
      * @return the amount of milliseconds representing the date in the string
      */
     public static long convertDateStringCompactToTimstamp(String timestring) throws NullPointerException, NumberFormatException{
-        int dayOfMonth = Integer.parseInt(timestring.substring(0,2));
+        int dayOfMonth = Integer.parseInt(timestring.substring(0, 2));
         int month = Integer.parseInt(timestring.substring(3, 5));
         int year = Integer.parseInt(timestring.substring(6));
 
@@ -184,5 +184,11 @@ public class Utils {
      */
     public static synchronized double makeNoise(double mean, double standardDiviation){
         return random.nextGaussian()*Math.sqrt(standardDiviation) + mean;
+    }
+
+    /** escape forbidden sql characters and return the reformed version*/
+    public static String makeTextSafeForSQL(String source){
+        String reformedText = source.replaceAll("'","''");
+        return reformedText;
     }
 }

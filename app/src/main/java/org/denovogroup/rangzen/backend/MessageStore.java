@@ -250,7 +250,7 @@ public class MessageStore extends SQLiteOpenHelper {
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null) {
-            String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + " LIKE '%" + message + "%'"
+            String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + " LIKE '%" + Utils.makeTextSafeForSQL(message) + "%'"
                     + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
                     + " "+sortOption
                     + (limit > 0 ? " LIMIT " + limit : "")
@@ -290,7 +290,7 @@ public class MessageStore extends SQLiteOpenHelper {
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null){
-            String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + message + "'"
+            String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + Utils.makeTextSafeForSQL(message) + "'"
                     +(!getDeleted ? " AND "+COL_DELETED+"="+FALSE : "")
                     +" LIMIT 1;";
             return db.rawQuery(query, null);
@@ -376,7 +376,7 @@ public class MessageStore extends SQLiteOpenHelper {
                         + ((location != null) ? (COL_LATLONG+"='"+location.getLatitude()+"x"+location.getLongitude()+"',") : "")
                         +COL_TIMESTAMP+"="+reducedTimestamp.getTimeInMillis()+","
                         +COL_EXPIRE+"="+timebound
-                        +" WHERE " + COL_MESSAGE + "='" + message + "';");
+                        +" WHERE " + COL_MESSAGE + "='" + Utils.makeTextSafeForSQL(message) + "';");
                 Log.d(TAG, "Message was already in store and was simply updated.");
             } else {
                 ContentValues content = new ContentValues();
@@ -407,7 +407,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public boolean removeMessage(String message){
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
-            db.execSQL("UPDATE " + TABLE + " SET " + COL_DELETED + "=" + TRUE + " WHERE " + COL_MESSAGE + "='" + message + "';");
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_DELETED + "=" + TRUE + " WHERE " + COL_MESSAGE + "='" + Utils.makeTextSafeForSQL(message) + "';");
             return  true;
         }
         Log.d(TAG, "Message not added to store, either message or database is null. ["+message+"]");
@@ -423,7 +423,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public boolean deleteMessage(String message) {
         SQLiteDatabase db = getWritableDatabase();
         if (db != null && message != null) {
-            db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + message + "';");
+            db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + Utils.makeTextSafeForSQL(message) + "';");
             return true;
         }
         Log.d(TAG, "Message not deleted from store, either message or database is null. [" + message + "]");
@@ -447,7 +447,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public double getTrust(String message){
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
-            Cursor cursor = db.rawQuery("SELECT "+COL_TRUST+" FROM "+TABLE+" WHERE "+COL_MESSAGE+"='"+message+"';", null);
+            Cursor cursor = db.rawQuery("SELECT "+COL_TRUST+" FROM "+TABLE+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';", null);
             if(cursor.getCount() > 0){
                 cursor.moveToFirst();
                 return cursor.getDouble(cursor.getColumnIndex(COL_TRUST));
@@ -460,7 +460,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public double getPriority(String message){
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
-            Cursor cursor = db.rawQuery("SELECT "+ COL_LIKES +" FROM "+TABLE+" WHERE "+COL_MESSAGE+"='"+message+"';", null);
+            Cursor cursor = db.rawQuery("SELECT "+ COL_LIKES +" FROM "+TABLE+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';", null);
             if(cursor.getCount() > 0){
                 cursor.moveToFirst();
                 return cursor.getInt(cursor.getColumnIndex(COL_LIKES));
@@ -487,7 +487,7 @@ public class MessageStore extends SQLiteOpenHelper {
             } else {
                 checkTrust(trust);
             }
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_TRUST+"="+trust+" WHERE "+COL_MESSAGE+"='"+message+"';");
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_TRUST+"="+trust+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
             Log.d(TAG, "Message trust changed in the store.");
             return true;
@@ -507,7 +507,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public boolean updateTrust(String message, int priority) {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
-            db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+message+"';");
+            db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
             Log.d(TAG, "Message priority changed in the store.");
             return true;
@@ -527,7 +527,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public boolean updatePriority(String message, int priority) {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
-            db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+message+"';");
+            db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
             Log.d(TAG, "Message priority changed in the store.");
             return true;
@@ -546,13 +546,13 @@ public class MessageStore extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
             int likedStatus = like ? FALSE : TRUE;
-            Cursor c = db.rawQuery("SELECT "+COL_LIKES+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_LIKED+"="+likedStatus+" AND "+COL_MESSAGE+" ='"+message+"';",null);
+            Cursor c = db.rawQuery("SELECT "+COL_LIKES+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_LIKED+"="+likedStatus+" AND "+COL_MESSAGE+" ='"+Utils.makeTextSafeForSQL(message)+"';",null);
             c.moveToFirst();
             if(c.getCount() > 0){
                 int likes = c.getInt(c.getColumnIndex(COL_LIKES)) + (like ? 1 : -1);
                 c.close();
                 likes = Math.max(0, likes);
-                db.execSQL("UPDATE "+TABLE+" SET "+COL_LIKED+"="+(like ? TRUE : FALSE)+","+COL_LIKES +"="+likes+" WHERE "+COL_DELETED+" ="+FALSE+" AND "+COL_LIKED+"="+likedStatus+" AND "+COL_MESSAGE+" ='"+message+"';");
+                db.execSQL("UPDATE "+TABLE+" SET "+COL_LIKED+"="+(like ? TRUE : FALSE)+","+COL_LIKES +"="+likes+" WHERE "+COL_DELETED+" ="+FALSE+" AND "+COL_LIKED+"="+likedStatus+" AND "+COL_MESSAGE+" ='"+Utils.makeTextSafeForSQL(message)+"';");
                 return true;
             }
         }
@@ -577,7 +577,7 @@ public class MessageStore extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
             int read = isRead ? TRUE : FALSE;
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_READ+"="+read+" WHERE "+COL_MESSAGE+"='"+message+"';");
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_READ+"="+read+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
             Log.d(TAG, "Message read state changed in the store.");
             return true;

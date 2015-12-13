@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+    <LinearLayout
+          android:orientation="vertical"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:padding="16dp">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="Device serial number"/>
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/serial_number"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="User"/>
+
+            <Button
+                android:id="@+id/select_user_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="select"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="Messages to push"/>
+
+            <RadioGroup
+                android:id="@+id/message_number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="number">
+
+                <RadioButton
+                    android:id="@+id/radio_push_10"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="10"
+                    android:checked="true"/>
+
+                <RadioButton
+                    android:id="@+id/radio_push_50"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="50"/>
+
+            </RadioGroup>
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/setup_test"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Prepare test"/>
+
+    </LinearLayout>
+
+</ScrollView>
