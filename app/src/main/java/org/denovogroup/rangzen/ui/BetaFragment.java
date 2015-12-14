@@ -144,7 +144,7 @@ public class BetaFragment extends Fragment {
                     final int messageOffset = serialNumber-1;
 
                     if((messageOffset+1) * messagesToPush > MESSAGES.length){
-                        Toast.makeText(getActivity(),"Too many devices, pushing "+messagesToPush+" messages support up to "+Math.floor(MESSAGES.length/messagesToPush)+" devices",Toast.LENGTH_LONG).show();
+                        Toast.makeText(getActivity(),"Too many devices, pushing "+messagesToPush+" messages support up to    "+Math.floor(MESSAGES.length/messagesToPush)+" devices",Toast.LENGTH_LONG).show();
                         return;
                     }
 
@@ -190,7 +190,7 @@ public class BetaFragment extends Fragment {
 
                             SecurityManager.setCurrentPseudonym(getActivity(), selectedUser.getName());
                             for(String friend : selectedUser.getFriends()) {
-                                fStore.addFriend(friend,friend,FriendStore.ADDED_VIA_QR, null);
+                                fStore.addFriend(friend,FriendStore.bytesToBase64(friend.getBytes()),FriendStore.ADDED_VIA_QR, null);
                             }
 
                             Random random = new Random();
