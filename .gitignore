@@ -9,3 +9,4 @@
 /app/*.apk
 *.jks
 .idea/codeStyleSettings.xml
+app/app.iml

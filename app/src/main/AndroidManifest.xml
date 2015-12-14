@@ -15,13 +15,14 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/rangzen_app_name"
         android:theme="@style/MyTheme1"
@@ -45,9 +46,18 @@
             android:theme="@style/MyThemeDrawer"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
-                <action android:name="android.intent.action.DEFAULT" />
-
+                <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.VIEW" />
+                <data android:scheme="org.denovogroup.rangzen" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
         <activity
@@ -57,11 +67,6 @@
             android:screenOrientation="portrait"
             android:theme="@style/MyTheme1"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.DEFAULT" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".ui.PostActivity"
@@ -69,12 +74,26 @@
             android:label="@string/rangzen_app_name"
             android:screenOrientation="portrait"
             android:theme="@style/MyTheme1"
-            android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.DEFAULT" />
+            android:windowSoftInputMode="adjustResize"
+            android:parentActivityName=".ui.Opener" >
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.Opener" />
+        </activity>
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+        <activity
+            android:name=".ui.SearchActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/rangzen_app_name"
+            android:screenOrientation="portrait"
+            android:theme="@style/MyTheme1"
+            android:windowSoftInputMode="adjustResize"
+            android:parentActivityName=".ui.Opener" >
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.Opener" />
         </activity>
 
         <activity
@@ -83,23 +102,22 @@
             android:label="@string/rangzen_app_name"
             android:screenOrientation="portrait"
             android:theme="@style/NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <activity
-            android:name=".ui.AboutPage"
-            android:label="@string/app_name"
-            android:theme="@style/NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.DEFAULT" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            android:name=".ui.PreferencesActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/rangzen_app_name"
+            android:screenOrientation="portrait"
+            android:theme="@style/MyTheme1"
+            android:windowSoftInputMode="adjustResize"
+            android:parentActivityName=".ui.Opener" >
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.Opener" />
         </activity>
+
     </application>
 
 </manifest>

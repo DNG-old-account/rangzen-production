@@ -32,12 +32,9 @@
 package org.denovogroup.rangzen.ui;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.backend.ReadStateTracker;
-import org.denovogroup.rangzen.backend.Utils;
+import org.denovogroup.rangzen.backend.*;
+import org.denovogroup.rangzen.backend.SecurityManager;
 import org.denovogroup.rangzen.ui.FragmentOrganizer.FragmentType;
-import org.denovogroup.rangzen.backend.FriendStore;
-import org.denovogroup.rangzen.backend.MessageStore;
-import org.denovogroup.rangzen.backend.StorageBase;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -47,16 +44,21 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -65,9 +67,20 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
+import java.util.List;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * This class is the manager of all of the fragments that are clickable in the
@@ -80,10 +93,14 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     private ListView mListView;
     private ActionBarDrawerToggle mDrawerListener;
     private SidebarListAdapter mSidebarAdapter;
+    private Button newMessagesNotification;
     private static TextView mCurrentTextView;
     private static boolean mHasStored = false;
     private static boolean mFirstTime = true;
     private static final String TAG = "Opener";
+    private static final int MAX_NEW_MESSAGES_DISPLAY = 99;
+    private Menu menu;
+    private MenuItem pendingNewMessagesMenuItem;
 
     // Create reciever object
     private BroadcastReceiver receiver = new MessageEventReceiver();
@@ -91,21 +108,28 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     // Set When broadcast event will fire.
     private IntentFilter filter = new IntentFilter(MessageStore.NEW_MESSAGE);
 
-    private final static int QR = 10;
     private final static int Message = 20;
+    private final static int Search = 30;
 
     /** Initialize the contents of the activities menu. */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
 
-        MessageStore messageStore = new MessageStore(this,
-                StorageBase.ENCRYPTION_DEFAULT);
+        this.menu = menu;
 
-        messageStore
-                .addMessage(
-                        "This is the Rangzen message feed. Messages in the ether will appear here.",
-                        1L);
+        pendingNewMessagesMenuItem = menu.findItem(R.id.new_post);
+
+        //Setup the search view
+        MenuItem searchItem = menu.findItem(R.id.search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+        setSearhView(searchView);
+        menu.findItem(R.id.advanced).setVisible(false);
+
+        //get any hashtag passed data from previous click events
+        Uri data = getIntent().getData();
+        getIntent().setData(null);
+        if(data != null) searchHashTagFromClick(data, searchItem);
         return true;
     }
 
@@ -116,6 +140,13 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(Intent.ACTION_SEND.equals(getIntent().getAction()) && "text/plain".equals(getIntent().getType())){
+            Intent intent = new Intent(this, PostActivity.class);
+            intent.putExtra(PostActivity.MESSAGE_BODY, getIntent().getStringExtra(Intent.EXTRA_TEXT));
+            startActivityForResult(intent,Message);
+
+        }
 
         setContentView(R.layout.drawer_layout);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
@@ -129,6 +160,10 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
 
             @Override
             public boolean onOptionsItemSelected(MenuItem item) {
+                if(item.getItemId() == R.id.advanced){
+                    Intent intent = new Intent(Opener.this, SearchActivity.class);
+                    startActivityForResult(intent, Search);
+                }
                 return super.onOptionsItemSelected(item);
             }
 
@@ -142,15 +177,27 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             }
 
         };
+        newMessagesNotification = (Button) findViewById(R.id.new_post_notification);
+        newMessagesNotification.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                notifyDataSetChanged(null);
+                //mark all the messages as read
+                MessageStore.getInstance(Opener.this).setAllAsRead();
+                setPendingUnreadMessagesDisplay();
+            }
+        });
 
         mDrawerLayout.setDrawerListener(mDrawerListener);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.LEFT);
 
-        if(savedInstanceState == null){
-            //Start the read state tracker to tell what messages are not read yet
-            ReadStateTracker.initTracker(getApplicationContext());
+        //start Rangzen service if necessary
+        SharedPreferences pref = getSharedPreferences(PreferencesActivity.PREF_FILE, Context.MODE_PRIVATE);
+        if(pref.getBoolean(KillswitchFragment.IS_APP_ENABLED, true)){
+            Intent startServiceIntent = new Intent(this, RangzenService.class);
+            startService(startServiceIntent);
         }
     }
 
@@ -194,7 +241,10 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             return true;
         }
         if (item.getItemId() == R.id.new_post) {
-            showFragment(1);
+            notifyDataSetChanged(null);
+            //mark all the messages as read
+            MessageStore.getInstance(this).setAllAsRead();
+            setPendingUnreadMessagesDisplay();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -267,41 +317,20 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         Log.i(TAG, "Got activity result back in Opener!");
 
-        // Check whether the activity that returned was the QR code activity,
-        // and whether it succeeded.
-        if (requestCode == QR && resultCode == RESULT_OK) {
-            // Grab the string extra containing the QR code that was scanned.
-            FriendStore fs = new FriendStore(this,
-                    StorageBase.ENCRYPTION_DEFAULT);
-            String code = intent
-                    .getStringExtra("barcode_data");
-            // Convert the code into a public Rangzen ID.
-            byte[] publicIDBytes = FriendStore.getPublicIDFromQR(code);
-            Log.i(TAG, "In Opener, received intent with code " + code);
+        if(resultCode == RESULT_OK) {
+            switch( requestCode){
+                case Message:
+                    notifyDataSetChanged(null);
+                    break;
+                case Search:
+                    String extra = intent.getStringExtra(SearchActivity.SEARCH_EXTRA);
 
-            // Try to add the friend to the FriendStore, if they're not null.
-            if (publicIDBytes != null) {
-                boolean wasAdded = fs.addFriendBytes(publicIDBytes);
-                Log.i(TAG, "Now have " + fs.getAllFriends().size()
-                        + " friends.");
-                if (wasAdded) {
-                    Toast.makeText(this, "Friend Added", Toast.LENGTH_SHORT)
-                            .show();
-                } else {
-                    Toast.makeText(this, "Already Friends", Toast.LENGTH_SHORT)
-                            .show();
-                }
-            } else {
-                // This can happen if the URI is well-formed (rangzen://<stuff>)
-                // but the
-                // stuff isn't valid base64, since we get here based on the
-                // scheme but
-                // not a check of the contents of the URI.
-                Log.i(TAG,
-                        "Opener got back a supposed rangzen scheme code that didn't process to produce a public id:"
-                                + code);
-                Toast.makeText(this, "Invalid Friend Code", Toast.LENGTH_SHORT)
-                        .show();
+                    MenuItem menuItem = menu.findItem(R.id.search);
+                    SearchView searchView = (SearchView) menuItem.getActionView();
+                    menuItem.expandActionView();
+                    searchView.setQuery(extra, true);
+                    searchView.clearFocus();
+                    break;
             }
         }
     }
@@ -317,24 +346,31 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
      */
     public void showFragment(int position) {
         Fragment needAdd = null;
-        if (position == 0) {
-            needAdd = new FeedFragment();
-        } else if (position == 1) {
-            Intent intent = new Intent();
-            intent.setClass(this, PostActivity.class);
-            startActivityForResult(intent, Message);
-            return;
-        } else if (position == 2) {
-            Intent intent = new Intent("com.google.zxing.client.android.SCAN");
-            intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-            // startActivityForResult(intent, 0);
-            startActivityForResult(intent, QR);
-            return;
-        } else {
-            needAdd = new FragmentOrganizer();
-            Bundle b = new Bundle();
-            b.putSerializable("whichScreen", FragmentType.SECONDABOUT);
-            needAdd.setArguments(b);
+        switch(position){
+            case 0:
+                needAdd = new FeedFragment();
+                break;
+            case 1:
+                Intent postIntent = new Intent();
+                postIntent.setClass(this, PostActivity.class);
+                startActivityForResult(postIntent, Message);
+                return;
+            case 2:
+                Intent addFriendIntent = new Intent();
+                addFriendIntent.setClass(this, PreferencesActivity.class);
+                addFriendIntent.setAction(PreferencesActivity.ACTION_ADD_FRIEND);
+                startActivity(addFriendIntent);
+                return;
+            case 3:
+                Intent settingsIntent = new Intent(this, PreferencesActivity.class);
+                startActivity(settingsIntent);
+                return;
+            default:
+                needAdd = new FragmentOrganizer();
+                Bundle b = new Bundle();
+                b.putSerializable("whichScreen", FragmentType.SECONDABOUT);
+                needAdd.setArguments(b);
+                break;
         }
         makeTitleBold(position);
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -373,7 +409,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     @Override
     protected void onResume() {
         super.onResume();
-        notifyDataSetChanged();
         registerReceiver(receiver, filter);
         Log.i(TAG, "Registered receiver");
 
@@ -388,7 +423,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     protected void onStop() {
         super.onStop();
         //mark all the messages as read
-        ReadStateTracker.markAllAsRead(getApplicationContext());
+        MessageStore.getInstance(this).setAllAsRead();
     }
 
     /**
@@ -416,18 +451,19 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
          */
         @Override
         public void onReceive(Context context, Intent intent) {
-            notifyDataSetChanged();
+            setPendingUnreadMessagesDisplay();
         }
     }
 
     /**
      * Request currently displayed fragment to refresh its view if its utilizing the Refreshable interface
+     * @param items List of objects to be used by the refreshed adapter or null to invoke default list of items
      */
-    private void notifyDataSetChanged() {
+    private void notifyDataSetChanged(Cursor items) {
         Fragment fragment = getSupportFragmentManager().findFragmentById(
                 R.id.mainContent);
         if (fragment instanceof Refreshable) {
-            ((Refreshable) fragment).refreshView();
+            ((Refreshable) fragment).refreshView(items, false);
         }
     }
 
@@ -491,5 +527,87 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
         builder.setMessage(R.string.dialog_no_wifi_message);
         builder.create();
         builder.show();
+    }
+
+    public void setSearhView(SearchView searchView){
+
+        searchView.findViewById(android.support.v7.appcompat.R.id.search_src_text).setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                Fragment frag = getSupportFragmentManager().findFragmentById(R.id.mainContent);
+                if (frag instanceof FeedFragment) {
+                    ((FeedFragment) frag).setAddButtonVisible(!hasFocus);
+                }
+            }
+        });
+
+        //Define on close listener which support pre-honycomb devices as well with the app compat
+        searchView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+                menu.findItem(R.id.advanced).setVisible(true);
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                //reset the list to its normal state
+                menu.findItem(R.id.advanced).setVisible(false);
+                notifyDataSetChanged(null);
+            }
+        });
+
+        //Define the search procedure
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                Fragment frag = getSupportFragmentManager().findFragmentById(R.id.mainContent);
+
+                if (frag != null && frag instanceof FeedFragment) {
+                    ((FeedFragment) frag).setQuery(query, false);
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                onQueryTextSubmit(newText);
+                return false;
+            }
+        });
+    }
+
+    /** Set the the Actionbar search view with the hashtag supplied in the provided Uri and run the
+     * default search method.
+     *
+     * @param data The Uri which contain the hashtag as the last part of the Uri
+     * @param menuItem The menu item hosting the searchView to use
+     */
+    private void searchHashTagFromClick(Uri data, MenuItem menuItem){
+
+        SearchView searchView = (SearchView) menuItem.getActionView();
+        menuItem.expandActionView();
+        String query = data.toString().substring(data.toString().indexOf("#"), data.toString().length()-1);
+        searchView.setQuery(query, true);
+        searchView.clearFocus();
+    }
+
+    /** set a notification at the actionbar letting the user know new unread messages are waiting,
+     */
+    private void setPendingUnreadMessagesDisplay(){
+        long unreadCount = MessageStore.getInstance(Opener.this).getUnreadCount();
+        if(pendingNewMessagesMenuItem != null){
+            if(unreadCount > 0) {
+                String countString = (unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? Long.toString(unreadCount) : "+"+MAX_NEW_MESSAGES_DISPLAY;
+                /*pendingNewMessagesMenuItem.setTitle(countString + " " + getString(R.string.new_post));
+                pendingNewMessagesMenuItem.setVisible(true);*/
+
+                newMessagesNotification.setText(countString + " " + ((unreadCount > 1) ? getString(R.string.new_posts) : getString(R.string.new_post)));
+                newMessagesNotification.setVisibility(View.VISIBLE);
+            } else {
+                newMessagesNotification.setVisibility(View.GONE);
+                pendingNewMessagesMenuItem.setVisible(false);
+            }
+
+        }
     }
 }

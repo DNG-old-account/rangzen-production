@@ -33,25 +33,26 @@ package org.denovogroup.rangzen.backend;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection.ServerReplyTuple;
 import org.denovogroup.rangzen.objects.ClientMessage;
+import org.denovogroup.rangzen.objects.JSONMessage;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.objects.ServerMessage;
+import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import android.os.Handler;
+import android.content.Context;
 import android.util.Log;
 
 import okio.ByteString;
@@ -60,12 +61,17 @@ import okio.ByteString;
  * Performs a single exchange with a Rangzen peer, using the PSI protocol
  * to exchange friends in a zero-knowledge fashion.
  *
+ * Transferred messages are being converted into a well known JSON format to enable message
+ * exchange between two different types of message java objects.
+ *
  * This class is given input and output streams and communicates over them,
  * oblivious to the underlying network communications used.
  */
 public class CryptographicExchange extends Exchange {
 
-  /** PSI computation for the half of the exchange where we're the "client". */
+    private Context mContext;
+
+    /** PSI computation for the half of the exchange where we're the "client". */
   private PrivateSetIntersection mClientPSI;
   
   /** PSI computation for the half of the exchange where we're the "server". */
@@ -82,6 +88,10 @@ public class CryptographicExchange extends Exchange {
 
   /** Tag appears in Android log messages. */
   private static final String TAG = "CryptographicExchange";
+
+    private static final String MESSAGE_COUNT_KEY = "count";
+
+    private static final String SECURITY_KEY = "security";
   
   /**
    * Perform the exchange asynchronously, calling back success or failure on
@@ -108,18 +118,21 @@ public class CryptographicExchange extends Exchange {
         sendFriends();
         //receive server's friends
         receiveFriends();
+        // Send server message in response to remote client message.
+        sendServerMessage();
+        // Receive server message.
+        receiveServerMessage();
+
+        computeSharedFriends();
+
       // Send client message.
       sendClientMessage();
       // Receive client message.
       receiveClientMessage();
-      // Send server message in response to remote client message.
-      sendServerMessage();
-      // Receive server message.
-      receiveServerMessage();
-
-      computeSharedFriends();
       
       setExchangeStatus(Status.SUCCESS);
+
+        mContext = null;
 
       callback.success(this);
     } catch (Exception e) {  // Treat ALL exceptions as fatal.
@@ -202,14 +215,14 @@ public class CryptographicExchange extends Exchange {
       boolean success = true;
       List<RangzenMessage> messagesPool = getMessages();
       //notify the recipient how many items we expect to send him.
-      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messagesPool.size()),1d);
+      JSONMessage exchangeInfoMessage = new JSONMessage("{\""+MESSAGE_COUNT_KEY+"\":"+messagesPool.size()+"}");
 
       if(!lengthValueWrite(out, exchangeInfoMessage)){
           success = false;
       } else {
           for (RangzenMessage message : messagesPool) {
-              List<RangzenMessage> messageWrapper = new ArrayList<>();
-              messageWrapper.add(message);
+              List<JSONMessage> messageWrapper = new ArrayList<>();
+              messageWrapper.add(new JSONMessage(message.toJSON(mContext)));
               ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
                       .build();
               if (!lengthValueWrite(out, cm)) {
@@ -233,10 +246,10 @@ public class CryptographicExchange extends Exchange {
 
       //the first message received is a hint, telling the us how many messages will be sent
       int messageCount = 0;
-      RangzenMessage exchangeInfo = lengthValueRead(in, RangzenMessage.class);
+      JSONMessage exchangeInfo = lengthValueRead(in, JSONMessage.class);
       if(exchangeInfo != null){
           try {
-              messageCount = Integer.parseInt(exchangeInfo.text);
+              messageCount = Math.min(NUM_MESSAGES_TO_EXCHANGE, new JSONObject(exchangeInfo.jsonString).getInt(MESSAGE_COUNT_KEY));
           } catch (Exception e){}
       }
 
@@ -244,52 +257,61 @@ public class CryptographicExchange extends Exchange {
       if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
 
       //Define the get single message task
-      class ReceiveSingleMessage implements Callable<String>{
+      class ReceiveSingleMessage implements Callable<ClientMessage> {
 
           @Override
-          public String call() throws Exception {
-              mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
+          public ClientMessage call() throws Exception {
+              ClientMessage mCurrentReceived;
+              mCurrentReceived = lengthValueRead(in, ClientMessage.class);
 
-              if (mRemoteClientMessage == null) {
-                  return "Remote client message not received.";
+              if (mCurrentReceived == null) {
+                  throw new Exception("Remote client message not received.");
               }
 
-              if (mRemoteClientMessage.messages == null) {
-                  return "Remote client messages field was null";
+              if (mCurrentReceived.messages == null) {
+                  throw new Exception("Remote client messages field was null");
               }
-              //Add everything passed in the wrapper to the pool
-              mMessagesReceived.addAll(mRemoteClientMessage.messages);
-              return null;
+              return mCurrentReceived;
           }
       }
 
       //read from the stream until either times out or get all the messages
       ExecutorService executor = Executors.newSingleThreadExecutor();
       while(mMessagesReceived.size() < messageCount) {
+          Future<ClientMessage> task = executor.submit(new ReceiveSingleMessage());
           try {
-              String exception = executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
-              if (exception != null && !exception.isEmpty()) {
-                  executor.shutdown();
-                  if (mMessagesReceived.isEmpty()) {
-                      setExchangeStatus(Status.ERROR);
-                  } else {
-                      setExchangeStatus(Status.ERROR_RECOVERABLE);
-                  }
-                  setErrorMessage(exception);
-                  throw new IOException(exception);
+              mRemoteClientMessage = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
+              //Add everything passed in the wrapper to the pool
+              for(JSONMessage message : mRemoteClientMessage.messages) {
+                  mMessagesReceived.add(RangzenMessage.fromJSON(mContext, message.jsonString));
               }
-          } catch (InterruptedException |ExecutionException | TimeoutException e) {
+          } catch (ExecutionException ex){
               executor.shutdown();
               if (mMessagesReceived.isEmpty()) {
                   setExchangeStatus(Status.ERROR);
               } else {
                   setExchangeStatus(Status.ERROR_RECOVERABLE);
               }
+              task.cancel(true);
+              setErrorMessage(ex.getMessage());
+              throw new IOException(ex.getMessage());
+          } catch (InterruptedException | TimeoutException e) {
+              executor.shutdown();
+              if (mMessagesReceived.isEmpty()) {
+                  setExchangeStatus(Status.ERROR);
+              } else {
+                  setExchangeStatus(Status.ERROR_RECOVERABLE);
+              }
+              task.cancel(true);
               setErrorMessage("Message receiving timed out");
               throw new IOException ("Message receiving timed out");
           }
       }
       executor.shutdown();
+
+      if (mRemoteClientMessage == null) {
+          throw new IOException("Remote client message was null in sendServerMessage.");
+      }
   }
 
   /**
@@ -298,9 +320,7 @@ public class CryptographicExchange extends Exchange {
    */
   private void sendServerMessage() throws NoSuchAlgorithmException, 
                                           IOException {
-      if (mRemoteClientMessage == null) {
-      throw new IOException("Remote client message was null in sendServerMessage.");
-    } else if (remoteBlindedFriends == null) {
+    if (remoteBlindedFriends == null) {
       throw new IOException("Remove client message blinded friends is null in sendServerMessage.");
     }
 
@@ -355,8 +375,15 @@ public class CryptographicExchange extends Exchange {
    * Compute the number of shared friends from the PSI operation and store
    * that number in an instance variable.
    */
-  private void computeSharedFriends() throws NoSuchAlgorithmException {
+  private void computeSharedFriends() throws NoSuchAlgorithmException, IOException {
     commonFriends = mClientPSI.getCardinality(getSRTFromServerTuple());
+
+      int requiredFriends = SecurityManager.getCurrentProfile(mContext).minSharedContacts;
+      if(requiredFriends > commonFriends){
+          setExchangeStatus(Status.ERROR);
+          setErrorMessage("Session rejected by client due to insufficient common friends with server(required:"+requiredFriends+" found:"+commonFriends+").");
+          throw new IOException("Session rejected by client due to insufficient common friends with server(required:"+requiredFriends+" found:"+commonFriends+").");
+      }
   }
 
   /**
@@ -378,9 +405,11 @@ public class CryptographicExchange extends Exchange {
   /**
    * Pass-through constructor to superclass constructor.
    */
-  public CryptographicExchange(InputStream in, OutputStream out, boolean asInitiator, 
+  public CryptographicExchange(Context context, String peerAddress, InputStream in, OutputStream out, boolean asInitiator,
                                FriendStore friendStore, MessageStore messageStore, 
                                ExchangeCallback callback) throws IllegalArgumentException {
-    super(in, out, asInitiator, friendStore, messageStore, callback);
+    super(peerAddress, in, out, asInitiator, friendStore, messageStore, callback);
+
+      mContext = context;
   }
 }

@@ -40,6 +40,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Parcelable;
+import android.provider.Settings;
 import android.util.Log;
 
 import org.denovogroup.rangzen.R;
@@ -134,6 +135,10 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
           case BluetoothAdapter.STATE_OFF:
               showNoBluetoothNotification(context);
               break;
+          case BluetoothAdapter.STATE_TURNING_ON:
+          case BluetoothAdapter.STATE_ON:
+              dismissNoBluetoothNotification(context);
+              break;
       }
 
   }
@@ -146,7 +151,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
 
         int notificationId = R.string.dialog_no_bluetooth_message;
 
-        Intent notificationIntent = new Intent(context, Opener.class);
+        Intent notificationIntent = new Intent(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));;
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -156,6 +161,15 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
                 .setContentIntent(pendingIntent)
                 .build();
         mNotificationManager.notify(notificationId, notification);
+    }
+
+    /** dismiss the no bluetooth notification if showing
+     */
+    public void dismissNoBluetoothNotification(Context context){
+        int notificationId = R.string.dialog_no_bluetooth_message;
+
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancel(notificationId);
     }
 
   /**

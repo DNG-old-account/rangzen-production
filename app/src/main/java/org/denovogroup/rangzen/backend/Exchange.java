@@ -33,13 +33,11 @@ package org.denovogroup.rangzen.backend;
 import com.squareup.wire.Wire;
 import com.squareup.wire.Message;
 
-import android.content.Context;
 import android.util.Log;
 
 import org.denovogroup.rangzen.objects.CleartextFriends;
 import org.denovogroup.rangzen.objects.CleartextMessages;
 import org.denovogroup.rangzen.objects.RangzenMessage;
-import org.denovogroup.rangzen.ui.RangzenApplication;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -54,6 +52,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -62,7 +61,9 @@ import java.util.concurrent.TimeoutException;
  * This class is given input and output streams and communicates over them,
  * oblivious to the underlying network communications used.
  */
-public class Exchange implements Runnable { 
+public class Exchange implements Runnable {
+    /** Peer bluetooth address with which interacting, for history optimization. */
+  /* package */ String peerAddress;
   /** Store of friends to use in this exchange. */
   /* package */ FriendStore friendStore;
   /** Store of messages to use in this exchange. */
@@ -89,7 +90,7 @@ public class Exchange implements Runnable {
   private CleartextFriends mFriendsReceived;
 
   /** Send up to this many messages (top priority) from the message store. */
-  private static final int NUM_MESSAGES_TO_SEND = 100;
+  public static final int NUM_MESSAGES_TO_EXCHANGE = 100;
 
   /** Minimum trust multiplier in the case of 0 shared friends. */
   public static final double EPSILON_TRUST = .001;
@@ -152,14 +153,16 @@ public class Exchange implements Runnable {
    * Create a new exchange which will communicate over the given Input/Output
    * streams and use the given context to access storage for messages/friends.
    *
+   * @param peerAddress the bluetooth address of the remote peer.
    * @param in An input stream which delivers a stream of data from the remote peer.
    * @param in An output stream which delivers a stream of data to the remote peer.
    * @param friendStore A store of friends to use in the friend-exchange protocol.
    * @param messageStore A store of messages to exchange with the remote peer.
    */
-  public Exchange(InputStream in, OutputStream out, boolean asInitiator, 
+  public Exchange(String peerAddress, InputStream in, OutputStream out, boolean asInitiator,
                   FriendStore friendStore, MessageStore messageStore, 
                   ExchangeCallback callback) throws IllegalArgumentException {
+      this.peerAddress = peerAddress;
     this.in = in;
     this.out = out;
     this.friendStore = friendStore;
@@ -209,24 +212,13 @@ public class Exchange implements Runnable {
   }
 
   /**
-   * Retrieve at most NUM_MESSAGES_TO_SEND messages from the message store and
+   * Retrieve at most NUM_MESSAGES_TO_EXCHANGE messages from the message store and
    * return them. If no messages, returns a empty list.
    *
-   * @return The top NUM_MESSAGES_TO_SEND in the MessageStore.
+   * @return The top NUM_MESSAGES_TO_EXCHANGE in the MessageStore.
    */
-  /* package */ List<RangzenMessage> getMessages() { 
-    List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
-    for (int k=0; k<NUM_MESSAGES_TO_SEND; k++) {
-      MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
-      if (messageFromStore == null) {
-        break;
-      }
-      messages.add(new RangzenMessage.Builder()
-                                     .text(messageFromStore.getMessage())
-                                     .priority(messageFromStore.getPriority())
-                                     .build());
-    }
-    return messages;
+  /* package */ List<RangzenMessage> getMessages() {
+    return MessageStore.getInstance().getMessages(false, NUM_MESSAGES_TO_EXCHANGE);
   }
 
   /**
@@ -234,23 +226,19 @@ public class Exchange implements Runnable {
    * object, and write that Message out to the output stream.
    */
   private void sendMessages() {
+      // get messages to send
+      List<RangzenMessage> messages = getMessages();
       //notify the recipient how many items we expect to send him.
-      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(NUM_MESSAGES_TO_SEND),1d);
+      RangzenMessage exchangeInfoMessage = new RangzenMessage(Integer.toString(messages.size()),1d);
       if(lengthValueWrite(out, exchangeInfoMessage)) {
           // Send messages
-          for (int k = 0; k < NUM_MESSAGES_TO_SEND; k++) {
-              List<RangzenMessage> messages = new ArrayList<RangzenMessage>();
-              MessageStore.Message messageFromStore = messageStore.getKthMessage(k);
-              if (messageFromStore == null) {
-                  break;
-              }
-              messages.add(new RangzenMessage.Builder()
-                      .text(messageFromStore.getMessage())
-                      .priority(messageFromStore.getPriority())
-                      .build());
+         for(RangzenMessage message : messages){
+
+             List<RangzenMessage> packet = new ArrayList<>();
+             packet.add(message);
 
               CleartextMessages messagesMessage = new CleartextMessages.Builder()
-                      .messages(messages)
+                      .messages(packet)
                       .build();
               lengthValueWrite(out, messagesMessage);
           }
@@ -271,7 +259,7 @@ public class Exchange implements Runnable {
       intersection.retainAll(theirFriends);
       commonFriends = intersection.size();
       Log.i(TAG, "Received " + theirFriends.size() + " friends. Overlap with my " +
-          myFriends.size() + " friends is " + commonFriends);
+              myFriends.size() + " friends is " + commonFriends);
     } else if (mFriendsReceived == null) {
       Log.e(TAG, "Friends received is null: " + mFriendsReceived);
       setExchangeStatus(Status.ERROR);
@@ -292,7 +280,7 @@ public class Exchange implements Runnable {
       RangzenMessage exchangeInfo = lengthValueRead(in, RangzenMessage.class);
       if(exchangeInfo != null){
           try {
-              messageCount = Integer.parseInt(exchangeInfo.text);
+              messageCount = Math.min(NUM_MESSAGES_TO_EXCHANGE, Integer.parseInt(exchangeInfo.text));
           } catch (Exception e){}
       }
 
@@ -300,23 +288,26 @@ public class Exchange implements Runnable {
       if(mMessagesReceived == null) mMessagesReceived = new ArrayList<>();
 
       //Define the get single message task
-      class ReceiveSingleMessage implements Callable<String> {
+      class ReceiveSingleMessage implements Callable<List<RangzenMessage>> {
 
           @Override
-          public String call() throws Exception {
-              CleartextMessages mCurrentReceived = lengthValueRead(in, CleartextMessages.class);
-              mMessagesReceived.addAll(mCurrentReceived.messages);
-              return null;
+          public List<RangzenMessage> call() throws Exception {
+              CleartextMessages mCurrentReceived;
+              mCurrentReceived = lengthValueRead(in, CleartextMessages.class);
+              return mCurrentReceived.messages;
           }
       }
 
       //read from the stream until either times out or get all the messages
       ExecutorService executor = Executors.newSingleThreadExecutor();
       while(mMessagesReceived.size() < messageCount) {
+          Future<List<RangzenMessage>> task = executor.submit(new ReceiveSingleMessage());
           try {
-              executor.submit(new ReceiveSingleMessage()).get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
+              List<RangzenMessage> res = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
+              mMessagesReceived.addAll(res);
           } catch (InterruptedException |ExecutionException | TimeoutException e) {
               e.printStackTrace();
+              task.cancel(true);
               break;
           }
       }
@@ -563,4 +554,8 @@ public class Exchange implements Runnable {
     }
     return priority * trustMultiplier;
   }
+
+    public String getPeerAddress(){
+        return peerAddress;
+    }
 }

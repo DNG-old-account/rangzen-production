@@ -1,42 +1,141 @@
 package org.denovogroup.rangzen.ui;
 
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.annotation.TargetApi;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.Cursor;
+import android.location.Location;
+import android.location.LocationManager;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.baoyz.swipemenulistview.SwipeMenu;
-import com.baoyz.swipemenulistview.SwipeMenuCreator;
-import com.baoyz.swipemenulistview.SwipeMenuItem;
-import com.baoyz.swipemenulistview.SwipeMenuListView;
+import android.widget.CheckBox;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.backend.MessageStore;
-import org.denovogroup.rangzen.backend.StorageBase;
-import org.denovogroup.rangzen.backend.Utils;
+import org.denovogroup.rangzen.backend.*;
+import org.denovogroup.rangzen.objects.RangzenMessage;
+
+import java.util.List;
 
 public class FeedFragment extends Fragment implements Refreshable{
 
     /** the amount to change the priority of a message by upon clicking on upvote/downvote*/
     private static final double PRIORITY_INCREMENT = 0.01d;
 
-    private SwipeMenuListView listView;
-    private FeedListAdapter mFeedListAdaper;
+    private ListView listView;
+    private FeedAdapter mFeedListAdaper;
+    private String query = "";
+    private AsyncTask<String, Void, Cursor> searchTask;
+    private int itemOffset = 0;
+    private int firstItem = 0;
+    private ImageButton addButton;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.feed, container, false);
-        listView = (SwipeMenuListView) view.findViewById(R.id.list);
+        listView = (ListView) view.findViewById(R.id.list);
         setupListView();
 
+        addButton = (ImageButton) view.findViewById(R.id.new_post_button);
+        addButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (getActivity().getClass() == Opener.class) {
+                    ((Opener) getActivity()).showFragment(1);
+                }
+            }
+        });
+
+        final LinearLayout sortOptions = (LinearLayout) view.findViewById(R.id.sort_options);
+
+        View.OnClickListener sortListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //get child index
+                for(int i=0; i<sortOptions.getChildCount();i++) {
+                    View child = sortOptions.getChildAt(i);
+                    if (child instanceof CheckBox){
+                        child.setActivated(child == v);
+                    }
+                }
+                switch (v.getId()){
+                    case R.id.sort_trust:
+                        MessageStore.getInstance(getActivity()).setSortOption(new String[]{MessageStore.COL_TRUST}, ((CheckBox)v).isChecked());
+                        break;
+                    case R.id.sort_date:
+                        MessageStore.getInstance(getActivity()).setSortOption(new String[]{MessageStore.COL_ROWID}, ((CheckBox) v).isChecked());
+                        break;
+                }
+
+                setQuery(query, false);
+            }
+        };
+
+        for(int i=0; i<sortOptions.getChildCount();i++){
+            View child = sortOptions.getChildAt(i);
+            if(child instanceof CheckBox){
+                child.setOnClickListener(sortListener);
+            }
+        }
+
         return view;
+    }
+
+    public void setQuery(String query, final boolean retainScroll){
+        this.query = query;
+
+        if(!retainScroll){
+            firstItem = 0;
+            firstItem = 0;
+        }
+
+        if (searchTask != null) {
+            searchTask.cancel(true);
+        }
+
+        searchTask = new AsyncTask<String, Void, Cursor>() {
+
+            @Override
+            protected Cursor doInBackground(String... params) {
+                MessageStore store = MessageStore.getInstance(getActivity());
+                String sqlQuery = SearchHelper.searchToSQL(params[0]);
+
+                Cursor cursor = (sqlQuery != null) ?
+                        store.getMessagesByQuery(sqlQuery) :
+                        store.getMessagesContainingCursor(params[0], false, -1);
+
+                if(cursor == null){
+                    cursor = store.getMessagesContainingCursor("", false, -1);
+                }
+
+                return cursor;
+            }
+
+            @Override
+            protected void onPostExecute(Cursor messages) {
+                super.onPostExecute(messages);
+
+                if (messages != null) {
+                    refreshView(messages, retainScroll);
+                }
+            }
+        };
+
+        searchTask.execute(query);
     }
 
 
@@ -44,130 +143,190 @@ public class FeedFragment extends Fragment implements Refreshable{
      * a list adapter to the feed list view
       */
     private void setupListView(){
-        setupListSwipeMenu();
-        resetListAdapter();
+        SecurityProfile currentProfile = org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(getActivity());
+        MessageStore.getInstance(getActivity()).deleteOutdatedOrIrrelevant(currentProfile);
+
+        resetListAdapter(null, false);
     }
 
-    /** Setting the Swipe menu which appears when an item is being swiped to the left
-     * this also include assigning the menu buttons with click listeners
-     */
-    private void setupListSwipeMenu(){
+    AlertDialog deleteManyDialog;
 
-        final int upvoteItemId = 0;
-        final int downvoteItemId = 1;
-        final int deleteItemId = 2;
+    /** set a feed list adapter to the list using the supplied list as source or using the default
+     * items set if supplied list is null
+     * @param items List of messages to be displayed by the attached listView or null to set
+     * @param keepApperance whether or not the view should retain its relative position before updating
+     * default list of items to the adapter*/
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)//this line is required to overcome a bug in the documentation, the problematic call is actually available since API 1 not 21
+    public void resetListAdapter(Cursor items, final Boolean keepApperance) {
 
-        SwipeMenuCreator creator = new SwipeMenuCreator() {
+        if(items == null) {
+            items = MessageStore.getInstance(getActivity()).getMessagesCursor(false, 500);
+        }
 
-            @Override
-            public void create(SwipeMenu menu) {
-                SwipeMenuItem upvoteItem = new SwipeMenuItem(getActivity());
-                upvoteItem.setId(upvoteItemId);
-                upvoteItem.setBackground(new ColorDrawable(Color.parseColor("#b7b7b7")));
-                upvoteItem.setWidth(Utils.dpToPx(80, getActivity()));
-                upvoteItem.setIcon(R.drawable.ic_thumb_up);
-                upvoteItem.getIcon().setAlpha(65);
-                upvoteItem.setTitle(R.string.Upvote);
-                upvoteItem.setTitleSize(14);
-                upvoteItem.setTitleColor(Color.GRAY);
-                menu.addMenuItem(upvoteItem);
+        mFeedListAdaper = new FeedAdapter(getActivity(), items, false);
+        if (listView != null) {
+            int position = listView.getFirstVisiblePosition();
+            int offset = (listView.getChildAt(0) != null) ? listView.getChildAt(0).getTop() : 0;
 
-                SwipeMenuItem downvoteItem = new SwipeMenuItem(getActivity());
-                downvoteItem.setId(downvoteItemId);
-                downvoteItem.setBackground(new ColorDrawable(Color.parseColor("#b7b7b7")));
-                downvoteItem.setWidth(Utils.dpToPx(80, getActivity()));
-                downvoteItem.setIcon(R.drawable.ic_thumb_down);
-                downvoteItem.getIcon().setAlpha(60);
-                downvoteItem.setTitle(R.string.Downvote);
-                downvoteItem.setTitleSize(14);
-                downvoteItem.setTitleColor(Color.GRAY);
-                menu.addMenuItem(downvoteItem);
-
-                SwipeMenuItem deleteItem = new SwipeMenuItem(getActivity());
-                deleteItem.setId(deleteItemId);
-                deleteItem.setBackground(new ColorDrawable(Color.RED));
-                deleteItem.setWidth(Utils.dpToPx(80, getActivity()));
-                deleteItem.setIcon(R.drawable.ic_bin);
-                deleteItem.getIcon().setAlpha(60);
-                menu.addMenuItem(deleteItem);
-            }
-        };
-
-        listView.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(int position, SwipeMenu swipeMenu, int index) {
-                MessageStore store = new MessageStore(getActivity(), StorageBase.ENCRYPTION_DEFAULT);
-                MessageStore.Message message = store.getKthMessage(position);
-                boolean updateViewDelayed = false;
-
-                switch (swipeMenu.getMenuItem(index).getId()) {
-                    case upvoteItemId:
-                        double oneAbove = 0;
-                        double twoAbove = 0;
-                        if(position > 0) {
-                            MessageStore.Message aboveMessage = store.getKthMessage(position - 1);
-                            oneAbove = aboveMessage.getPriority();
-                            if(position > 1){
-                                MessageStore.Message twoAboveMessage = store.getKthMessage(position - 2);
-                                twoAbove = twoAboveMessage.getPriority();
-                            }
-                        }
-                        double addedPriority = Math.min(PRIORITY_INCREMENT,
-                                (Math.max(0,oneAbove - message.getPriority())+(Math.max(0,twoAbove-oneAbove))/2));
-                        double newHigherPriority = message.getPriority() + ((addedPriority > 0) ? addedPriority : PRIORITY_INCREMENT);
-                        store.updatePriority(message.getMessage(), newHigherPriority);
-                        updateViewDelayed = true;
-                        break;
-                    case downvoteItemId:
-                        double oneBelow = 0;
-                        double twoBelow = 0;
-                        if(position < store.getMessageCount() -1 ) {
-                            MessageStore.Message belowMessage = store.getKthMessage(position + 1);
-                            oneBelow = belowMessage.getPriority();
-                            if(position < store.getMessageCount() - 2){
-                                MessageStore.Message twoBelowMessage = store.getKthMessage(position + 2);
-                                twoBelow = twoBelowMessage.getPriority();
-                            }
-                        }
-                        double subtractedPriority = Math.min(PRIORITY_INCREMENT,
-                                (Math.max(0,message.getPriority() - oneBelow)+(Math.max(0,oneBelow - twoBelow))/2));
-                        double newLowerPriority = message.getPriority() - ((subtractedPriority > 0) ? subtractedPriority : PRIORITY_INCREMENT);
-                        store.updatePriority(message.getMessage(), newLowerPriority);
-                        updateViewDelayed = true;
-                        break;
-                    case deleteItemId:
-                        store.deleteMessage(message.getMessage());
-                        resetListAdapter();
-                        break;
-                }
-
-                if(updateViewDelayed){
-                    Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            resetListAdapter();
-                        }
-                    }, 360);
-                }
-
-                return false;
-            }
-        });
-
-        listView.setMenuCreator(creator);
-    }
-
-    /** set a feed list adapter to the list */
-    public void resetListAdapter(){
-        mFeedListAdaper = new FeedListAdapter(getActivity());
-        if(listView != null) {
             listView.setAdapter(mFeedListAdaper);
+            mFeedListAdaper.setAdapterCallbacks(new FeedAdapter.FeedAdapterCallbacks() {
+                @Override
+                public void onDelete(final String message) {
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
+                    dialog.setTitle(R.string.confirm_delete_title);
+                    dialog.setMessage(R.string.confirm_delete);
+                    dialog.setIcon(R.drawable.ic_bin);
+                    dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            MessageStore.getInstance(getActivity())
+                                    .removeMessage(message);
+                            //refresh the listView
+                            firstItem = listView.getFirstVisiblePosition();
+                            firstItem = listView.getChildAt(0).getTop();
+                            setQuery(query, keepApperance);
+                        }
+                    });
+                    dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+
+                    dialog.show();
+                }
+
+                @Override
+                public void onDeleteMany(final String message, final float trust, final String pseudonym, final int likes) {
+                    if(deleteManyDialog != null && deleteManyDialog.isShowing()) deleteManyDialog.dismiss();
+                    deleteManyDialog = null;
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
+                    dialog.setTitle(R.string.confirm_delete_many_title);
+                    dialog.setMessage(R.string.confirm_delete_many);
+                    dialog.setIcon(R.drawable.ic_bin);
+                    View contentView = getLayoutInflater(null).inflate(R.layout.delete_many_dialog, null);
+                    contentView.findViewById(R.id.button_same_sender).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            MessageStore.getInstance(getActivity()).deleteBySender(pseudonym);
+                            setQuery(query, false);
+                            if(deleteManyDialog != null) deleteManyDialog.dismiss();
+                            deleteManyDialog = null;
+                        }
+                    });
+                    contentView.findViewById(R.id.button_lower_trust).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            MessageStore.getInstance(getActivity()).deleteByTrust(trust);
+                            setQuery(query, false);
+                            if(deleteManyDialog != null) deleteManyDialog.dismiss();
+                            deleteManyDialog = null;
+                        }
+                    });
+                    contentView.findViewById(R.id.button_lower_likes).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            MessageStore.getInstance(getActivity()).deleteByLikes(likes);
+                            setQuery(query, false);
+                            if(deleteManyDialog != null) deleteManyDialog.dismiss();
+                            deleteManyDialog = null;
+                        }
+                    });
+                    dialog.setView(contentView);
+                    dialog.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+
+                    deleteManyDialog = dialog.show();
+                }
+
+                @Override
+                public void onUpvote(String message, int oldPriority) {
+                    MessageStore.getInstance(getActivity()).likeMessage(
+                            message,
+                            true);
+                    //refresh the listView
+                    firstItem = listView.getFirstVisiblePosition();
+                    firstItem = listView.getChildAt(0).getTop();
+                    setQuery(query, true);
+                }
+
+                @Override
+                public void onDownvote(String message, int oldPriority) {
+                    MessageStore.getInstance(getActivity()).likeMessage(
+                            message,
+                            false);
+                    //refresh the listView
+                    firstItem = listView.getFirstVisiblePosition();
+                    firstItem = listView.getChildAt(0).getTop();
+                    setQuery(query, true);
+                }
+
+                @Override
+                public void onRetweet(String message) {
+                    int priorityChange = 100;
+                    MessageStore.getInstance(getActivity())
+                            .updatePriority(
+                                    message,
+                                    priorityChange);
+                    //refresh the listView
+                    firstItem = listView.getFirstVisiblePosition();
+                    firstItem = listView.getChildAt(0).getTop();
+                    setQuery(query, true);
+                }
+
+                @Override
+                public void onShare(String message) {
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("text/plain");
+                    shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Sent with Rangzen");
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, message);
+                    startActivity(Intent.createChooser(shareIntent, getString(R.string.share_using)));
+                }
+
+                @Override
+                public void onTimeboundClick(String message, long timebound) {
+                    int days = Utils.convertTimestampToRelativeDays(timebound);
+                    Toast.makeText(getActivity(), "Message will expire "+
+                            (days > 0 ?
+                                    "in "+days+" days" : "today"),
+                            Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onNavigate(String message, String latxLon) {
+                    double lat = Double.parseDouble(latxLon.substring(0, latxLon.indexOf("x")));
+                    double lon = Double.parseDouble(latxLon.substring(latxLon.indexOf("x") + 1));
+
+                    Uri gmmIntentUri = Uri.parse("geo:"+lat+","+lon);
+                    Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                    mapIntent.setPackage("com.google.android.apps.maps");
+                    if (mapIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                        startActivity(mapIntent);
+                    }
+
+                }
+            });
+
+            if(keepApperance && listView.getFirstVisiblePosition() > -1) {
+                listView.setSelectionFromTop(position,offset);
+            }
         }
     }
 
     @Override
-    public void refreshView() {
-        resetListAdapter();
+    public void refreshView(Cursor items, boolean retainScroll) {
+        resetListAdapter(items, retainScroll);
+        listView.smoothScrollToPositionFromTop(firstItem, itemOffset, 0);
+    }
+
+    public void setAddButtonVisible(boolean visible){
+        if(addButton != null){
+            addButton.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        }
     }
 }

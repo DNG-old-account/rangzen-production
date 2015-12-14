@@ -7,28 +7,11 @@
     android:orientation="vertical"
     android:padding="20dp" >
 
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:paddingBottom="20dp"
-        android:paddingTop="30dp"
-        android:text="@string/app_name"
-        android:textSize="35sp" />
-
-    <LinearLayout
-        android:id="@+id/linearLayout1"
-        android:layout_width="fill_parent"
-        android:layout_height="1dp"
-        android:background="#d3d3d3"
-        android:orientation="vertical" >
-    </LinearLayout>
-
     <ScrollView
         android:id="@+id/scrollView1"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -52,124 +35,40 @@
                 android:paddingBottom="15dp"
                 android:text="@string/FirstAboutParagraph" />
 
-            <TextView
-                android:id="@+id/firstTitleSecond"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/SecondAboutParagraph" />
-
-            <TextView
-                android:id="@+id/firstTitleThird"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/ThirdAboutParagraph" />
-
-            <TextView
-                android:id="@+id/secondTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/SecondTitleAbout"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/secondTitleFirst"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/FourthAboutParagraph" />
-
-            <TextView
-                android:id="@+id/thirdTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/ThirdTitleAbout"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/thirdTitleFirst"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/FifthParagraphAbout" />
-
-            <TextView
-                android:id="@+id/thirdTitleSecond"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/SixthParagraphAbout" />
-
-            <TextView
-                android:id="@+id/thirdTitleThird"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/SeventhParagraphAbout" />
-
-            <TextView
-                android:id="@+id/fourthTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/FourthTitleAbout"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/fourthTitleFirst"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/EighthParagraphAbout" />
-
-            <TextView
-                android:id="@+id/fourthTitleSecond"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/NinthParagraphAbout" />
-
-            <TextView
-                android:id="@+id/fifthTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/FifthTitleAbout"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/fifthTitleFirst"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/TenthParagraphAbout" />
-
-            <TextView
-                android:id="@+id/sixthTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/SixthTitleAbout"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/sixthTitleFirst"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
-                android:text="@string/EleventhParagraphAbout" />
-
-            <Button
-                android:id="@+id/reportBug"
-                android:layout_gravity="center"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/report_bug" />
-
         </LinearLayout>
     </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="#d3d3d3"
+        android:orientation="vertical" >
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/versionTextView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:text="@string/app_name"
+        android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/reportBug"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/report_bug" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/include_log"
+        android:checked="true"
+        android:layout_gravity="center"
+        android:id="@+id/includeLog"/>
 
 </LinearLayout>

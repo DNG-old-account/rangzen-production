@@ -33,20 +33,22 @@ package org.denovogroup.rangzen.ui;
 
 import com.google.zxing.common.BitMatrix;
 
-import android.app.AlertDialog;
+import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.AsyncTask;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
@@ -56,6 +58,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -63,21 +66,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.backend.MessageStore;
-import org.denovogroup.rangzen.backend.ReadStateTracker;
-import org.denovogroup.rangzen.backend.StorageBase;
+import org.denovogroup.rangzen.backend.*;
+import org.denovogroup.rangzen.backend.SecurityManager;
 
-import java.io.UnsupportedEncodingException;
-import java.util.Properties;
-
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * This class manages the behavior for all of the introductory fragments as well
@@ -91,7 +87,7 @@ public class FragmentOrganizer extends Fragment {
 	private static final String TAG = "FragmentOrganizer";
 
 	enum FragmentType {
-		FIRSTINTRO, SECONDINTRO, THIRDINTRO, SECONDABOUT, TRANSPARENT, POST, QRWrite
+		FIRSTINTRO, SECONDINTRO, THIRDINTRO, SECONDABOUT, TRANSPARENT, QRWrite
 	}
 
 	/**
@@ -138,9 +134,19 @@ public class FragmentOrganizer extends Fragment {
             view5.findViewById(R.id.reportBug).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    reportBug();
+                    boolean includeLog = ((CheckBox) ((View) v.getParent()).findViewById(R.id.includeLog)).isChecked();
+                    reportBug(includeLog);
                 }
             });
+
+            String version = "0.0";
+            try {
+                version = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(),0).versionName +" ("+getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(),0).versionCode+")";
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+            ((TextView) view5.findViewById(R.id.versionTextView)).setText("v"+version);
+
 			return view5;
 
 		case TRANSPARENT:
@@ -149,9 +155,6 @@ public class FragmentOrganizer extends Fragment {
 					container, false);
 			view6.setSoundEffectsEnabled(false);
 			return view6;
-
-		case POST:
-			return post(inflater, container);
 			
 		case QRWrite:
 			return makeQRWrite(inflater, container);
@@ -284,108 +287,6 @@ public class FragmentOrganizer extends Fragment {
 	}
 
 	/**
-	 * This will create the fragment for "create post" page.
-	 * 
-	 * @param inflater
-	 *            LayoutInflater object that creates a java object from xml.
-	 * @param container
-	 *            The parent ViewGroup to the current view.
-	 * @return Completed, formatted view (what the fragment will look like).
-	 */
-	private View post(LayoutInflater inflater, ViewGroup container) {
-		View view7 = inflater.inflate(R.layout.makepost, container, false);
-		EditText messageBox = (EditText) view7.findViewById(R.id.editText1);
-		InputMethodManager imm = (InputMethodManager) getActivity()
-                .getSystemService(Context.INPUT_METHOD_SERVICE);
-		imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,
-                InputMethodManager.HIDE_IMPLICIT_ONLY);
-		Button cancel = (Button) view7.findViewById(R.id.button1);
-		cancel.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                EditText message = (EditText) getActivity().findViewById(
-                        R.id.editText1);
-                message.setText("");
-            }
-        });
-		final Button send = (Button) view7.findViewById(R.id.button2);
-		send.setOnClickListener(new View.OnClickListener() {
-
-            /**
-             * Stores the text of the TextView in the MessageStore with
-             * default priority 1.0f. Displays a Toast upon completion and
-             * exits the Activity.
-             *
-             * @param v
-             *            The view which is clicked - in this case, the Button.
-             */
-            @Override
-            public void onClick(View v) {
-                MessageStore messageStore = new MessageStore(getActivity(),
-                        StorageBase.ENCRYPTION_DEFAULT);
-                String message = ((TextView) getActivity().findViewById(
-                        R.id.editText1)).getText().toString();
-                float priority = 1.0f;
-                messageStore.addMessage(message, priority);
-                Toast.makeText(getActivity(), "Message sent!",
-                        Toast.LENGTH_SHORT).show();
-                ReadStateTracker.setReadState(getActivity().getApplicationContext(), message, false);
-                getActivity().setResult(1);
-                getActivity().finish();
-            }
-
-        });
-        messageBox.addTextChangedListener(new TextWatcher() {
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count,
-                                          int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before,
-                                      int count) {
-                TextView characterCount = (TextView) getActivity()
-                        .findViewById(R.id.characterCount);
-                EditText textBox = (EditText) getActivity().findViewById(
-                        R.id.editText1);
-                characterCount.setText(String.valueOf(140 - textBox.getText()
-                        .length()));
-
-                if(isTextValid(s.toString())){
-                    send.setEnabled(true);
-                    send.setAlpha(1);
-                } else {
-                    send.setEnabled(false);
-                    send.setAlpha(0.5f);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-
-        });
-
-        send.setEnabled(false);
-        send.setAlpha(0.5f);
-
-		return view7;
-	}
-
-    private boolean isTextValid(String text){
-        boolean valid = false;
-        for(char c : text.toCharArray()){
-            if((c != ' ') && (c != '\n')){
-                valid = true;
-                break;
-            }
-        }
-        return valid;
-    }
-
-	/**
 	 * This takes the image, caches it, resizes it and then adds it to the
 	 * relative layout.
 	 * 
@@ -514,98 +415,53 @@ public class FragmentOrganizer extends Fragment {
 	}
 
     /**Open a dialog to send a bug report to dedicated server*/
-    public void reportBug() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(R.string.report_bug);
-
-        final EditText input = new EditText(getActivity());
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        input.setHint(R.string.report_bug_hint);
-        input.setMinEms(2);
-        builder.setView(input);
-        builder.setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if(!input.getText().toString().isEmpty()) {
-                    sendMail(input.getText().toString());
-                    input.clearFocus();
-                }
-                dialog.dismiss();
-            }
-        });
-        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
-        builder.show();
-        input.requestFocus();
-        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+    public void reportBug(boolean includeLog) {
+        openEmailSendingForm(includeLog);
     }
 
-    private void sendMail(String messageBody) {
-        Session session = createSessionObject();
+    private void openEmailSendingForm(boolean includeLog){
+        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "rangzen_dev@denovogroup.org", null));
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback");
+        intent.putExtra(Intent.EXTRA_TEXT, "Dear Rangzen support representative");
 
-        try {
-            Message message = createMessage(messageBody, session);
-            new SendMailTask().execute(message);
-        } catch (AddressException e) {
-            e.printStackTrace();
-        } catch (MessagingException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-    }
 
-    private Session createSessionObject() {
-        Properties properties = new Properties();
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.starttls.enable", "true");
-        properties.put("mail.smtp.host", "smtp.gmail.com");
-        properties.put("mail.smtp.port", "587");
+        if(includeLog) {
+            File log_filename = new File(Environment.getExternalStorageDirectory() + "/device_log.txt");
+            log_filename.delete();
 
-        return Session.getInstance(properties, new javax.mail.Authenticator() {
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication("username", "password");
-            }
-        });
-    }
+            //get device info
+            String userData = "";
 
-    private Message createMessage(String messageBody, Session session) throws MessagingException, UnsupportedEncodingException {
-        Message message = new MimeMessage(session);
-        message.setFrom(new InternetAddress("rangzen_user@denovogroup.com", "Rangzen User"));
-        String recipient = "support@denovogroup.com";
-        message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient, recipient));
-        message.setSubject("Bug report by user");
-        message.setText(messageBody);
-        return message;
-    }
-
-    private class SendMailTask extends AsyncTask<Message, Void, Void> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            Toast.makeText(getActivity(),R.string.sending_bug_report, Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-        }
-
-        @Override
-        protected Void doInBackground(Message... messages) {
             try {
-                Transport.send(messages[0]);
-            } catch (MessagingException e) {
+                PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+                userData += "Application: Ranzgen v" + info.versionName + " (" + info.versionCode + ")\n";
+            } catch (PackageManager.NameNotFoundException e) {
+            }
+
+            userData += "OS version: " + android.os.Build.VERSION.SDK_INT + "\n";
+            userData += "Device: " + android.os.Build.DEVICE + "\n";
+            userData += "Model: " + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")\n";
+
+            try {
+                log_filename.createNewFile();
+                BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
+                writer.write(userData);
+                writer.close();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
-            return null;
+
+            try {
+                //get log from device
+                String cmd = "logcat -d -f" + log_filename.getAbsolutePath();
+                Runtime.getRuntime().exec(cmd);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
         }
+
+        startActivity(Intent.createChooser(intent, "Send mail using..."));
     }
 }

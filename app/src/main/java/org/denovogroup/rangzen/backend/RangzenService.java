@@ -30,8 +30,17 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
+import android.content.ComponentName;
+import android.content.SharedPreferences;
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.content.Context;
@@ -41,8 +50,10 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
 
+import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.objects.RangzenMessage;
-import org.denovogroup.rangzen.ui.RangzenApplication;
+import org.denovogroup.rangzen.ui.Opener;
+import org.denovogroup.rangzen.ui.PreferencesActivity;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -74,6 +85,9 @@ public class RangzenService extends Service {
 
     /** Cancellable scheduling of backgroundTasks. */
     private ScheduledFuture mBackgroundExecution;
+
+    /** Cancellable scheduling of cleanup. */
+    private ScheduledFuture mCleanupExecution;
 
     /** Handle to app's PeerManager. */
     private PeerManager mPeerManager;
@@ -118,10 +132,18 @@ public class RangzenService extends Service {
                             "org.denovogroup.rangzen.LAST_EXCHANGE_TIME_KEY";
 
     /** Time to wait between exchanges, in milliseconds. */
-    private static final int TIME_BETWEEN_EXCHANGES_MILLIS = 10 * 1000;
+    public static int TIME_BETWEEN_EXCHANGES_MILLIS;
 
     /** Android Log Tag. */
     private final static String TAG = "RangzenService";
+
+    private static final int NOTIFICATION_ID = R.string.unread_notification_title;
+    private static final int RENAME_DELAY = 1000;
+    private static final String DUMMY_MAC_ADDRESS = "02:00:00:00:00:00";
+    private static final int BACKOFF_FOR_ATTEMPT_MILLIS = 20 * 1000;
+    private static final int BACKOFF_MAX = BACKOFF_FOR_ATTEMPT_MILLIS * 6;
+
+    private static final boolean USE_MINIMAL_LOGGING = true;
 
     /**
      * Called whenever the service is requested to start. If the service is
@@ -165,7 +187,7 @@ public class RangzenService extends Service {
         mStartTime = new Date();
 
         mStore = new StorageBase(this, StorageBase.ENCRYPTION_DEFAULT);
-        mFriendStore = new FriendStore(this, StorageBase.ENCRYPTION_DEFAULT);
+        mFriendStore = FriendStore.getInstance(this);
 
         // Used for a live test.
         // TODO(lerner): Remove this after real tests for cryptographic exchange exist.
@@ -179,11 +201,9 @@ public class RangzenService extends Service {
                                                    mBluetoothSpeaker,
                                                    new WifiDirectFrameworkGetter());
 
-        mMessageStore = new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT);
+        mMessageStore = MessageStore.getInstance(this);
 
-
-        String btAddress = mBluetoothSpeaker.getAddress();
-        mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
+        setWifiDirectFriendlyName();
         mWifiDirectSpeaker.setmSeekingDesired(true);
 
         // Schedule the background task thread to run occasionally.
@@ -195,6 +215,15 @@ public class RangzenService extends Service {
                 backgroundTasks();
             }
         }, 0, 1, TimeUnit.SECONDS);
+
+        mCleanupExecution = mScheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                cleanupMessageStore();
+            }
+        }, 0, 1, TimeUnit.DAYS);
+
+        TIME_BETWEEN_EXCHANGES_MILLIS = SecurityManager.getCurrentProfile(this).getCooldown() * 1000;
     }
 
     /**
@@ -202,7 +231,14 @@ public class RangzenService extends Service {
      */
     public void onDestroy() {
       mBackgroundExecution.cancel(true);
-      return;
+        SharedPreferences pref = getSharedPreferences(PreferencesActivity.PREF_FILE, Context.MODE_PRIVATE);
+        if(pref.contains(PreferencesActivity.WIFI_NAME) && mWifiDirectSpeaker != null){
+            Log.d(TAG, "Restoring wifi name");
+            mWifiDirectSpeaker.setWifiDirectUserFriendlyName(pref.getString(PreferencesActivity.WIFI_NAME, ""));
+        }
+
+        mWifiDirectSpeaker.dismissNoWifiNotification();
+        mBluetoothSpeaker.dismissNoBluetoothNotification();
     }
 
 
@@ -217,7 +253,7 @@ public class RangzenService extends Service {
       long now = System.currentTimeMillis();
       long lastExchangeMillis = mStore.getLong(LAST_EXCHANGE_TIME_KEY, -1);
 
-      boolean timeSinceLastOK;
+        boolean timeSinceLastOK;
       if (lastExchangeMillis == -1) {
         timeSinceLastOK = true;
       } else if (now - lastExchangeMillis < TIME_BETWEEN_EXCHANGES_MILLIS) {
@@ -225,9 +261,11 @@ public class RangzenService extends Service {
       } else {
         timeSinceLastOK = true;
       }
-      Log.v(TAG, "Ready to connect? " + (timeSinceLastOK && !getConnecting()));
-      Log.v(TAG, "Connecting: " + getConnecting());
-      Log.v(TAG, "timeSinceLastOK: " + timeSinceLastOK);
+        if(!USE_MINIMAL_LOGGING) {
+            Log.v(TAG, "Ready to connect? " + (timeSinceLastOK && !getConnecting()));
+            Log.v(TAG, "Connecting: " + getConnecting());
+            Log.v(TAG, "timeSinceLastOK: " + timeSinceLastOK);
+        }
       return timeSinceLastOK && !getConnecting(); 
     }
 
@@ -235,7 +273,7 @@ public class RangzenService extends Service {
      * Set the time of the last exchange, kept in storage, to the current time.
      */
     private void setLastExchangeTime() {
-      Log.i(TAG, "Setting last exchange time");
+        if(!USE_MINIMAL_LOGGING) Log.i(TAG, "Setting last exchange time");
       long now = System.currentTimeMillis();
       mStore.putLong(LAST_EXCHANGE_TIME_KEY, now);
     }
@@ -245,8 +283,11 @@ public class RangzenService extends Service {
      * background tasks.
      */
     public void backgroundTasks() {
-        Log.v(TAG, "Background Tasks Started");
+        if(!USE_MINIMAL_LOGGING) Log.v(TAG, "Background Tasks Started");
 
+        if(isAppInForeground()){
+            cancelUnreadMessagesNotification();
+        }
         // TODO(lerner): Why not just use mPeerManager?
         PeerManager peerManager = PeerManager.getInstance(getApplicationContext());
         peerManager.tasks();
@@ -260,11 +301,30 @@ public class RangzenService extends Service {
           Peer peer = peers.get(mRandom.nextInt(peers.size()));
           try {
             if (peerManager.thisDeviceSpeaksTo(peer)) {
-              // Connect to the peer, starting an exchange with the peer once
-              // connected. We only do this if thisDeviceSpeaksTo(peer), which
-              // checks whether we initiate conversations with this peer or
-              // it initiates with us (a function of our respective addresses).
-              connectTo(peer);
+                // Connect to the peer, starting an exchange with the peer once
+                // connected. We only do this if thisDeviceSpeaksTo(peer), which
+                // checks whether we initiate conversations with this peer or
+                // it initiates with us (a function of our respective addresses).
+
+
+                //optimize connection using history tracker
+                ExchangeHistoryTracker.ExchangeHistoryItem historyItem = ExchangeHistoryTracker.getInstance().getHistoryItem(peer.address);
+                boolean hasHistory = historyItem != null;
+                boolean storeVersionChanged = false;
+                boolean waitedMuch = false;
+
+                if(hasHistory) {
+                    storeVersionChanged = !historyItem.storeVersion.equals(MessageStore.getInstance(RangzenService.this).getStoreVersion());
+                    waitedMuch = historyItem.lastExchangeTime + Math.min(historyItem.attempts * BACKOFF_FOR_ATTEMPT_MILLIS, BACKOFF_MAX) < System.currentTimeMillis();
+                }
+
+                if(!hasHistory || storeVersionChanged || waitedMuch){
+                    Log.d(TAG,"Can connect with peer: "+peer);
+                    connectTo(peer);
+                } else {
+                    Log.d(TAG,"Backoff from peer: "+peer+
+                            " [previously interacted:"+hasHistory+", store ready:"+storeVersionChanged+" ,backoff timeout:"+waitedMuch+"]");
+                }
             }
           } catch (NoSuchAlgorithmException e) {
             Log.e(TAG, "No such algorithm for hashing in thisDeviceSpeaksTo!? " + e);
@@ -323,11 +383,13 @@ public class RangzenService extends Service {
           Log.i(TAG, "Socket connected, attempting exchange");
           try {
             mExchange = new CryptographicExchange(
+                    RangzenService.this,
+                    socket.getRemoteDevice().getAddress(),
                 socket.getInputStream(),
                 socket.getOutputStream(),
                 true,
-                new FriendStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT),
-                new MessageStore(RangzenService.this, StorageBase.ENCRYPTION_DEFAULT),
+                FriendStore.getInstance(RangzenService.this),
+                MessageStore.getInstance(RangzenService.this),
                 RangzenService.this.mExchangeCallback);
             (new Thread(mExchange)).start();
           } catch (IOException e) {
@@ -384,30 +446,56 @@ public class RangzenService extends Service {
     /* package */ ExchangeCallback mExchangeCallback = new ExchangeCallback() {
       @Override
       public void success(Exchange exchange) {
+          boolean hasNew = false;
         List<RangzenMessage> newMessages = exchange.getReceivedMessages();
         int friendOverlap = exchange.getCommonFriends();
         Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
         Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
-        for (RangzenMessage message : newMessages) {
           Set<String> myFriends = mFriendStore.getAllFriends();
-          double stored = mMessageStore.getPriority(message.text);
-          double remote = message.priority;
-          double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
+        for (RangzenMessage message : newMessages) {
+          double stored = mMessageStore.getTrust(message.text);
+          double remote = message.trust;
+          double newTrust = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
           try {
-            if (mMessageStore.contains(message.text)) {
-              mMessageStore.updatePriority(message.text, newPriority);
+            if (mMessageStore.containsOrRemoved(message.text)){
+                //update existing message priority unless its marked as removed by user
+                mMessageStore.updateTrust(message.text, newTrust, true);
             } else {
-              mMessageStore.addMessage(message.text, newPriority);
+                hasNew = true;
+
+                mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation());
                 //mark this message as unread
-                ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
+                mMessageStore.setRead(message.text, false);
             }
           } catch (IllegalArgumentException e) {
-            Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
+            Log.e(TAG, String.format("Attempted to add/update message %s with trust (%f/%f)" +
                                     ", %d friends, %d friends in common",
-                                    message.text, newPriority, message.priority, 
+                                    message.text, newTrust, message.priority,
                                     myFriends.size(), friendOverlap));
           }
         }
+
+          if(hasNew){
+              mMessageStore.updateStoreVersion();
+              ExchangeHistoryTracker.getInstance().updateHistory(RangzenService.this, exchange.getPeerAddress());
+              if(isAppInForeground()) {
+                  Intent intent = new Intent();
+                  intent.setAction(MessageStore.NEW_MESSAGE);
+                  getApplicationContext().sendBroadcast(intent);
+              } else {
+                  showUnreadMessagesNotification();
+              }
+          } else if(ExchangeHistoryTracker.getInstance().getHistoryItem(exchange.getPeerAddress()) != null){
+              // Has history, should increment the attempts counter
+              ExchangeHistoryTracker.getInstance().updateAttemptsHistory(exchange.getPeerAddress());
+              Log.d(TAG,"Exchange finished without receiving new messages, back-off timeout increased to:"+
+                    Math.min(BACKOFF_MAX , BACKOFF_FOR_ATTEMPT_MILLIS*ExchangeHistoryTracker.getInstance().getHistoryItem(exchange.getPeerAddress()).attempts));
+          } else {
+              // No history file, create one
+              Log.d(TAG, "Exchange finished without receiving new messages from new peer, creating history track");
+              ExchangeHistoryTracker.getInstance().updateHistory(RangzenService.this, exchange.getPeerAddress());
+          }
+
         RangzenService.this.cleanupAfterExchange();
       }
 
@@ -420,6 +508,7 @@ public class RangzenService extends Service {
         @Override
         public void recover(Exchange exchange, String reason) {
             Log.e(TAG, "Exchange failed but data can be recovered, reason: " + reason);
+            boolean hasNew = false;
             List<RangzenMessage> newMessages = exchange.getReceivedMessages();
             int friendOverlap = Math.max(exchange.getCommonFriends(), 0);
             Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
@@ -427,25 +516,42 @@ public class RangzenService extends Service {
             if(newMessages != null) {
                 for (RangzenMessage message : newMessages) {
                     Set<String> myFriends = mFriendStore.getAllFriends();
-                    double stored = mMessageStore.getPriority(message.text);
+                    double stored = mMessageStore.getTrust(message.text);
                     double remote = message.priority;
-                    double newPriority = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
+                    double newTrust = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
                     try {
-                        if (mMessageStore.contains(message.text)) {
-                            mMessageStore.updatePriority(message.text, newPriority);
+                        if (mMessageStore.containsOrRemoved(message.text)){
+                            //update existing message priority unless its marked as removed by user
+                            mMessageStore.updateTrust(message.text, newTrust, true);
                         } else {
-                            mMessageStore.addMessage(message.text, newPriority);
+                            hasNew = true;
+                            mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation());
                             //mark this message as unread
-                            ReadStateTracker.setReadState(getApplicationContext(), message.text, false);
+                            mMessageStore.setRead(message.text, false);
                         }
                     } catch (IllegalArgumentException e) {
-                        Log.e(TAG, String.format("Attempted to add/update message %s with priority (%f/%f)" +
+                        Log.e(TAG, String.format("Attempted to add/update message %s with trust (%f/%f)" +
                                         ", %d friends, %d friends in common",
-                                message.text, newPriority, message.priority,
+                                message.text, newTrust, message.priority,
                                 myFriends.size(), friendOverlap));
                     }
                 }
             }
+
+            if(hasNew){
+                mMessageStore.updateStoreVersion();
+                ExchangeHistoryTracker.getInstance().updateHistory(RangzenService.this, exchange.getPeerAddress());
+                if(isAppInForeground()) {
+                    Intent intent = new Intent();
+                    intent.setAction(MessageStore.NEW_MESSAGE);
+                    getApplicationContext().sendBroadcast(intent);
+                } else {
+                    showUnreadMessagesNotification();
+                }
+            } else {
+                ExchangeHistoryTracker.getInstance().updateAttemptsHistory(exchange.getPeerAddress());
+            }
+
             RangzenService.this.cleanupAfterExchange();
         }
     };
@@ -524,5 +630,75 @@ public class RangzenService extends Service {
     public IBinder onBind(Intent intent) {
         // This service is not meant to be used through binding.
         return null;
+    }
+
+    /** This method check how many unread messages there are and display a notification
+     * visible from the recent task pull down menu. this method should be called only
+     * be called when the app itself is either closed or in the background.
+     */
+    private void showUnreadMessagesNotification() {
+        Intent intent = new Intent(this, Opener.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this , 0, intent,PendingIntent.FLAG_CANCEL_CURRENT);
+
+        Notification.Builder builder = new Notification.Builder(getApplicationContext());
+        builder.setContentIntent(pendingIntent);
+        builder.setContentTitle(getString(R.string.unread_notification_title));
+        builder.setContentText(MessageStore.getInstance(this).getUnreadCount() + " " + getString(R.string.unread_notification_content));
+        builder.setSmallIcon(R.drawable.ic_launcher);
+        builder.setAutoCancel(true);
+        builder.setTicker(getText(R.string.unread_notification_content));
+        builder.setDefaults(Notification.DEFAULT_SOUND);
+
+        NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        nManager.notify(NOTIFICATION_ID, builder.build());
+    }
+
+    public void cancelUnreadMessagesNotification(){
+        NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        nManager.cancel(NOTIFICATION_ID);
+    }
+
+    /** Check if the app have a living instance in the foreground
+     *
+     * @return true if the app is active and in the foreground, false otherwise
+     */
+    public boolean isAppInForeground() {
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
+        ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
+        return componentInfo.getPackageName().contains("org.denovogroup.rangzen");
+    }
+
+    /** retrieve the bluetooth MAC address from the bluetooth speaker and set the WifiDirectSpeaker
+     * friendly name accordingly.
+     */
+    private void setWifiDirectFriendlyName(){
+        String btAddress = mBluetoothSpeaker.getAddress();
+        if(mWifiDirectSpeaker != null) {
+
+            SharedPreferences pref = getSharedPreferences(PreferencesActivity.PREF_FILE, Context.MODE_PRIVATE);
+            if(!pref.contains(PreferencesActivity.WIFI_NAME)){
+                String oldName = BluetoothAdapter.getDefaultAdapter().getName();
+                pref.edit().putString(PreferencesActivity.WIFI_NAME, oldName).commit();
+            }
+
+            mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
+            if (mBluetoothSpeaker.getAddress().equals(DUMMY_MAC_ADDRESS)) {
+                Log.w(TAG, "Bluetooth speaker provided a dummy bluetooth" +
+                        " MAC address (" + DUMMY_MAC_ADDRESS + ") scheduling device name change.");
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        setWifiDirectFriendlyName();
+                    }
+                }, RENAME_DELAY);
+            }
+        }
+    }
+
+    private void cleanupMessageStore(){
+        SecurityProfile currentProfile = SecurityManager.getCurrentProfile(this);
+            MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile);
     }
 }

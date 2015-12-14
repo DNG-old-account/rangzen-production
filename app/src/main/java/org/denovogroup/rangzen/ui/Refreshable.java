@@ -1,5 +1,7 @@
 package org.denovogroup.rangzen.ui;
 
+import android.database.Cursor;
+
 /**
  * Created by Liran on 9/12/2015.
  *
@@ -7,5 +9,5 @@ package org.denovogroup.rangzen.ui;
  */
 public interface Refreshable  {
 
-    public void refreshView();
+    public void refreshView(Cursor items, boolean retainScroll);
 }

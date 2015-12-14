@@ -16,14 +16,14 @@ import static com.squareup.wire.Message.Label.REPEATED;
  */
 public final class ClientMessage extends Message {
 
-  public static final List<RangzenMessage> DEFAULT_MESSAGES = Collections.emptyList();
+  public static final List<JSONMessage> DEFAULT_MESSAGES = Collections.emptyList();
   public static final List<ByteString> DEFAULT_BLINDEDFRIENDS = Collections.emptyList();
 
   /**
    * The client's messages to propagate.
    */
   @ProtoField(tag = 1, label = REPEATED)
-  public final List<RangzenMessage> messages;
+  public final List<JSONMessage> messages;
 
   /**
    * The client's friends, blinded.
@@ -31,7 +31,7 @@ public final class ClientMessage extends Message {
   @ProtoField(tag = 2, type = BYTES, label = REPEATED)
   public final List<ByteString> blindedFriends;
 
-  public ClientMessage(List<RangzenMessage> messages, List<ByteString> blindedFriends) {
+  public ClientMessage(List<JSONMessage> messages, List<ByteString> blindedFriends) {
     this.messages = immutableCopyOf(messages);
     this.blindedFriends = immutableCopyOf(blindedFriends);
   }
@@ -63,7 +63,7 @@ public final class ClientMessage extends Message {
 
   public static final class Builder extends Message.Builder<ClientMessage> {
 
-    public List<RangzenMessage> messages;
+    public List<JSONMessage> messages;
     public List<ByteString> blindedFriends;
 
     public Builder() {
@@ -79,7 +79,7 @@ public final class ClientMessage extends Message {
     /**
      * The client's messages to propagate.
      */
-    public Builder messages(List<RangzenMessage> messages) {
+    public Builder messages(List<JSONMessage> messages) {
       this.messages = checkForNulls(messages);
       return this;
     }

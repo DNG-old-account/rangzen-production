@@ -106,8 +106,8 @@ public class SlidingPageIndicator extends FragmentActivity {
         super.onCreate(savedInstanceState);
 
         if (!fileExists(FILENAME)) {
-          FriendStore store = new FriendStore(this, StorageBase.ENCRYPTION_DEFAULT);
-          String publicID = store.getPublicDeviceIDString();
+          FriendStore store = FriendStore.getInstance(this);
+          String publicID = store.getPublicDeviceIDString(this, StorageBase.ENCRYPTION_NONE);
           if (publicID != null) {
             new CreateQRCode().execute(QR_FRIENDING_SCHEME + publicID);
           } else {
