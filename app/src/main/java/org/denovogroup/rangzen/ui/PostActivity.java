@@ -15,6 +15,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,17 +33,20 @@ import org.denovogroup.rangzen.backend.SecurityManager;
 
 import java.util.Calendar;
 import java.util.List;
+import java.util.Random;
 
 /** This activity crates the message sending page. It also handles back button. */
 public class PostActivity extends ActionBarActivity {
 
     public static final String MESSAGE_BODY = "MESSAGE_BODY";
+    public static final String MESSAGE_PARENT = "MESSAGE_PARENT";
 
     MenuItem characterCounter;
 
     private int maxChars = 140;
     private EditText messageBox;
     String messageBody = "";
+    String messageParent = null;
     private long timebound = -1;
 
     Button timeboundButton;
@@ -91,6 +95,11 @@ public class PostActivity extends ActionBarActivity {
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle("New Post");
+
+        if(getIntent().hasExtra(MESSAGE_PARENT)){
+            messageParent = getIntent().getStringExtra(MESSAGE_PARENT);
+            getSupportActionBar().setTitle("Reply");
+        }
 
         messageBox = (EditText) findViewById(R.id.editText1);
 
@@ -216,11 +225,17 @@ public class PostActivity extends ActionBarActivity {
                     }
                 }
 
-                messageStore.addMessage(messageBody, trust, priority, pseudonym, timestamp, true, timebound, myLocation);
+                Random random = new Random();
+                long idLong = System.nanoTime()*(1+random.nextInt());
+                String messageId = Base64.encodeToString(Crypto.encodeString(String.valueOf(idLong)), Base64.NO_WRAP);
+
+
+                messageStore.addMessage(messageId, messageBody, trust, priority, pseudonym, timestamp, true, timebound, myLocation, messageParent);
                 Toast.makeText(PostActivity.this, "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 ExchangeHistoryTracker.getInstance().cleanHistory(null);
                 MessageStore.getInstance(PostActivity.this).updateStoreVersion();
+
                 PostActivity.this.setResult(Activity.RESULT_OK);
                 PostActivity.this.finish();
             }

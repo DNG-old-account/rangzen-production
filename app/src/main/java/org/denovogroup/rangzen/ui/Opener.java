@@ -108,7 +108,7 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
     // Set When broadcast event will fire.
     private IntentFilter filter = new IntentFilter(MessageStore.NEW_MESSAGE);
 
-    private final static int Message = 20;
+    public final static int Message = 20;
     private final static int Search = 30;
 
     /** Initialize the contents of the activities menu. */

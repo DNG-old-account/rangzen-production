@@ -109,7 +109,7 @@ public class ProfileSettingsFragment extends Fragment implements TextView.OnEdit
         AsyncTask<Void, Void, Boolean> exportTask = new AsyncTask<Void, Void, Boolean>() {
             @Override
             protected Boolean doInBackground(Void... params) {
-                Cursor cursor = MessageStore.getInstance(getActivity()).getMessagesCursor(false, 1000);
+                Cursor cursor = MessageStore.getInstance(getActivity()).getMessagesCursor(false, false,1000);
                 cursor.moveToFirst();
 
                 int messageColIndex = cursor.getColumnIndex(MessageStore.COL_MESSAGE);

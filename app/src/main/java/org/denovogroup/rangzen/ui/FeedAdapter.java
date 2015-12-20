@@ -2,12 +2,14 @@ package org.denovogroup.rangzen.ui;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -28,6 +30,8 @@ public class FeedAdapter extends CursorAdapter {
     private int timebound_colIndex;
     private int read_colIndex;
     private int location_colIndex;
+    private int parent_colIndex;
+    private int messageId_colIndex;
 
     private SecurityProfile currentProfile;
 
@@ -39,6 +43,8 @@ public class FeedAdapter extends CursorAdapter {
     private FeedAdapterCallbacks callbacks;
 
     private ListView listView;
+    private Context context;
+    int resourceId = -1;
 
     public interface FeedAdapterCallbacks{
         void onDelete(String message);
@@ -49,19 +55,27 @@ public class FeedAdapter extends CursorAdapter {
         void onShare(String message);
         void onTimeboundClick(String message, long timebound);
         void onNavigate(String message, String latxLon);
+        void onReply(String messageId);
+    }
+
+    public FeedAdapter(Context context, Cursor c, boolean autoRequery, int resourceId) {
+        super(context, c, autoRequery);
+        init(context, c, resourceId);
     }
 
     public FeedAdapter(Context context, Cursor c, boolean autoRequery) {
         super(context, c, autoRequery);
-        init(context, c);
+        init(context, c, -1);
     }
 
     public FeedAdapter(Context context, Cursor c, int flags) {
         super(context, c, flags);
-        init(context, c);
+        init(context, c, -1);
     }
 
-    private void init(Context context,Cursor cursor){
+    private void init(Context context,Cursor cursor, int resourceId){
+        this.context = context;
+        this.resourceId = resourceId == -1 ? R.layout.feed_item : resourceId;
         text_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_MESSAGE);
         trust_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_TRUST);
         priority_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_LIKES);
@@ -72,6 +86,8 @@ public class FeedAdapter extends CursorAdapter {
         timebound_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_EXPIRE);
         location_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_LATLONG);
         currentProfile = org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(context);
+        parent_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_PARENT);
+        messageId_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_MESSAGE_ID);
     }
 
     @Override
@@ -79,7 +95,7 @@ public class FeedAdapter extends CursorAdapter {
         listView = (ListView) parent;
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View convertView = inflater.inflate(R.layout.feed_item, parent, false);
+        View convertView = inflater.inflate(resourceId, parent, false);
 
         mViewHolder = new ViewHolder();
         mViewHolder.mPriorityView = (TextView) convertView
@@ -106,6 +122,10 @@ public class FeedAdapter extends CursorAdapter {
                 .findViewById(R.id.timebound_marker);
         mViewHolder.btn_navigate = (ImageButton) convertView
                 .findViewById(R.id.item_navigate);
+        mViewHolder.btn_reply = (ImageButton) convertView
+                .findViewById(R.id.item_reply);
+        mViewHolder.comments_holder = (ListView) convertView
+                .findViewById(R.id.comments_holder);
         convertView.setTag(mViewHolder);
         return convertView;
     }
@@ -119,8 +139,10 @@ public class FeedAdapter extends CursorAdapter {
     private void setProperties(View view, ViewHolder viewHolder, Cursor cursor){
 
         boolean isRead = cursor.getInt(read_colIndex) == MessageStore.TRUE;
+        boolean isComment = cursor.getString(parent_colIndex) != null;
 
-        view.setBackgroundResource(isRead ? R.drawable.feed_item_background_gradient : R.drawable.feed_item_background_gradient_unread);
+        //view.setBackgroundResource(isRead ? R.drawable.feed_item_background_gradient : R.drawable.feed_item_background_gradient_unread);
+        //view.setBackgroundResource(isComment ? R.drawable.feed_item_comment_background_gradient : R.drawable.feed_item_background_gradient);
 
         viewHolder.mPriorityView.setText(cursor.getString(priority_colIndex));
         viewHolder.mTrustView.setText(String.valueOf(cursor.getFloat(trust_colIndex) * 100));
@@ -159,6 +181,7 @@ public class FeedAdapter extends CursorAdapter {
                 int priority = getCursor().getInt(priority_colIndex);
                 long timebound = getCursor().getLong(timebound_colIndex);
                 String location = getCursor().getString(location_colIndex);
+                String messageId = getCursor().getString(messageId_colIndex);
 
                 getCursor().moveToPosition(cursorPosition);
 
@@ -183,6 +206,9 @@ public class FeedAdapter extends CursorAdapter {
                         break;
                     case R.id.item_navigate:
                         if(callbacks != null) callbacks.onNavigate(message, location);
+                        break;
+                    case R.id.item_reply:
+                        if(callbacks != null) callbacks.onReply(messageId);
                         break;
                 }
             }
@@ -242,7 +268,21 @@ public class FeedAdapter extends CursorAdapter {
         viewHolder.timebound_marker.setOnClickListener(clickListener);
         viewHolder.timebound_marker.setVisibility(isTimebound ? View.VISIBLE : View.GONE);
         viewHolder.btn_navigate.setOnClickListener(clickListener);
-        viewHolder.btn_navigate.setVisibility(hasLocation ? View.VISIBLE : View.GONE );
+        viewHolder.btn_navigate.setVisibility(hasLocation ? View.VISIBLE : View.GONE);
+        if(viewHolder.btn_reply != null) viewHolder.btn_reply.setOnClickListener(clickListener);
+
+        if(viewHolder.comments_holder != null) {
+            if (!isComment) {
+                Cursor commentsCursor = MessageStore.getInstance().getComments(cursor.getString(messageId_colIndex));
+                if (commentsCursor != null && commentsCursor.getCount() > 0) {
+                    viewHolder.comments_holder.setAdapter(new FeedAdapter(context, commentsCursor, false, R.layout.feed_item_comment));
+                } else {
+                    viewHolder.comments_holder.setAdapter(null);
+                }
+            } else {
+                viewHolder.comments_holder.setAdapter(null);
+            }
+        }
     }
 
     /**
@@ -297,6 +337,14 @@ public class FeedAdapter extends CursorAdapter {
          * The view object that act as navigate button.
          */
         private ImageButton btn_navigate;
+        /**
+         * The view object that act as reply button.
+         */
+        private ImageButton btn_reply;
+        /**
+         * The view object that act as navigate button.
+         */
+        private ListView comments_holder;
     }
 
     public void setAdapterCallbacks(FeedAdapterCallbacks callbacks){

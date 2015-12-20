@@ -116,10 +116,10 @@ public class FeedFragment extends Fragment implements Refreshable{
 
                 Cursor cursor = (sqlQuery != null) ?
                         store.getMessagesByQuery(sqlQuery) :
-                        store.getMessagesContainingCursor(params[0], false, -1);
+                        store.getMessagesContainingCursor(params[0],false, true, -1);
 
                 if(cursor == null){
-                    cursor = store.getMessagesContainingCursor("", false, -1);
+                    cursor = store.getMessagesContainingCursor("", false, false, -1);
                 }
 
                 return cursor;
@@ -160,7 +160,7 @@ public class FeedFragment extends Fragment implements Refreshable{
     public void resetListAdapter(Cursor items, final Boolean keepApperance) {
 
         if(items == null) {
-            items = MessageStore.getInstance(getActivity()).getMessagesCursor(false, 500);
+            items = MessageStore.getInstance(getActivity()).getMessagesCursor(false, false, 500);
         }
 
         mFeedListAdaper = new FeedAdapter(getActivity(), items, false);
@@ -211,7 +211,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                         public void onClick(View v) {
                             MessageStore.getInstance(getActivity()).deleteBySender(pseudonym);
                             setQuery(query, false);
-                            if(deleteManyDialog != null) deleteManyDialog.dismiss();
+                            if (deleteManyDialog != null) deleteManyDialog.dismiss();
                             deleteManyDialog = null;
                         }
                     });
@@ -220,7 +220,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                         public void onClick(View v) {
                             MessageStore.getInstance(getActivity()).deleteByTrust(trust);
                             setQuery(query, false);
-                            if(deleteManyDialog != null) deleteManyDialog.dismiss();
+                            if (deleteManyDialog != null) deleteManyDialog.dismiss();
                             deleteManyDialog = null;
                         }
                     });
@@ -229,7 +229,7 @@ public class FeedFragment extends Fragment implements Refreshable{
                         public void onClick(View v) {
                             MessageStore.getInstance(getActivity()).deleteByLikes(likes);
                             setQuery(query, false);
-                            if(deleteManyDialog != null) deleteManyDialog.dismiss();
+                            if (deleteManyDialog != null) deleteManyDialog.dismiss();
                             deleteManyDialog = null;
                         }
                     });
@@ -268,15 +268,16 @@ public class FeedFragment extends Fragment implements Refreshable{
 
                 @Override
                 public void onRetweet(String message) {
-                    int priorityChange = 100;
-                    MessageStore.getInstance(getActivity())
-                            .updatePriority(
-                                    message,
-                                    priorityChange);
-                    //refresh the listView
-                    firstItem = listView.getFirstVisiblePosition();
-                    firstItem = listView.getChildAt(0).getTop();
-                    setQuery(query, true);
+                    Intent intent = new Intent(getActivity(), PostActivity.class);
+                    intent.putExtra(PostActivity.MESSAGE_BODY, message);
+                    startActivityForResult(intent, Opener.Message);
+                }
+
+                @Override
+                public void onReply(String parentId) {
+                    Intent intent = new Intent(getActivity(), PostActivity.class);
+                    intent.putExtra(PostActivity.MESSAGE_PARENT, parentId);
+                    startActivityForResult(intent, Opener.Message);
                 }
 
                 @Override

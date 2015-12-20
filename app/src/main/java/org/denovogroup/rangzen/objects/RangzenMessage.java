@@ -33,56 +33,71 @@ public final class RangzenMessage extends Message {
     public static final int DEFAULT_PRIORITY = 0;
     public static final String DEFAULT_PSEUDONYM = "";
 
+    public static final String MESSAGE_ID_KEY = "messageId";
     public static final String TEXT_KEY = "text";
     public static final String TRUST_KEY = "trust";
     public static final String PRIORITY_KEY = "priority";
     public static final String PSEUDONYM_KEY = "pseudonym";
     public static final String LATLONG_KEY = "latlang";
     public static final String TIMEBOUND_KEY = "timebound";
+    public static final String PARENT_KEY = "parent";
+
+    /**
+     * The message's id, as a String.
+     */
+    @ProtoField(tag = 1, type = STRING, label = REQUIRED)
+    public final String messageid;
 
   /**
    * The message's text, as a String.
    */
-  @ProtoField(tag = 1, type = STRING, label = REQUIRED)
+  @ProtoField(tag = 2, type = STRING, label = REQUIRED)
   public final String text;
 
   /**
    * The message's trust, as a double.
    */
-  @ProtoField(tag = 2, type = DOUBLE, label = REQUIRED)
+  @ProtoField(tag = 3, type = DOUBLE, label = REQUIRED)
   public final Double trust;
 
     /**
      * The message's priority, as a double.
      */
-    @ProtoField(tag = 3, type = INT32, label = OPTIONAL)
+    @ProtoField(tag = 4, type = INT32, label = OPTIONAL)
     public final Integer priority;
 
     /**
      * The message's sender name, as a String.
      */
-    @ProtoField(tag = 4, type = STRING, label = OPTIONAL)
+    @ProtoField(tag = 5, type = STRING, label = OPTIONAL)
     public final String pseudonym;
 
     /**
      * The message's timestamp, as a long.
      */
-    @ProtoField(tag = 5, type = INT64, label = OPTIONAL)
+    @ProtoField(tag = 6, type = INT64, label = OPTIONAL)
     public final long timestamp;
 
     /**
      * The message's location, as a long.
      */
-    @ProtoField(tag = 6, type = STRING, label = OPTIONAL)
+    @ProtoField(tag = 7, type = STRING, label = OPTIONAL)
     public final String latlong;
 
     /**
      * The message's timestamp, as a long.
      */
-    @ProtoField(tag = 7, type = INT64, label = OPTIONAL)
+    @ProtoField(tag = 8, type = INT64, label = OPTIONAL)
     public final long timebound;
 
-  public RangzenMessage(String text, Double trust, Integer priority, String pseudonym, long timestamp, String latlong, long timebound) {
+    /**
+     * The message's parent message id, as a long.
+     */
+    @ProtoField(tag = 9, type = STRING, label = OPTIONAL)
+    public final String parent;
+
+  public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, long timestamp, String latlong, long timebound, String parent) {
+      this.messageid = messageid;
     this.text = text;
     this.trust = trust;
     this.priority = priority;
@@ -90,9 +105,11 @@ public final class RangzenMessage extends Message {
       this.timestamp = timestamp;
       this.latlong = latlong;
       this.timebound = timebound;
+      this.parent = parent;
   }
 
-    public RangzenMessage(String text, Double trust, Integer priority, String pseudonym, String latlong, long timebound) {
+    public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, String latlong, long timebound, String parent) {
+        this.messageid = messageid;
         this.text = text;
         this.trust = trust;
         this.priority = priority;
@@ -100,9 +117,11 @@ public final class RangzenMessage extends Message {
         this.timestamp = 0;
         this.latlong = latlong;
         this.timebound = timebound;
+        this.parent = parent;
     }
 
-    public RangzenMessage(String text, Double trust) {
+    public RangzenMessage(String messageid, String text, Double trust) {
+        this.messageid = messageid;
         this.text = text;
         this.trust = trust;
         this.priority = DEFAULT_PRIORITY;
@@ -110,10 +129,11 @@ public final class RangzenMessage extends Message {
         this.timestamp = 0;
         this.latlong = null;
         this.timebound = -1;
+        this.parent = null;
     }
 
   private RangzenMessage(Builder builder) {
-    this(builder.text, builder.trust, builder.priority, builder.pseudonym, builder.timestamp, builder.latlong, builder.timebound);
+    this(builder.messageId, builder.text, builder.trust, builder.priority, builder.pseudonym, builder.timestamp, builder.latlong, builder.timebound, builder.parent);
     setBuilder(builder);
   }
 
@@ -124,6 +144,7 @@ public final class RangzenMessage extends Message {
         Calendar currentTime = Utils.reduceCalendar(Calendar.getInstance());
 
         return new RangzenMessage(
+                json.optString(MESSAGE_ID_KEY, DEFAULT_TEXT),
                 json.optString(TEXT_KEY, DEFAULT_TEXT),
                 json.optDouble(TRUST_KEY,DEFAULT_TRUST),
                 json.optInt(PRIORITY_KEY, DEFAULT_PRIORITY),
@@ -132,7 +153,8 @@ public final class RangzenMessage extends Message {
                         currentTime.getTimeInMillis() : 0L,
                 securityProfile.isShareLocation() ?
                         json.optString(LATLONG_KEY, null) : null,
-                json.optLong(TIMEBOUND_KEY, -1L)
+                json.optLong(TIMEBOUND_KEY, -1L),
+                json.optString(PARENT_KEY, null)
         );
     }
 
@@ -151,9 +173,11 @@ public final class RangzenMessage extends Message {
     public JSONObject toJSON(Context context){
         JSONObject result = new JSONObject();
         try {
+            result.put(MESSAGE_ID_KEY, this.messageid);
             result.put(TEXT_KEY, this.text);
             result.put(TRUST_KEY, this.trust + Utils.makeNoise(0d, 0.003d));
             result.put(PRIORITY_KEY, this.priority);
+            if(parent != null) result.put(PARENT_KEY, this.parent);
             if(timebound > 0) result.put(TIMEBOUND_KEY, this.timebound);
 
             SecurityProfile profile = SecurityManager.getCurrentProfile(context);
@@ -193,7 +217,8 @@ public final class RangzenMessage extends Message {
     if (!(other instanceof RangzenMessage)) return false;
     RangzenMessage o = (RangzenMessage) other;
     return equals(text, o.text)
-        && equals(priority, o.priority);
+        && equals(priority, o.priority)
+        && equals(messageid, o.messageid);
   }
 
   @Override
@@ -201,7 +226,7 @@ public final class RangzenMessage extends Message {
     int result = hashCode;
     if (result == 0) {
       result = text != null ? text.hashCode() : 0;
-      result = result * 37 + (priority != null ? priority.hashCode() : 0);
+      result = result * 37 + (trust != null ? trust.hashCode() : 0);
       hashCode = result;
     }
     return result;
@@ -209,6 +234,7 @@ public final class RangzenMessage extends Message {
 
   public static final class Builder extends Message.Builder<RangzenMessage> {
 
+      public String messageId;
     public String text;
     public Double trust;
       public Integer priority;
@@ -216,6 +242,7 @@ public final class RangzenMessage extends Message {
       public long timestamp;
       public String latlong;
       public long timebound;
+      public String parent;
 
     public Builder() {
     }
@@ -223,6 +250,7 @@ public final class RangzenMessage extends Message {
     public Builder(RangzenMessage message) {
       super(message);
       if (message == null) return;
+        this.messageId = message.messageid;
       this.text = message.text;
         this.trust = message.trust;
       this.priority = message.priority;
@@ -230,7 +258,16 @@ public final class RangzenMessage extends Message {
         this.timestamp = message.timestamp;
         this.latlong = message.latlong;
         this.timebound = message.timebound;
+        this.parent = message.parent;
     }
+
+      /**
+       * The message's id, as a String.
+       */
+      public Builder messageId(String messageId) {
+          this.messageId = messageId;
+          return this;
+      }
 
     /**
      * The message's text, as a String.
@@ -285,6 +322,14 @@ public final class RangzenMessage extends Message {
        */
       public Builder timebound(long timebound) {
           this.timebound = timebound;
+          return this;
+      }
+
+      /**
+       * The message's parentid, as a string.
+       */
+      public Builder parent(String parent) {
+          this.parent = parent;
           return this;
       }
 

@@ -74,7 +74,7 @@ public class MessageStore extends SQLiteOpenHelper {
 
     private static final String TABLE = "Messages";
     public static final String COL_ROWID = "_id";
-    private static final String COL_MESSAGE_ID = "messageId";
+    public static final String COL_MESSAGE_ID = "messageId";
     public static final String COL_MESSAGE = "message";
     public static final String COL_TRUST = "trust";
     public static final String COL_LIKES = "likes";
@@ -85,6 +85,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public static final String COL_READ = "read";
     public static final String COL_EXPIRE = "expire";
     public static final String COL_LATLONG = "location";
+    public static final String COL_PARENT = "parent";
 
     private static final String[] defaultSort = new String[]{COL_DELETED,COL_READ};
 
@@ -115,7 +116,8 @@ public class MessageStore extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE + " ("
                 + COL_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                //+ COL_MESSAGE_ID + " VARCHAR(255) NOT NULL,"
+                + COL_MESSAGE_ID + " TEXT NOT NULL,"
+                + COL_PARENT + " TEXT,"
                 + COL_MESSAGE + " VARCHAR(" + MAX_MESSAGE_SIZE + ") NOT NULL,"
                 + COL_TIMESTAMP + " INTEGER NOT NULL,"
                 + COL_EXPIRE + " INTEGER NOT NULL,"
@@ -177,6 +179,7 @@ public class MessageStore extends SQLiteOpenHelper {
         List<RangzenMessage> messages = new ArrayList<>();
         cursor.moveToFirst();
 
+        int messageIdColIndex = cursor.getColumnIndex(COL_MESSAGE_ID);
         int trustColIndex = cursor.getColumnIndex(COL_TRUST);
         int priorityColIndex = cursor.getColumnIndex(COL_LIKES);
         int messageColIndex = cursor.getColumnIndex(COL_MESSAGE);
@@ -184,17 +187,20 @@ public class MessageStore extends SQLiteOpenHelper {
         int timestampColIndex = cursor.getColumnIndex(COL_TIMESTAMP);
         int latlongColIndex = cursor.getColumnIndex(COL_LATLONG);
         int timeboundColIndex = cursor.getColumnIndex(COL_EXPIRE);
+        int parentColIndex = cursor.getColumnIndex(COL_PARENT);
 
         if (cursor.getCount() > 0) {
             while (!cursor.isAfterLast()){
                 messages.add(new RangzenMessage(
+                        cursor.getString(messageIdColIndex),
                         cursor.getString(messageColIndex),
                         cursor.getDouble(trustColIndex),
                         cursor.getInt(priorityColIndex),
                         cursor.getString(pseudonymColIndex),
                         cursor.getLong(timestampColIndex),
                         cursor.getString(latlongColIndex),
-                        cursor.getLong(timeboundColIndex)
+                        cursor.getLong(timeboundColIndex),
+                        cursor.getString(parentColIndex)
                 ));
                 cursor.moveToNext();
             }
@@ -205,14 +211,17 @@ public class MessageStore extends SQLiteOpenHelper {
 
     /** Return a cursor pointing to messages sorted by according their priority and deleted state
      * @param getDeleted whether or not results should include deleted items
+     * @param getReplies whether or not results should include items which are replies on other message
      * @param limit Maximum number of items to return or -1 for unlimited
      * @return Cursor with Message items based on database items matching conditions
      */
-    public Cursor getMessagesCursor(boolean getDeleted, int limit){
+    public Cursor getMessagesCursor(boolean getDeleted,boolean getReplies, int limit){
         SQLiteDatabase db = getWritableDatabase();
         if(db != null) {
             String query = "SELECT * FROM " + TABLE
-                    + (!getDeleted ? " WHERE " + COL_DELETED + "=" + FALSE : "")
+                    + ((!getDeleted || !getReplies) ? " WHERE ": "")
+                        + (!getDeleted ? COL_DELETED + "=" + FALSE : "")
+                        + (!getReplies ? " AND " + COL_PARENT + " IS NULL" : "")
                     + " " + sortOption
                     + (limit > 0 ? " LIMIT " + limit : "")
                     + ";";
@@ -221,15 +230,16 @@ public class MessageStore extends SQLiteOpenHelper {
         return null;
     }
 
-    /** Return an array of messages sorted by according their priority and deleted state
+    /** Return an array of messages sorted by according current sort order definition and deleted state
      * @param getDeleted whether or not results should include deleted items
+     * @param getReplies whether or not results should include items which are replies on other message
      * @param limit Maximum number of items to return or -1 for unlimited
      * @return List of Message items based on database items matching conditions
      */
-    public List<RangzenMessage> getMessages(boolean getDeleted, int limit){
+    public List<RangzenMessage> getMessages(boolean getDeleted, boolean getReplies, int limit){
         SQLiteDatabase db = getWritableDatabase();
         if(db != null){
-            Cursor cursor = getMessagesCursor(getDeleted, limit);
+            Cursor cursor = getMessagesCursor(getDeleted, getReplies, limit);
             if(cursor != null && cursor.getCount() > 0){
                 List<RangzenMessage> result = convertToMessages(cursor);
                 cursor.close();
@@ -240,18 +250,20 @@ public class MessageStore extends SQLiteOpenHelper {
         return new ArrayList<>();
     }
 
-    /** Return a cursor pointing to messages sorted by according their priority and deleted state
+    /** Return a cursor pointing to messages sorted according to current sort order and deleted state
      * @param getDeleted whether or not results should include deleted items
+     * @param getReplies whether or not results should include items which are replies on other message
      * @param limit Maximum number of items to return or -1 for unlimited
      * @return Cursor of Message items based on database items matching conditions
      */
-    public Cursor getMessagesContainingCursor(String message, boolean getDeleted, int limit){
+    public Cursor getMessagesContainingCursor(String message, boolean getDeleted, boolean getReplies, int limit){
         if(message == null) message = "";
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null) {
             String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + " LIKE '%" + message + "%'"
                     + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
+                    + (!getReplies ? " AND " + COL_PARENT + "IS NULL" : "")
                     + " "+sortOption
                     + (limit > 0 ? " LIMIT " + limit : "")
                     + ";";
@@ -270,7 +282,7 @@ public class MessageStore extends SQLiteOpenHelper {
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null){
-            Cursor cursor = getMessagesContainingCursor(message, getDeleted, limit);
+            Cursor cursor = getMessagesContainingCursor(message, getDeleted, true, limit);
             if(cursor != null && cursor.getCount() > 0){
                 List<RangzenMessage> result = convertToMessages(cursor);
                 cursor.close();
@@ -335,7 +347,7 @@ public class MessageStore extends SQLiteOpenHelper {
      * @return Message in the K position based on priority or null if position too high
      */
     public RangzenMessage getKthMessage(int position){
-        List<RangzenMessage> result = getMessages(false, position + 1);
+        List<RangzenMessage> result = getMessages(false, false,position + 1);
         return (result.size() > position) ? result.get(position) : null;
     }
 
@@ -351,7 +363,7 @@ public class MessageStore extends SQLiteOpenHelper {
      *                     if set to false and value is outside of limit, an exception is thrown
      * @return Returns true if the message was added. If message already exists, update its values
      */
-    public boolean addMessage(String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location){
+    public boolean addMessage(String messageId, String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location, String parent){
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
@@ -380,6 +392,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 Log.d(TAG, "Message was already in store and was simply updated.");
             } else {
                 ContentValues content = new ContentValues();
+                content.put(COL_MESSAGE_ID, messageId);
                 content.put(COL_MESSAGE, message);
                 content.put(COL_TRUST, trust);
                 content.put(COL_LIKES, priority);
@@ -387,6 +400,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 content.put(COL_PSEUDONYM, pseudonym);
                 content.put(COL_EXPIRE, timebound);
                 content.put(COL_TIMESTAMP, reducedTimestamp.getTimeInMillis());
+                content.put(COL_PARENT, parent);
                 db.insert(TABLE, null, content);
                 Log.d(TAG, "Message added to store.");
             }
@@ -690,5 +704,14 @@ public class MessageStore extends SQLiteOpenHelper {
             }
         }
         sortOption = "ORDER BY "+options+(ascending ? " ASC" : " DESC");
+    }
+
+    /** return comments of a certain message parent */
+    public Cursor getComments(String parentId){
+        SQLiteDatabase db = getReadableDatabase();
+        if(db != null){
+            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_PARENT+"='"+parentId+"';",null);
+        }
+        return null;
     }
 }

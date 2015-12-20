@@ -463,7 +463,7 @@ public class RangzenService extends Service {
             } else {
                 hasNew = true;
 
-                mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation());
+                mMessageStore.addMessage(message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent);
                 //mark this message as unread
                 mMessageStore.setRead(message.text, false);
             }
@@ -525,7 +525,7 @@ public class RangzenService extends Service {
                             mMessageStore.updateTrust(message.text, newTrust, true);
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation());
+                            mMessageStore.addMessage(message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent);
                             //mark this message as unread
                             mMessageStore.setRead(message.text, false);
                         }
