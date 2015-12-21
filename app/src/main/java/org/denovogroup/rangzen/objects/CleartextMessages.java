@@ -2,12 +2,15 @@
 // Source file: /Users/barathraghavan/code/rangzen/rangzen/buck-out/gen/proto-repo/compile_protobufs__srcs/CleartextMessages.proto
 package org.denovogroup.rangzen.objects;
 
-import com.squareup.wire.Message;
-import com.squareup.wire.ProtoField;
+import android.content.Context;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.squareup.wire.Message.Label.REPEATED;
 
 /**
  * Protobuf representation of a set of messages to be send over the wire to
@@ -16,63 +19,44 @@ import static com.squareup.wire.Message.Label.REPEATED;
 public final class CleartextMessages extends Message {
 
   public static final List<RangzenMessage> DEFAULT_MESSAGES = Collections.emptyList();
+    private static final String MESSAGES = "messages";
 
   /**
    * This is called a RangzenMessage to avoid ambiguity with Wire.Message.
    * It represents a message and its priority.
    * A list of messages.
    */
-  @ProtoField(tag = 1, label = REPEATED)
   public final List<RangzenMessage> messages;
 
-  public CleartextMessages(List<RangzenMessage> messages) {
-    this.messages = immutableCopyOf(messages);
+  public CleartextMessages(ArrayList<RangzenMessage> messages) {
+    this.messages = (List<RangzenMessage>) messages.clone();
   }
 
-  private CleartextMessages(Builder builder) {
-    this(builder.messages);
-    setBuilder(builder);
-  }
-
-  @Override
-  public boolean equals(Object other) {
-    if (other == this) return true;
-    if (!(other instanceof CleartextMessages)) return false;
-    return equals(messages, ((CleartextMessages) other).messages);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = hashCode;
-    return result != 0 ? result : (hashCode = messages != null ? messages.hashCode() : 1);
-  }
-
-  public static final class Builder extends Message.Builder<CleartextMessages> {
-
-    public List<RangzenMessage> messages;
-
-    public Builder() {
+    public JSONObject toJson(Context context){
+        JSONObject json = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        for(RangzenMessage message : messages){
+            jsonArray.put(message.toJSON(context));
+        }
+        try {
+            json.put(MESSAGES, jsonArray);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
     }
 
-    public Builder(CleartextMessages message) {
-      super(message);
-      if (message == null) return;
-      this.messages = copyOf(message.messages);
+    public static CleartextMessages fromJson(Context context, JSONObject json){
+        try {
+            JSONArray jsonArray = json.getJSONArray(MESSAGES);
+            List<RangzenMessage> messages = new ArrayList<>();
+            for(int i=0; i<json.length(); i++){
+                messages.add(RangzenMessage.fromJSON(context, (String) jsonArray.get(i)));
+            }
+            return new CleartextMessages((ArrayList<RangzenMessage>) messages);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
-
-    /**
-     * This is called a RangzenMessage to avoid ambiguity with Wire.Message.
-     * It represents a message and its priority.
-     * A list of messages.
-     */
-    public Builder messages(List<RangzenMessage> messages) {
-      this.messages = checkForNulls(messages);
-      return this;
-    }
-
-    @Override
-    public CleartextMessages build() {
-      return new CleartextMessages(this);
-    }
-  }
 }

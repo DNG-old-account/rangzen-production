@@ -12,10 +12,12 @@ import android.util.Log;
 public class RangzenApplication extends Application {
 
     private static String TAG = "RangzenApplication";
+    private static  Context context;
 
     @Override
     public final void onCreate() {
         super.onCreate();
+        context = this;
     }
 
     /**
@@ -26,5 +28,9 @@ public class RangzenApplication extends Application {
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
         MultiDex.install(this);
+    }
+
+    public static Context getContext(){
+        return context;
     }
 }

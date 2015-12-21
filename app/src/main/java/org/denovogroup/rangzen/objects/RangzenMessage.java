@@ -6,22 +6,12 @@ import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
 
-import com.squareup.wire.Message;
-import com.squareup.wire.ProtoField;
-
 import org.denovogroup.rangzen.backend.*;
 import org.denovogroup.rangzen.backend.SecurityManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Calendar;
-
-import static com.squareup.wire.Message.Datatype.DOUBLE;
-import static com.squareup.wire.Message.Datatype.INT32;
-import static com.squareup.wire.Message.Datatype.INT64;
-import static com.squareup.wire.Message.Datatype.STRING;
-import static com.squareup.wire.Message.Label.OPTIONAL;
-import static com.squareup.wire.Message.Label.REQUIRED;
 
 /**
  * Representation of a single Rangzen message with text and priority.
@@ -45,55 +35,46 @@ public final class RangzenMessage extends Message {
     /**
      * The message's id, as a String.
      */
-    @ProtoField(tag = 1, type = STRING, label = REQUIRED)
     public final String messageid;
 
   /**
    * The message's text, as a String.
    */
-  @ProtoField(tag = 2, type = STRING, label = REQUIRED)
   public final String text;
 
   /**
    * The message's trust, as a double.
    */
-  @ProtoField(tag = 3, type = DOUBLE, label = REQUIRED)
   public final Double trust;
 
     /**
      * The message's priority, as a double.
      */
-    @ProtoField(tag = 4, type = INT32, label = OPTIONAL)
     public final Integer priority;
 
     /**
      * The message's sender name, as a String.
      */
-    @ProtoField(tag = 5, type = STRING, label = OPTIONAL)
     public final String pseudonym;
 
     /**
      * The message's timestamp, as a long.
      */
-    @ProtoField(tag = 6, type = INT64, label = OPTIONAL)
     public final long timestamp;
 
     /**
      * The message's location, as a long.
      */
-    @ProtoField(tag = 7, type = STRING, label = OPTIONAL)
     public final String latlong;
 
     /**
      * The message's timestamp, as a long.
      */
-    @ProtoField(tag = 8, type = INT64, label = OPTIONAL)
     public final long timebound;
 
     /**
      * The message's parent message id, as a long.
      */
-    @ProtoField(tag = 9, type = STRING, label = OPTIONAL)
     public final String parent;
 
   public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, long timestamp, String latlong, long timebound, String parent) {
@@ -131,11 +112,6 @@ public final class RangzenMessage extends Message {
         this.timebound = -1;
         this.parent = null;
     }
-
-  private RangzenMessage(Builder builder) {
-    this(builder.messageId, builder.text, builder.trust, builder.priority, builder.pseudonym, builder.timestamp, builder.latlong, builder.timebound, builder.parent);
-    setBuilder(builder);
-  }
 
     public static RangzenMessage fromJSON(Context context, JSONObject json){
 
@@ -210,133 +186,4 @@ public final class RangzenMessage extends Message {
         }
         return null;
     }
-
-  @Override
-  public boolean equals(Object other) {
-    if (other == this) return true;
-    if (!(other instanceof RangzenMessage)) return false;
-    RangzenMessage o = (RangzenMessage) other;
-    return equals(text, o.text)
-        && equals(priority, o.priority)
-        && equals(messageid, o.messageid);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = hashCode;
-    if (result == 0) {
-      result = text != null ? text.hashCode() : 0;
-      result = result * 37 + (trust != null ? trust.hashCode() : 0);
-      hashCode = result;
-    }
-    return result;
-  }
-
-  public static final class Builder extends Message.Builder<RangzenMessage> {
-
-      public String messageId;
-    public String text;
-    public Double trust;
-      public Integer priority;
-      public String pseudonym;
-      public long timestamp;
-      public String latlong;
-      public long timebound;
-      public String parent;
-
-    public Builder() {
-    }
-
-    public Builder(RangzenMessage message) {
-      super(message);
-      if (message == null) return;
-        this.messageId = message.messageid;
-      this.text = message.text;
-        this.trust = message.trust;
-      this.priority = message.priority;
-      this.pseudonym = message.pseudonym;
-        this.timestamp = message.timestamp;
-        this.latlong = message.latlong;
-        this.timebound = message.timebound;
-        this.parent = message.parent;
-    }
-
-      /**
-       * The message's id, as a String.
-       */
-      public Builder messageId(String messageId) {
-          this.messageId = messageId;
-          return this;
-      }
-
-    /**
-     * The message's text, as a String.
-     */
-    public Builder text(String text) {
-      this.text = text;
-      return this;
-    }
-
-      /**
-       * The message's trust, as a double.
-       */
-      public Builder trust(Double trust) {
-          this.trust = trust;
-          return this;
-      }
-
-    /**
-     * The message's priority, as an integer.
-     */
-    public Builder priority(Integer priority) {
-      this.priority = priority;
-      return this;
-    }
-
-      /**
-       * The message's sender name, as a string.
-       */
-      public Builder pseudonym(String pseudonym) {
-          this.pseudonym = pseudonym;
-          return this;
-      }
-
-      /**
-       * The message's timestamp, as a long.
-       */
-      public Builder timestamp(long timestamp) {
-          this.timestamp = timestamp;
-          return this;
-      }
-
-      /**
-       * The message's location, as a string.
-       */
-      public Builder latlong(String latlong) {
-          this.latlong = latlong;
-          return this;
-      }
-
-      /**
-       * The message's timebound, as a long.
-       */
-      public Builder timebound(long timebound) {
-          this.timebound = timebound;
-          return this;
-      }
-
-      /**
-       * The message's parentid, as a string.
-       */
-      public Builder parent(String parent) {
-          this.parent = parent;
-          return this;
-      }
-
-    @Override
-    public RangzenMessage build() {
-      checkRequiredFields();
-      return new RangzenMessage(this);
-    }
-  }
 }

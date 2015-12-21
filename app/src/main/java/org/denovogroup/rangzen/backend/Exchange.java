@@ -30,14 +30,14 @@
  */
 package org.denovogroup.rangzen.backend;
 
-import com.squareup.wire.Wire;
-import com.squareup.wire.Message;
-
 import android.util.Log;
 
 import org.denovogroup.rangzen.objects.CleartextFriends;
 import org.denovogroup.rangzen.objects.CleartextMessages;
+import org.denovogroup.rangzen.objects.JSONMessage;
+import org.denovogroup.rangzen.objects.Message;
 import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.denovogroup.rangzen.ui.RangzenApplication;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -205,10 +205,9 @@ public class Exchange implements Runnable {
   private void sendFriends() {
     List<String> friends = new ArrayList<String>();
     friends.addAll(friendStore.getAllFriends());
-    CleartextFriends friendsMessage = new CleartextFriends.Builder()
-                                                          .friends(friends)
-                                                          .build();
-    lengthValueWrite(out, friendsMessage); 
+    CleartextFriends friendsMessage = new CleartextFriends((ArrayList<String>) friends);
+      JSONMessage friendsMessageJson = new JSONMessage(friendsMessage.toJson());
+    lengthValueWrite(out, friendsMessageJson);
   }
 
   /**
@@ -230,17 +229,15 @@ public class Exchange implements Runnable {
       List<RangzenMessage> messages = getMessages();
       //notify the recipient how many items we expect to send him.
       RangzenMessage exchangeInfoMessage = new RangzenMessage("ExchangeAgreement", Integer.toString(messages.size()),1d);
-      if(lengthValueWrite(out, exchangeInfoMessage)) {
+      if(lengthValueWrite(out, new JSONMessage(exchangeInfoMessage.toJSON(RangzenApplication.getContext())))) {
           // Send messages
          for(RangzenMessage message : messages){
 
              List<RangzenMessage> packet = new ArrayList<>();
              packet.add(message);
 
-              CleartextMessages messagesMessage = new CleartextMessages.Builder()
-                      .messages(packet)
-                      .build();
-              lengthValueWrite(out, messagesMessage);
+              CleartextMessages messagesMessage = new CleartextMessages((ArrayList<RangzenMessage>) packet);
+              lengthValueWrite(out, new JSONMessage(messagesMessage.toJson(RangzenApplication.getContext())));
           }
       }
   }
@@ -249,7 +246,7 @@ public class Exchange implements Runnable {
    * Receive friends from the remote device.
    */
   private void receiveFriends() {
-    CleartextFriends friendsReceived = lengthValueRead(in, CleartextFriends.class);
+    CleartextFriends friendsReceived = CleartextFriends.fromJSON(lengthValueRead(in).jsonObject());
     this.mFriendsReceived = friendsReceived;
 
     if (mFriendsReceived != null && mFriendsReceived.friends != null) {
@@ -277,7 +274,7 @@ public class Exchange implements Runnable {
   private void receiveMessages() {
       //the first message received is a hint, telling the us how many messages will be sent
       int messageCount = 0;
-      RangzenMessage exchangeInfo = lengthValueRead(in, RangzenMessage.class);
+      RangzenMessage exchangeInfo = RangzenMessage.fromJSON(RangzenApplication.getContext(),lengthValueRead(in).jsonObject());
       if(exchangeInfo != null){
           try {
               messageCount = Math.min(NUM_MESSAGES_TO_EXCHANGE, Integer.parseInt(exchangeInfo.text));
@@ -293,7 +290,7 @@ public class Exchange implements Runnable {
           @Override
           public List<RangzenMessage> call() throws Exception {
               CleartextMessages mCurrentReceived;
-              mCurrentReceived = lengthValueRead(in, CleartextMessages.class);
+              mCurrentReceived = CleartextMessages.fromJson(RangzenApplication.getContext(),lengthValueRead(in).jsonObject());
               return mCurrentReceived.messages;
           }
       }
@@ -418,9 +415,6 @@ public class Exchange implements Runnable {
     }
   }
 
-  /** Instance of Wire to encode/decode messages. */
-  private static Wire wire = new Wire();
-
   /**
    * Take a Wire protobuf Message and encode it in a byte[] as:
    *
@@ -428,11 +422,11 @@ public class Exchange implements Runnable {
    *
    * where length is the length in bytes encoded as a 4 byte integer
    * and value are the bytes produced by Message.toByteArray().
-   * 
+   *
    * @param m A message to encode in length/value format.
    * @return A ByteBuffer containing the encoded bytes of the message and its length.
    */
-  /* package */ static ByteBuffer lengthValueEncode(Message m) {
+  /* package */ static ByteBuffer lengthValueEncode(JSONMessage m) {
     byte[] value = m.toByteArray();
 
     ByteBuffer encoded = ByteBuffer.allocate(Integer.SIZE/Byte.SIZE + value.length);
@@ -454,7 +448,7 @@ public class Exchange implements Runnable {
    * @param m A message to write.
    * @return True if the write succeeds, false otherwise.
    */
-  public static boolean lengthValueWrite(OutputStream outputStream, Message m) {
+  public static boolean lengthValueWrite(OutputStream outputStream, JSONMessage m) {
     if (outputStream == null || m == null) {
       return false;
     }
@@ -473,12 +467,10 @@ public class Exchange implements Runnable {
    * Decode a Message of the given type from the input stream and return it.
    * This method is much like a delimited read from Google's Protobufs.
    *
-   * @param inputStream An input stream to read a Message from.
-   * @param messageClass The type of Message to read.
+   * @param inputStream An input stream to read a Message from
    * @return The message recovered from the stream, or null if an error occurs.
    */
-  public static <T extends Message> T lengthValueRead(InputStream inputStream, 
-                                                      Class<T> messageClass) {
+  public static JSONMessage lengthValueRead(InputStream inputStream) {
     int length = popLength(inputStream);
     if (length < 0) {
       return null;
@@ -487,13 +479,13 @@ public class Exchange implements Runnable {
       return null;
     }
     byte[] messageBytes = new byte[length];
-    T recoveredMessage;
+    JSONMessage recoveredMessage;
     int readByteCount = 0;
     try {
       while (readByteCount != length) {
         readByteCount += inputStream.read(messageBytes, readByteCount, length - readByteCount);
       }
-      recoveredMessage = wire.parseFrom(messageBytes, messageClass);
+      recoveredMessage = new JSONMessage(new String(messageBytes));
     } catch (IOException e) {
       Log.e(TAG, "IOException parsing message bytes: " + e);
       return null;

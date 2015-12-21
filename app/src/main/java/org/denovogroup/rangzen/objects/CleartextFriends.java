@@ -2,13 +2,13 @@
 // Source file: /Users/barathraghavan/code/rangzen/rangzen/buck-out/gen/proto-repo/compile_protobufs__srcs/CleartextFriends.proto
 package org.denovogroup.rangzen.objects;
 
-import com.squareup.wire.Message;
-import com.squareup.wire.ProtoField;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.squareup.wire.Message.Datatype.STRING;
-import static com.squareup.wire.Message.Label.REPEATED;
 
 /**
  * Protobuf representation of a list of friends (represented as strings) to be
@@ -19,59 +19,40 @@ import static com.squareup.wire.Message.Label.REPEATED;
 public final class CleartextFriends extends Message {
 
   public static final List<String> DEFAULT_FRIENDS = Collections.emptyList();
+    private static final String LIST_KEY = "friends";
 
   /**
    * A list of friends, represented as opaque String-encoded friend ids.
    */
-  @ProtoField(tag = 1, type = STRING, label = REPEATED)
   public final List<String> friends;
 
-  public CleartextFriends(List<String> friends) {
-    this.friends = immutableCopyOf(friends);
+  public CleartextFriends(ArrayList<String> friends) {
+    this.friends = (List<String>) friends.clone();
   }
 
-  private CleartextFriends(Builder builder) {
-    this(builder.friends);
-    setBuilder(builder);
-  }
-
-  @Override
-  public boolean equals(Object other) {
-    if (other == this) return true;
-    if (!(other instanceof CleartextFriends)) return false;
-    return equals(friends, ((CleartextFriends) other).friends);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = hashCode;
-    return result != 0 ? result : (hashCode = friends != null ? friends.hashCode() : 1);
-  }
-
-  public static final class Builder extends Message.Builder<CleartextFriends> {
-
-    public List<String> friends;
-
-    public Builder() {
+    public JSONObject toJson(){
+        JSONObject json = new JSONObject();
+        try {
+            json.put(LIST_KEY, new JSONArray(friends));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
     }
 
-    public Builder(CleartextFriends message) {
-      super(message);
-      if (message == null) return;
-      this.friends = copyOf(message.friends);
-    }
+    public static CleartextFriends fromJSON(JSONObject json){
 
-    /**
-     * A list of friends, represented as opaque String-encoded friend ids.
-     */
-    public Builder friends(List<String> friends) {
-      this.friends = checkForNulls(friends);
-      return this;
+        List<String> friends = new ArrayList<>();
+        if(json.has(LIST_KEY)){
+            try {
+                JSONArray jsonArray = json.getJSONArray(LIST_KEY);
+                for(int i=0; i<jsonArray.length(); i++){
+                    friends.add((String) jsonArray.get(i));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return new CleartextFriends((ArrayList<String>) friends);
     }
-
-    @Override
-    public CleartextFriends build() {
-      return new CleartextFriends(this);
-    }
-  }
 }

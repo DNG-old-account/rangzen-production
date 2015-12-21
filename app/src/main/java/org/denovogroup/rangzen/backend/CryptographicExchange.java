@@ -36,6 +36,7 @@ import org.denovogroup.rangzen.objects.ClientMessage;
 import org.denovogroup.rangzen.objects.JSONMessage;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.objects.ServerMessage;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.InputStream;
@@ -43,6 +44,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -174,10 +176,8 @@ public class CryptographicExchange extends Exchange {
      */
     private void sendFriends() throws IOException{
         ArrayList<ByteString> blindedFriends = Crypto.byteArraysToStrings(mClientPSI.encodeBlindedItems());
-        ClientMessage cm = new ClientMessage.Builder()
-                .blindedFriends(blindedFriends)
-                .build();
-        if(!lengthValueWrite(out, cm)) {
+        ClientMessage cm = new ClientMessage(null ,blindedFriends);
+        if(!lengthValueWrite(out, new JSONMessage(cm.toJSON()))) {
             setExchangeStatus(Status.ERROR);
             setErrorMessage("Length/value write of client friends failed.");
             throw new IOException("Length/value write of client friends failed, but exception is hidden (see Exchange.java)");
@@ -186,7 +186,7 @@ public class CryptographicExchange extends Exchange {
 
 
     private void receiveFriends() throws IOException{
-        mRemoteClientMessage = lengthValueRead(in, ClientMessage.class);
+        mRemoteClientMessage = ClientMessage.fromJSON(lengthValueRead(in).jsonObject());
 
         if (mRemoteClientMessage == null) {
             setExchangeStatus(Status.ERROR);
@@ -223,9 +223,8 @@ public class CryptographicExchange extends Exchange {
           for (RangzenMessage message : messagesPool) {
               List<JSONMessage> messageWrapper = new ArrayList<>();
               messageWrapper.add(new JSONMessage(message.toJSON(mContext)));
-              ClientMessage cm = new ClientMessage.Builder().messages(messageWrapper)
-                      .build();
-              if (!lengthValueWrite(out, cm)) {
+              ClientMessage cm = new ClientMessage((ArrayList<JSONMessage>)messageWrapper, null);
+              if (!lengthValueWrite(out, new JSONMessage(cm.toJSON()))) {
                   success = false;
               }
           }
@@ -246,7 +245,7 @@ public class CryptographicExchange extends Exchange {
 
       //the first message received is a hint, telling the us how many messages will be sent
       int messageCount = 0;
-      JSONMessage exchangeInfo = lengthValueRead(in, JSONMessage.class);
+      JSONMessage exchangeInfo = lengthValueRead(in);
       if(exchangeInfo != null){
           try {
               messageCount = Math.min(NUM_MESSAGES_TO_EXCHANGE, new JSONObject(exchangeInfo.jsonString).getInt(MESSAGE_COUNT_KEY));
@@ -262,7 +261,7 @@ public class CryptographicExchange extends Exchange {
           @Override
           public ClientMessage call() throws Exception {
               ClientMessage mCurrentReceived;
-              mCurrentReceived = lengthValueRead(in, ClientMessage.class);
+              mCurrentReceived = ClientMessage.fromJSON(lengthValueRead(in).jsonObject());
 
               if (mCurrentReceived == null) {
                   throw new Exception("Remote client message not received.");
@@ -343,13 +342,10 @@ public class CryptographicExchange extends Exchange {
     // Format and create ServerMessage.
     ArrayList<ByteString> doubleBlindedStrings = Crypto.byteArraysToStrings(srt.doubleBlindedItems);
     ArrayList<ByteString> hashedBlindedStrings = Crypto.byteArraysToStrings(srt.hashedBlindedItems);
-    ServerMessage sm = new ServerMessage.Builder()    
-                                        .doubleBlindedFriends(doubleBlindedStrings)
-                                        .hashedBlindedFriends(hashedBlindedStrings)
-                                        .build(); 
+    ServerMessage sm = new ServerMessage(doubleBlindedStrings,hashedBlindedStrings);
 
     // Write out the ServerMessage.
-    boolean success = lengthValueWrite(out, sm);
+    boolean success = lengthValueWrite(out, new JSONMessage(sm.toJson()));
     if (!success) {
       setExchangeStatus(Status.ERROR);
       setErrorMessage("Length/value write of server message failed.");
@@ -363,7 +359,7 @@ public class CryptographicExchange extends Exchange {
    * @return A ServerMessage representing the remote party's server message.
    */
   private void receiveServerMessage() throws IOException {
-    mRemoteServerMessage = lengthValueRead(in, ServerMessage.class);
+    mRemoteServerMessage = ServerMessage.fromJSON(lengthValueRead(in).jsonObject());
     if (mRemoteServerMessage == null) {
       setExchangeStatus(Status.ERROR);
       setErrorMessage("Remote server message was not received.");

@@ -3,6 +3,8 @@ package org.denovogroup.rangzen.ui;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Message;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +17,8 @@ import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
+
+import java.util.List;
 
 /**
  * Created by Liran on 11/26/2015.
@@ -146,7 +150,9 @@ public class FeedAdapter extends CursorAdapter {
 
         viewHolder.mPriorityView.setText(cursor.getString(priority_colIndex));
         viewHolder.mTrustView.setText(String.valueOf(cursor.getFloat(trust_colIndex) * 100));
-        viewHolder.mTextView.setText(cursor.getString(text_colIndex));
+
+        setHashtagLinks(viewHolder.mTextView, cursor.getString(text_colIndex));
+
         viewHolder.mPseudonymView.setText(currentProfile.isPseudonyms() ?
                 cursor.getString(pseudonym_colIndex) : "");
         long timstamp = currentProfile.isTimestamp() ?
@@ -283,6 +289,27 @@ public class FeedAdapter extends CursorAdapter {
                 viewHolder.comments_holder.setAdapter(null);
             }
         }
+    }
+
+    /** set hashtag links to any hashtag in the supplied text and assign the text to the supplied
+     * text view, clicking a hashtag will call new instance of the activity with intent filter of
+     * //hashtag
+     * @param textView
+     * @param source
+     */
+    private void setHashtagLinks(TextView textView, String source){
+        String hashtaggedMessage = source;
+
+        List<String> hashtags = Utils.getHashtags(source);
+        for(String hashtag : hashtags){
+            String textBefore = hashtaggedMessage.substring(0,hashtaggedMessage.indexOf(hashtag));
+            String textAfter = hashtaggedMessage.substring(hashtaggedMessage.indexOf(hashtag)+hashtag.length());
+            hashtaggedMessage = textBefore+"<a href=\"org.denovogroup.rangzen://hashtag/"+hashtag+"/\">"+hashtag+"</a>"+textAfter;
+        }
+
+        textView.setText(Html.fromHtml(hashtaggedMessage));
+        textView.setLinksClickable(true);
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     /**

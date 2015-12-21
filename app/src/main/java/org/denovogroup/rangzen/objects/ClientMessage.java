@@ -2,14 +2,16 @@
 // Source file: /Users/barathraghavan/code/rangzen/rangzen/buck-out/gen/proto-repo/compile_protobufs__srcs/ClientMessage.proto
 package org.denovogroup.rangzen.objects;
 
-import com.squareup.wire.Message;
-import com.squareup.wire.ProtoField;
+import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import okio.ByteString;
-
-import static com.squareup.wire.Message.Datatype.BYTES;
-import static com.squareup.wire.Message.Label.REPEATED;
 
 /**
  * Data sent by the "client" in a PSI exchange.
@@ -18,83 +20,62 @@ public final class ClientMessage extends Message {
 
   public static final List<JSONMessage> DEFAULT_MESSAGES = Collections.emptyList();
   public static final List<ByteString> DEFAULT_BLINDEDFRIENDS = Collections.emptyList();
+    private static final String MESSAGES = "messages";
+    private static final String FRIENDS = "friends";
 
   /**
    * The client's messages to propagate.
    */
-  @ProtoField(tag = 1, label = REPEATED)
-  public final List<JSONMessage> messages;
+  public List<JSONMessage> messages;
 
   /**
    * The client's friends, blinded.
    */
-  @ProtoField(tag = 2, type = BYTES, label = REPEATED)
-  public final List<ByteString> blindedFriends;
+  public List<ByteString> blindedFriends;
 
-  public ClientMessage(List<JSONMessage> messages, List<ByteString> blindedFriends) {
-    this.messages = immutableCopyOf(messages);
-    this.blindedFriends = immutableCopyOf(blindedFriends);
+  public ClientMessage(ArrayList<JSONMessage> messages, ArrayList<ByteString> blindedFriends) {
+    this.messages = (messages != null) ?(List<JSONMessage>)messages.clone() : DEFAULT_MESSAGES;
+    this.blindedFriends = (blindedFriends != null) ? (List<ByteString>) blindedFriends.clone() :DEFAULT_BLINDEDFRIENDS;
   }
 
-  private ClientMessage(Builder builder) {
-    this(builder.messages, builder.blindedFriends);
-    setBuilder(builder);
-  }
+    public JSONObject toJSON(){
+        JSONObject json = new JSONObject();
+        JSONArray messagesArray = new JSONArray();
+        JSONArray friendsArray = new JSONArray();
 
-  @Override
-  public boolean equals(Object other) {
-    if (other == this) return true;
-    if (!(other instanceof ClientMessage)) return false;
-    ClientMessage o = (ClientMessage) other;
-    return equals(messages, o.messages)
-        && equals(blindedFriends, o.blindedFriends);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = hashCode;
-    if (result == 0) {
-      result = messages != null ? messages.hashCode() : 1;
-      result = result * 37 + (blindedFriends != null ? blindedFriends.hashCode() : 1);
-      hashCode = result;
-    }
-    return result;
-  }
-
-  public static final class Builder extends Message.Builder<ClientMessage> {
-
-    public List<JSONMessage> messages;
-    public List<ByteString> blindedFriends;
-
-    public Builder() {
+        for(JSONMessage message : messages){
+            messagesArray.put(message.jsonString);
+        }
+        for(ByteString friend : blindedFriends){
+            friendsArray.put(friend.base64());
+        }
+        try {
+            json.put(MESSAGES,messagesArray);
+            json.put(FRIENDS,friendsArray);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
     }
 
-    public Builder(ClientMessage message) {
-      super(message);
-      if (message == null) return;
-      this.messages = copyOf(message.messages);
-      this.blindedFriends = copyOf(message.blindedFriends);
-    }
+    public static ClientMessage fromJSON(JSONObject json){
+        try {
+            JSONArray messagesArray = json.getJSONArray(MESSAGES);
+            JSONArray friendsArray = json.getJSONArray(FRIENDS);
 
-    /**
-     * The client's messages to propagate.
-     */
-    public Builder messages(List<JSONMessage> messages) {
-      this.messages = checkForNulls(messages);
-      return this;
-    }
+            List<JSONMessage> messages = new ArrayList<>();
+            List<ByteString> friends = new ArrayList<>();
 
-    /**
-     * The client's friends, blinded.
-     */
-    public Builder blindedFriends(List<ByteString> blindedFriends) {
-      this.blindedFriends = checkForNulls(blindedFriends);
-      return this;
+            for(int i=0; i<messagesArray.length(); i++){
+                messages.add(new JSONMessage((String) messagesArray.get(i)));
+            }
+            for(int i=0; i<friendsArray.length(); i++){
+                friends.add(ByteString.decodeBase64((String) friendsArray.get(i)));
+            }
+            return new ClientMessage((ArrayList<JSONMessage>)messages,(ArrayList<ByteString>)friends);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
-
-    @Override
-    public ClientMessage build() {
-      return new ClientMessage(this);
-    }
-  }
 }

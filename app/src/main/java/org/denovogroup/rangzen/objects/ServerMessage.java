@@ -2,14 +2,16 @@
 // Source file: /Users/barathraghavan/code/rangzen/rangzen/buck-out/gen/proto-repo/compile_protobufs__srcs/ServerMessage.proto
 package org.denovogroup.rangzen.objects;
 
-import com.squareup.wire.Message;
-import com.squareup.wire.ProtoField;
+import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import okio.ByteString;
-
-import static com.squareup.wire.Message.Datatype.BYTES;
-import static com.squareup.wire.Message.Label.REPEATED;
 
 /**
  * Data sent by the "server" in a PSI exchange.
@@ -18,83 +20,65 @@ public final class ServerMessage extends Message {
 
   public static final List<ByteString> DEFAULT_DOUBLEBLINDEDFRIENDS = Collections.emptyList();
   public static final List<ByteString> DEFAULT_HASHEDBLINDEDFRIENDS = Collections.emptyList();
+    private static final String DBLIND = "dblind";
+    private static final String DHASH = "dhash";
 
   /**
    * Double blinded friends of the client.
    */
-  @ProtoField(tag = 1, type = BYTES, label = REPEATED)
   public final List<ByteString> doubleBlindedFriends;
 
   /**
    * Hashed blinded friends of the server.
    */
-  @ProtoField(tag = 2, type = BYTES, label = REPEATED)
   public final List<ByteString> hashedBlindedFriends;
 
-  public ServerMessage(List<ByteString> doubleBlindedFriends, List<ByteString> hashedBlindedFriends) {
-    this.doubleBlindedFriends = immutableCopyOf(doubleBlindedFriends);
-    this.hashedBlindedFriends = immutableCopyOf(hashedBlindedFriends);
+  public ServerMessage(ArrayList<ByteString> doubleBlindedFriends, ArrayList<ByteString> hashedBlindedFriends) {
+    this.doubleBlindedFriends = doubleBlindedFriends != null ? (List<ByteString>) doubleBlindedFriends.clone() : DEFAULT_DOUBLEBLINDEDFRIENDS;
+    this.hashedBlindedFriends = hashedBlindedFriends != null ? (List<ByteString>) hashedBlindedFriends.clone() : DEFAULT_HASHEDBLINDEDFRIENDS;
   }
 
-  private ServerMessage(Builder builder) {
-    this(builder.doubleBlindedFriends, builder.hashedBlindedFriends);
-    setBuilder(builder);
-  }
+    public JSONObject toJson(){
+        JSONObject json = new JSONObject();
+        JSONArray dBlinded = new JSONArray();
+        JSONArray dHashed = new JSONArray();
 
-  @Override
-  public boolean equals(Object other) {
-    if (other == this) return true;
-    if (!(other instanceof ServerMessage)) return false;
-    ServerMessage o = (ServerMessage) other;
-    return equals(doubleBlindedFriends, o.doubleBlindedFriends)
-        && equals(hashedBlindedFriends, o.hashedBlindedFriends);
-  }
+        for(ByteString dblind : doubleBlindedFriends){
+            dBlinded.put(dblind.base64());
+        }
+        for(ByteString hashed : hashedBlindedFriends){
+            dHashed.put(hashed.base64());
+        }
 
-  @Override
-  public int hashCode() {
-    int result = hashCode;
-    if (result == 0) {
-      result = doubleBlindedFriends != null ? doubleBlindedFriends.hashCode() : 1;
-      result = result * 37 + (hashedBlindedFriends != null ? hashedBlindedFriends.hashCode() : 1);
-      hashCode = result;
-    }
-    return result;
-  }
+        try {
+            json.put(DBLIND, dBlinded);
+            json.put(DHASH, dHashed);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-  public static final class Builder extends Message.Builder<ServerMessage> {
-
-    public List<ByteString> doubleBlindedFriends;
-    public List<ByteString> hashedBlindedFriends;
-
-    public Builder() {
+        return json;
     }
 
-    public Builder(ServerMessage message) {
-      super(message);
-      if (message == null) return;
-      this.doubleBlindedFriends = copyOf(message.doubleBlindedFriends);
-      this.hashedBlindedFriends = copyOf(message.hashedBlindedFriends);
-    }
+    public static ServerMessage fromJSON(JSONObject json){
+        List<ByteString> doubleBlindedFriends = new ArrayList<>();
+        List<ByteString> hashedBlindedFriends = new ArrayList<>();
 
-    /**
-     * Double blinded friends of the client.
-     */
-    public Builder doubleBlindedFriends(List<ByteString> doubleBlindedFriends) {
-      this.doubleBlindedFriends = checkForNulls(doubleBlindedFriends);
-      return this;
-    }
+        try {
+            JSONArray dblinded = json.getJSONArray(DBLIND);
+            JSONArray dhashed = json.getJSONArray(DHASH);
 
-    /**
-     * Hashed blinded friends of the server.
-     */
-    public Builder hashedBlindedFriends(List<ByteString> hashedBlindedFriends) {
-      this.hashedBlindedFriends = checkForNulls(hashedBlindedFriends);
-      return this;
+            for(int i=0; i<dblinded.length();i++){
+                doubleBlindedFriends.add(ByteString.decodeBase64((String) dblinded.get(i)));
+            }
+            for(int i=0; i<dhashed.length();i++){
+                hashedBlindedFriends.add(ByteString.decodeBase64((String) dhashed.get(i)));
+            }
+            return new ServerMessage((ArrayList<ByteString>) doubleBlindedFriends, (ArrayList<ByteString>) hashedBlindedFriends);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
-
-    @Override
-    public ServerMessage build() {
-      return new ServerMessage(this);
-    }
-  }
 }
+
