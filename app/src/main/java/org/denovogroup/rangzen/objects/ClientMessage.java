@@ -18,7 +18,7 @@ import okio.ByteString;
  */
 public final class ClientMessage extends Message {
 
-  public static final List<JSONMessage> DEFAULT_MESSAGES = Collections.emptyList();
+  public static final List<JSONObject> DEFAULT_MESSAGES = Collections.emptyList();
   public static final List<ByteString> DEFAULT_BLINDEDFRIENDS = Collections.emptyList();
     private static final String MESSAGES = "messages";
     private static final String FRIENDS = "friends";
@@ -26,15 +26,15 @@ public final class ClientMessage extends Message {
   /**
    * The client's messages to propagate.
    */
-  public List<JSONMessage> messages;
+  public List<JSONObject> messages;
 
   /**
    * The client's friends, blinded.
    */
   public List<ByteString> blindedFriends;
 
-  public ClientMessage(ArrayList<JSONMessage> messages, ArrayList<ByteString> blindedFriends) {
-    this.messages = (messages != null) ?(List<JSONMessage>)messages.clone() : DEFAULT_MESSAGES;
+  public ClientMessage(ArrayList<JSONObject> messages, ArrayList<ByteString> blindedFriends) {
+    this.messages = (messages != null) ?(List<JSONObject>)messages.clone() : DEFAULT_MESSAGES;
     this.blindedFriends = (blindedFriends != null) ? (List<ByteString>) blindedFriends.clone() :DEFAULT_BLINDEDFRIENDS;
   }
 
@@ -43,8 +43,8 @@ public final class ClientMessage extends Message {
         JSONArray messagesArray = new JSONArray();
         JSONArray friendsArray = new JSONArray();
 
-        for(JSONMessage message : messages){
-            messagesArray.put(message.jsonString);
+        for(JSONObject message : messages){
+            messagesArray.put(message);
         }
         for(ByteString friend : blindedFriends){
             friendsArray.put(friend.base64());
@@ -63,16 +63,16 @@ public final class ClientMessage extends Message {
             JSONArray messagesArray = json.getJSONArray(MESSAGES);
             JSONArray friendsArray = json.getJSONArray(FRIENDS);
 
-            List<JSONMessage> messages = new ArrayList<>();
+            List<JSONObject> messages = new ArrayList<>();
             List<ByteString> friends = new ArrayList<>();
 
             for(int i=0; i<messagesArray.length(); i++){
-                messages.add(new JSONMessage((String) messagesArray.get(i)));
+                messages.add((JSONObject) messagesArray.get(i));
             }
             for(int i=0; i<friendsArray.length(); i++){
                 friends.add(ByteString.decodeBase64((String) friendsArray.get(i)));
             }
-            return new ClientMessage((ArrayList<JSONMessage>)messages,(ArrayList<ByteString>)friends);
+            return new ClientMessage((ArrayList<JSONObject>)messages,(ArrayList<ByteString>)friends);
         } catch (JSONException e) {
             e.printStackTrace();
         }

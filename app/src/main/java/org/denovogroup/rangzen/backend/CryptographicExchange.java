@@ -33,7 +33,6 @@ package org.denovogroup.rangzen.backend;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection.ServerReplyTuple;
 import org.denovogroup.rangzen.objects.ClientMessage;
-import org.denovogroup.rangzen.objects.JSONMessage;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.objects.ServerMessage;
 import org.json.JSONException;
@@ -129,6 +128,7 @@ public class CryptographicExchange extends Exchange {
 
       // Send client message.
       sendClientMessage();
+
       // Receive client message.
       receiveClientMessage();
       
@@ -177,7 +177,7 @@ public class CryptographicExchange extends Exchange {
     private void sendFriends() throws IOException{
         ArrayList<ByteString> blindedFriends = Crypto.byteArraysToStrings(mClientPSI.encodeBlindedItems());
         ClientMessage cm = new ClientMessage(null ,blindedFriends);
-        if(!lengthValueWrite(out, new JSONMessage(cm.toJSON()))) {
+        if(!lengthValueWrite(out, cm.toJSON())){
             setExchangeStatus(Status.ERROR);
             setErrorMessage("Length/value write of client friends failed.");
             throw new IOException("Length/value write of client friends failed, but exception is hidden (see Exchange.java)");
@@ -186,7 +186,7 @@ public class CryptographicExchange extends Exchange {
 
 
     private void receiveFriends() throws IOException{
-        mRemoteClientMessage = ClientMessage.fromJSON(lengthValueRead(in).jsonObject());
+        mRemoteClientMessage = ClientMessage.fromJSON(lengthValueRead(in));
 
         if (mRemoteClientMessage == null) {
             setExchangeStatus(Status.ERROR);
@@ -210,21 +210,21 @@ public class CryptographicExchange extends Exchange {
    * Construct and send a ClientMessage to the remote party including messages
    * from the message store.
    */
-  private void sendClientMessage() throws IOException {
+  private void sendClientMessage() throws IOException, JSONException {
       //create a message pool to be sent and send each message individually to allow partial data recovery in case of connection loss
       boolean success = true;
       List<RangzenMessage> messagesPool = getMessages();
       //notify the recipient how many items we expect to send him.
-      JSONMessage exchangeInfoMessage = new JSONMessage("{\""+MESSAGE_COUNT_KEY+"\":"+messagesPool.size()+"}");
+      JSONObject exchangeInfoMessage = new JSONObject("{\""+MESSAGE_COUNT_KEY+"\":"+messagesPool.size()+"}");
 
       if(!lengthValueWrite(out, exchangeInfoMessage)){
           success = false;
       } else {
           for (RangzenMessage message : messagesPool) {
-              List<JSONMessage> messageWrapper = new ArrayList<>();
-              messageWrapper.add(new JSONMessage(message.toJSON(mContext)));
-              ClientMessage cm = new ClientMessage((ArrayList<JSONMessage>)messageWrapper, null);
-              if (!lengthValueWrite(out, new JSONMessage(cm.toJSON()))) {
+              List<JSONObject> messageWrapper = new ArrayList<>();
+              messageWrapper.add(message.toJSON(mContext));
+              ClientMessage cm = new ClientMessage((ArrayList<JSONObject>)messageWrapper, null);
+              if (!lengthValueWrite(out, cm.toJSON())) {
                   success = false;
               }
           }
@@ -245,10 +245,12 @@ public class CryptographicExchange extends Exchange {
 
       //the first message received is a hint, telling the us how many messages will be sent
       int messageCount = 0;
-      JSONMessage exchangeInfo = lengthValueRead(in);
+
+      JSONObject exchangeInfo = lengthValueRead(in);
+
       if(exchangeInfo != null){
           try {
-              messageCount = Math.min(NUM_MESSAGES_TO_EXCHANGE, new JSONObject(exchangeInfo.jsonString).getInt(MESSAGE_COUNT_KEY));
+              messageCount = Math.min(NUM_MESSAGES_TO_EXCHANGE, exchangeInfo.getInt(MESSAGE_COUNT_KEY));
           } catch (Exception e){}
       }
 
@@ -261,7 +263,8 @@ public class CryptographicExchange extends Exchange {
           @Override
           public ClientMessage call() throws Exception {
               ClientMessage mCurrentReceived;
-              mCurrentReceived = ClientMessage.fromJSON(lengthValueRead(in).jsonObject());
+
+              mCurrentReceived = ClientMessage.fromJSON(lengthValueRead(in));
 
               if (mCurrentReceived == null) {
                   throw new Exception("Remote client message not received.");
@@ -281,8 +284,8 @@ public class CryptographicExchange extends Exchange {
           try {
               mRemoteClientMessage = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
               //Add everything passed in the wrapper to the pool
-              for(JSONMessage message : mRemoteClientMessage.messages) {
-                  mMessagesReceived.add(RangzenMessage.fromJSON(mContext, message.jsonString));
+              for(JSONObject message : mRemoteClientMessage.messages) {
+                  mMessagesReceived.add(RangzenMessage.fromJSON(mContext, message));
               }
           } catch (ExecutionException ex){
               executor.shutdown();
@@ -345,7 +348,7 @@ public class CryptographicExchange extends Exchange {
     ServerMessage sm = new ServerMessage(doubleBlindedStrings,hashedBlindedStrings);
 
     // Write out the ServerMessage.
-    boolean success = lengthValueWrite(out, new JSONMessage(sm.toJson()));
+    boolean success = lengthValueWrite(out, sm.toJson());
     if (!success) {
       setExchangeStatus(Status.ERROR);
       setErrorMessage("Length/value write of server message failed.");
@@ -359,7 +362,7 @@ public class CryptographicExchange extends Exchange {
    * @return A ServerMessage representing the remote party's server message.
    */
   private void receiveServerMessage() throws IOException {
-    mRemoteServerMessage = ServerMessage.fromJSON(lengthValueRead(in).jsonObject());
+    mRemoteServerMessage = ServerMessage.fromJSON(lengthValueRead(in));
     if (mRemoteServerMessage == null) {
       setExchangeStatus(Status.ERROR);
       setErrorMessage("Remote server message was not received.");

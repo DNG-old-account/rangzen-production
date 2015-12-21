@@ -34,10 +34,10 @@ import android.util.Log;
 
 import org.denovogroup.rangzen.objects.CleartextFriends;
 import org.denovogroup.rangzen.objects.CleartextMessages;
-import org.denovogroup.rangzen.objects.JSONMessage;
-import org.denovogroup.rangzen.objects.Message;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.ui.RangzenApplication;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -206,7 +206,7 @@ public class Exchange implements Runnable {
     List<String> friends = new ArrayList<String>();
     friends.addAll(friendStore.getAllFriends());
     CleartextFriends friendsMessage = new CleartextFriends((ArrayList<String>) friends);
-      JSONMessage friendsMessageJson = new JSONMessage(friendsMessage.toJson());
+      JSONObject friendsMessageJson = friendsMessage.toJson();
     lengthValueWrite(out, friendsMessageJson);
   }
 
@@ -229,7 +229,7 @@ public class Exchange implements Runnable {
       List<RangzenMessage> messages = getMessages();
       //notify the recipient how many items we expect to send him.
       RangzenMessage exchangeInfoMessage = new RangzenMessage("ExchangeAgreement", Integer.toString(messages.size()),1d);
-      if(lengthValueWrite(out, new JSONMessage(exchangeInfoMessage.toJSON(RangzenApplication.getContext())))) {
+      if(lengthValueWrite(out, exchangeInfoMessage.toJSON(RangzenApplication.getContext()))) {
           // Send messages
          for(RangzenMessage message : messages){
 
@@ -237,7 +237,7 @@ public class Exchange implements Runnable {
              packet.add(message);
 
               CleartextMessages messagesMessage = new CleartextMessages((ArrayList<RangzenMessage>) packet);
-              lengthValueWrite(out, new JSONMessage(messagesMessage.toJson(RangzenApplication.getContext())));
+              lengthValueWrite(out, messagesMessage.toJson(RangzenApplication.getContext()));
           }
       }
   }
@@ -246,7 +246,7 @@ public class Exchange implements Runnable {
    * Receive friends from the remote device.
    */
   private void receiveFriends() {
-    CleartextFriends friendsReceived = CleartextFriends.fromJSON(lengthValueRead(in).jsonObject());
+    CleartextFriends friendsReceived = CleartextFriends.fromJSON(lengthValueRead(in));
     this.mFriendsReceived = friendsReceived;
 
     if (mFriendsReceived != null && mFriendsReceived.friends != null) {
@@ -274,7 +274,7 @@ public class Exchange implements Runnable {
   private void receiveMessages() {
       //the first message received is a hint, telling the us how many messages will be sent
       int messageCount = 0;
-      RangzenMessage exchangeInfo = RangzenMessage.fromJSON(RangzenApplication.getContext(),lengthValueRead(in).jsonObject());
+      RangzenMessage exchangeInfo = RangzenMessage.fromJSON(RangzenApplication.getContext(),lengthValueRead(in));
       if(exchangeInfo != null){
           try {
               messageCount = Math.min(NUM_MESSAGES_TO_EXCHANGE, Integer.parseInt(exchangeInfo.text));
@@ -290,7 +290,7 @@ public class Exchange implements Runnable {
           @Override
           public List<RangzenMessage> call() throws Exception {
               CleartextMessages mCurrentReceived;
-              mCurrentReceived = CleartextMessages.fromJson(RangzenApplication.getContext(),lengthValueRead(in).jsonObject());
+              mCurrentReceived = CleartextMessages.fromJson(RangzenApplication.getContext(),lengthValueRead(in));
               return mCurrentReceived.messages;
           }
       }
@@ -426,8 +426,8 @@ public class Exchange implements Runnable {
    * @param m A message to encode in length/value format.
    * @return A ByteBuffer containing the encoded bytes of the message and its length.
    */
-  /* package */ static ByteBuffer lengthValueEncode(JSONMessage m) {
-    byte[] value = m.toByteArray();
+  /* package */ static ByteBuffer lengthValueEncode(JSONObject m) {
+    byte[] value = m.toString().getBytes();
 
     ByteBuffer encoded = ByteBuffer.allocate(Integer.SIZE/Byte.SIZE + value.length);
     encoded.order(ByteOrder.BIG_ENDIAN);   // Network byte order.
@@ -448,7 +448,7 @@ public class Exchange implements Runnable {
    * @param m A message to write.
    * @return True if the write succeeds, false otherwise.
    */
-  public static boolean lengthValueWrite(OutputStream outputStream, JSONMessage m) {
+  public static boolean lengthValueWrite(OutputStream outputStream, JSONObject m) {
     if (outputStream == null || m == null) {
       return false;
     }
@@ -470,7 +470,7 @@ public class Exchange implements Runnable {
    * @param inputStream An input stream to read a Message from
    * @return The message recovered from the stream, or null if an error occurs.
    */
-  public static JSONMessage lengthValueRead(InputStream inputStream) {
+  public static JSONObject lengthValueRead(InputStream inputStream) {
     int length = popLength(inputStream);
     if (length < 0) {
       return null;
@@ -479,18 +479,23 @@ public class Exchange implements Runnable {
       return null;
     }
     byte[] messageBytes = new byte[length];
-    JSONMessage recoveredMessage;
+    JSONObject recoveredMessage;
     int readByteCount = 0;
     try {
       while (readByteCount != length) {
         readByteCount += inputStream.read(messageBytes, readByteCount, length - readByteCount);
       }
-      recoveredMessage = new JSONMessage(new String(messageBytes));
+
+      recoveredMessage = new JSONObject(new String(messageBytes));
+
     } catch (IOException e) {
       Log.e(TAG, "IOException parsing message bytes: " + e);
-      return null;
+        return null;
+    } catch (JSONException e) {
+        Log.e(TAG, "IOException parsing message bytes: " + e);
+        return null;
     }
-    return recoveredMessage;
+      return recoveredMessage;
   }
 
   /**
