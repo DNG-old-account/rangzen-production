@@ -189,13 +189,6 @@ public class RangzenService extends Service {
         mStore = new StorageBase(this, StorageBase.ENCRYPTION_DEFAULT);
         mFriendStore = FriendStore.getInstance(this);
 
-        // Used for a live test.
-        // TODO(lerner): Remove this after real tests for cryptographic exchange exist.
-        // mFriendStore.addFriend(FriendStore.bytesToBase64(new byte[]{0, 0}));
-        // mFriendStore.addFriend(FriendStore.bytesToBase64(new byte[]{0, 1}));
-        // mFriendStore.addFriend(FriendStore.bytesToBase64(new byte[]{1, 0}));
-        // mFriendStore.addFriend(FriendStore.bytesToBase64(new byte[]{1, 1}));
-
         mWifiDirectSpeaker = new WifiDirectSpeaker(this, 
                                                    mPeerManager, 
                                                    mBluetoothSpeaker,
@@ -298,41 +291,48 @@ public class RangzenService extends Service {
         // TODO(lerner): Don't just connect all willy-nilly every time we have
         // an opportunity. Have some kind of policy for when to connect.
         if (peers.size() > 0 && readyToConnect() ) {
-          Peer peer = peers.get(mRandom.nextInt(peers.size()));
-          try {
-            if (peerManager.thisDeviceSpeaksTo(peer)) {
-                // Connect to the peer, starting an exchange with the peer once
-                // connected. We only do this if thisDeviceSpeaksTo(peer), which
-                // checks whether we initiate conversations with this peer or
-                // it initiates with us (a function of our respective addresses).
+            if(SecurityManager.getCurrentProfile(this).isRandomExchange()) {
+                Peer selectedPeer = peers.get(mRandom.nextInt(peers.size()));
+                peers.clear();
+                peers.add(selectedPeer);
+            }
+            for(Peer peer : peers) {
+                try {
+                    Log.d(TAG,"Checking peer:"+peer);
+                    if (peerManager.thisDeviceSpeaksTo(peer)) {
+                        // Connect to the peer, starting an exchange with the peer once
+                        // connected. We only do this if thisDeviceSpeaksTo(peer), which
+                        // checks whether we initiate conversations with this peer or
+                        // it initiates with us (a function of our respective addresses).
 
 
-                //optimize connection using history tracker
-                ExchangeHistoryTracker.ExchangeHistoryItem historyItem = ExchangeHistoryTracker.getInstance().getHistoryItem(peer.address);
-                boolean hasHistory = historyItem != null;
-                boolean storeVersionChanged = false;
-                boolean waitedMuch = false;
+                        //optimize connection using history tracker
+                        ExchangeHistoryTracker.ExchangeHistoryItem historyItem = ExchangeHistoryTracker.getInstance().getHistoryItem(peer.address);
+                        boolean hasHistory = historyItem != null;
+                        boolean storeVersionChanged = false;
+                        boolean waitedMuch = false;
 
-                if(hasHistory) {
-                    storeVersionChanged = !historyItem.storeVersion.equals(MessageStore.getInstance(RangzenService.this).getStoreVersion());
-                    waitedMuch = historyItem.lastExchangeTime + Math.min(historyItem.attempts * BACKOFF_FOR_ATTEMPT_MILLIS, BACKOFF_MAX) < System.currentTimeMillis();
-                }
+                        if (hasHistory) {
+                            storeVersionChanged = !historyItem.storeVersion.equals(MessageStore.getInstance(RangzenService.this).getStoreVersion());
+                            waitedMuch = historyItem.lastExchangeTime + Math.min(historyItem.attempts * BACKOFF_FOR_ATTEMPT_MILLIS, BACKOFF_MAX) < System.currentTimeMillis();
+                        }
 
-                if(!hasHistory || storeVersionChanged || waitedMuch){
-                    Log.d(TAG,"Can connect with peer: "+peer);
-                    connectTo(peer);
-                } else {
-                    Log.d(TAG,"Backoff from peer: "+peer+
-                            " [previously interacted:"+hasHistory+", store ready:"+storeVersionChanged+" ,backoff timeout:"+waitedMuch+"]");
+                        if (!hasHistory || storeVersionChanged || waitedMuch) {
+                            Log.d(TAG, "Can connect with peer: " + peer);
+                            connectTo(peer);
+                        } else {
+                            Log.d(TAG, "Backoff from peer: " + peer +
+                                    " [previously interacted:" + hasHistory + ", store ready:" + storeVersionChanged + " ,backoff timeout:" + waitedMuch + "]");
+                        }
+                    }
+                } catch (NoSuchAlgorithmException e) {
+                    Log.e(TAG, "No such algorithm for hashing in thisDeviceSpeaksTo!? " + e);
+                    return;
+                } catch (UnsupportedEncodingException e) {
+                    Log.e(TAG, "Unsupported encoding exception in thisDeviceSpeaksTo!?" + e);
+                    return;
                 }
             }
-          } catch (NoSuchAlgorithmException e) {
-            Log.e(TAG, "No such algorithm for hashing in thisDeviceSpeaksTo!? " + e);
-            return;
-          } catch (UnsupportedEncodingException e) {
-            Log.e(TAG, "Unsupported encoding exception in thisDeviceSpeaksTo!?" + e);
-            return;
-          }
         } else {
           Log.v(TAG, String.format("Not connecting (%d peers, ready to connect is %s)",
                                    peers.size(), readyToConnect()));
@@ -455,7 +455,9 @@ public class RangzenService extends Service {
         for (RangzenMessage message : newMessages) {
           double stored = mMessageStore.getTrust(message.text);
           double remote = message.trust;
-          double newTrust = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
+          double newTrust = SecurityManager.getCurrentProfile(RangzenService.this).isUseTrust() ?
+                  Exchange.newPriority(remote, stored, friendOverlap, myFriends.size()) :
+                  0.5d;
           try {
             if (mMessageStore.containsOrRemoved(message.text)){
                 //update existing message priority unless its marked as removed by user
@@ -463,7 +465,7 @@ public class RangzenService extends Service {
             } else {
                 hasNew = true;
 
-                mMessageStore.addMessage(message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent);
+                mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent);
                 //mark this message as unread
                 mMessageStore.setRead(message.text, false);
             }
@@ -518,14 +520,16 @@ public class RangzenService extends Service {
                     Set<String> myFriends = mFriendStore.getAllFriends();
                     double stored = mMessageStore.getTrust(message.text);
                     double remote = message.priority;
-                    double newTrust = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
+                    double newTrust = SecurityManager.getCurrentProfile(RangzenService.this).isUseTrust() ?
+                            Exchange.newPriority(remote, stored, friendOverlap, myFriends.size()) :
+                            0.5d;
                     try {
                         if (mMessageStore.containsOrRemoved(message.text)){
                             //update existing message priority unless its marked as removed by user
                             mMessageStore.updateTrust(message.text, newTrust, true);
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent);
+                            mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent);
                             //mark this message as unread
                             mMessageStore.setRead(message.text, false);
                         }

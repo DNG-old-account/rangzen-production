@@ -101,6 +101,12 @@
     <string name="profile_timebound_desc">todo</string>
     <string name="profile_cooldown_title">Timeout between exchanges:</string>
     <string name="profile_cooldown_desc">todo</string>
+    <string name="profile_use_trust_title">Connection score:</string>
+    <string name="profile_use_trust_desc">todo</string>
+    <string name="profile_enforce_lock_title">Use lock pattern:</string>
+    <string name="profile_enforce_lock_desc">todo</string>
+    <string name="profile_random_exchange_title">Random exchanges:</string>
+    <string name="profile_random_exchange_desc">todo</string>
 
     <string name="pager_title_security">Security</string>
     <string name="pager_title_profile">My profile</string>

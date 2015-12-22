@@ -31,8 +31,18 @@ public class SecurityProfile {
     int minSharedContacts;
     /** Maximum messages for message exchange */
     int maxMessages;
-
+    /** amount of days a timebound message will stay alive by default */
     int timeboundPeriod;
+    /** enforce lock pattern ?*/
+    boolean enforceLock;
+    /** if app should calculate trust based on shared friends between devices */
+    boolean useTrust;
+    /** if exchange should be randomized between all devices in the vicinity or as round robin */
+    boolean randomExchange;
+
+    public SecurityProfile(int strength){
+        this.strength = strength;
+    }
 
     public SecurityProfile(int strength,
                            String name,
@@ -48,7 +58,11 @@ public class SecurityProfile {
                            int minSharedContacts,
                            int maxMessages,
                            int cooldown,
-                           int timeboundPeriod) {
+                           int timeboundPeriod,
+                           boolean enforceLock,
+                           boolean useTrust,
+                           boolean randomExchange
+                            ) {
         this.strength = strength;
         this.name = name;
         this.timestamp = timestamp;
@@ -64,6 +78,9 @@ public class SecurityProfile {
         this.maxMessages = maxMessages;
         this.cooldown = cooldown;
         this.timeboundPeriod = timeboundPeriod;
+        this.enforceLock = enforceLock;
+        this.useTrust = useTrust;
+        this.randomExchange = randomExchange;
     }
 
     public int getStrength(){
@@ -74,80 +91,90 @@ public class SecurityProfile {
         return name;
     }
 
-    public void setName(String name) {
+    public SecurityProfile setName(String name) {
         this.name = name;
+        return this;
     }
 
     public boolean isPseudonyms() {
         return pseudonyms;
     }
 
-    public void setPseudonyms(boolean pseudonyms) {
+    public SecurityProfile setPseudonyms(boolean pseudonyms) {
         this.pseudonyms = pseudonyms;
+        return this;
     }
 
     public boolean isTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(boolean timestamp) {
+    public SecurityProfile setTimestamp(boolean timestamp) {
         this.timestamp = timestamp;
+        return this;
     }
 
     public int getFeedSize() {
         return feedSize;
     }
 
-    public void setFeedSize(int feedSize) {
+    public SecurityProfile setFeedSize(int feedSize) {
         this.feedSize = feedSize;
+        return this;
     }
 
     public boolean isFriendsViaBook() {
         return friendsViaBook;
     }
 
-    public void setFriendsViaBook(boolean friendsViaBook) {
+    public SecurityProfile setFriendsViaBook(boolean friendsViaBook) {
         this.friendsViaBook = friendsViaBook;
+        return this;
     }
 
     public boolean isFriendsViaQR() {
         return friendsViaQR;
     }
 
-    public void setFriendsViaQR(boolean friendsViaQR) {
+    public SecurityProfile setFriendsViaQR(boolean friendsViaQR) {
         this.friendsViaQR = friendsViaQR;
+        return this;
     }
 
     public boolean isAutodelete() {
         return autodelete;
     }
 
-    public void setAutodelete(boolean autodelete) {
+    public SecurityProfile setAutodelete(boolean autodelete) {
         this.autodelete = autodelete;
+        return this;
     }
 
     public boolean isShareLocation() {
         return shareLocation;
     }
 
-    public void setShareLocation(boolean shareLocation) {
+    public SecurityProfile setShareLocation(boolean shareLocation) {
         this.shareLocation = shareLocation;
+        return this;
     }
 
     public int getMinSharedContacts() {
         return minSharedContacts;
     }
 
-    public void setMinSharedContacts(int minSharedContacts) {
+    public SecurityProfile setMinSharedContacts(int minSharedContacts) {
         this.minSharedContacts = minSharedContacts;
+        return this;
     }
 
     public int getMaxMessages() {
         return maxMessages;
     }
 
-    public void setMaxMessages(int maxMessages) {
+    public SecurityProfile setMaxMessages(int maxMessages) {
         this.maxMessages = maxMessages;
+        return this;
     }
 
     public SecurityProfile clone(){
@@ -166,7 +193,10 @@ public class SecurityProfile {
                 minSharedContacts,
                 maxMessages,
                 cooldown,
-                timeboundPeriod);
+                timeboundPeriod,
+                enforceLock,
+                useTrust,
+                randomExchange);
     }
 
     public float getAutodeleteTrust() {
@@ -181,23 +211,54 @@ public class SecurityProfile {
         return cooldown;
     }
 
-    public void setAutodeleteTrust(float autodeleteTrust) {
+    public SecurityProfile setAutodeleteTrust(float autodeleteTrust) {
         this.autodeleteTrust = autodeleteTrust;
+        return this;
     }
 
-    public void setAutodeleteAge(int autodeleteAge) {
+    public SecurityProfile setAutodeleteAge(int autodeleteAge) {
         this.autodeleteAge = autodeleteAge;
+        return this;
     }
 
-    public void setCooldown(int cooldown) {
+    public SecurityProfile setCooldown(int cooldown) {
         this.cooldown = cooldown;
+        return this;
     }
 
     public int getTimeboundPeriod() {
         return timeboundPeriod;
     }
 
-    public void setTimeboundPeriod(int timeboundPeriod) {
+    public SecurityProfile setTimeboundPeriod(int timeboundPeriod) {
         this.timeboundPeriod = timeboundPeriod;
+        return this;
+    }
+
+    public boolean isEnforceLock() {
+        return enforceLock;
+    }
+
+    public SecurityProfile setEnforceLock(boolean enforceLock) {
+        this.enforceLock = enforceLock;
+        return this;
+    }
+
+    public boolean isUseTrust() {
+        return useTrust;
+    }
+
+    public SecurityProfile setUseTrust(boolean useTrust) {
+        this.useTrust = useTrust;
+        return this;
+    }
+
+    public boolean isRandomExchange() {
+        return randomExchange;
+    }
+
+    public SecurityProfile setRandomExchange(boolean randomExchange) {
+        this.randomExchange = randomExchange;
+        return this;
     }
 }

@@ -175,7 +175,8 @@ public class CryptographicExchange extends Exchange {
      * blinded friends from the friend store.
      */
     private void sendFriends() throws IOException{
-        ArrayList<ByteString> blindedFriends = Crypto.byteArraysToStrings(mClientPSI.encodeBlindedItems());
+        ArrayList<ByteString> blindedFriends = SecurityManager.getCurrentProfile(mContext).isUseTrust() ?
+                Crypto.byteArraysToStrings(mClientPSI.encodeBlindedItems()) : new ArrayList<ByteString>();
         ClientMessage cm = new ClientMessage(null ,blindedFriends);
         if(!lengthValueWrite(out, cm.toJSON())){
             setExchangeStatus(Status.ERROR);
@@ -203,7 +204,9 @@ public class CryptographicExchange extends Exchange {
         // This can't return null because byteStringsToArrays only returns null
         // when passed null, and we already checked that ClientMessage.blindedFriends
         // isn't null.
-        remoteBlindedFriends = Crypto.byteStringsToArrays(mRemoteClientMessage.blindedFriends);
+        remoteBlindedFriends = SecurityManager.getCurrentProfile(mContext).isUseTrust() ?
+                Crypto.byteStringsToArrays(mRemoteClientMessage.blindedFriends) :
+                new ArrayList<byte[]>();
     }
 
   /**
@@ -378,7 +381,7 @@ public class CryptographicExchange extends Exchange {
     commonFriends = mClientPSI.getCardinality(getSRTFromServerTuple());
 
       int requiredFriends = SecurityManager.getCurrentProfile(mContext).minSharedContacts;
-      if(requiredFriends > commonFriends){
+      if(requiredFriends > commonFriends && SecurityManager.getCurrentProfile(mContext).isUseTrust()){
           setExchangeStatus(Status.ERROR);
           setErrorMessage("Session rejected by client due to insufficient common friends with server(required:"+requiredFriends+" found:"+commonFriends+").");
           throw new IOException("Session rejected by client due to insufficient common friends with server(required:"+requiredFriends+" found:"+commonFriends+").");

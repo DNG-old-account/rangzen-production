@@ -363,7 +363,7 @@ public class MessageStore extends SQLiteOpenHelper {
      *                     if set to false and value is outside of limit, an exception is thrown
      * @return Returns true if the message was added. If message already exists, update its values
      */
-    public boolean addMessage(String messageId, String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location, String parent){
+    public boolean addMessage(Context context, String messageId, String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location, String parent){
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
@@ -371,6 +371,14 @@ public class MessageStore extends SQLiteOpenHelper {
                 trust = streamlineTrust(trust);
             } else {
                 checkTrust(trust);
+            }
+
+            Cursor cursor = db.rawQuery("SELECT "+COL_ROWID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" ORDER BY "+COL_ROWID+" ASC;",null);
+            int overflow = cursor.getCount() - 3;//SecurityManager.getCurrentProfile(context).getMaxMessages();
+            cursor.close();
+            if(overflow >= 0){
+                db.execSQL("UPDATE "+TABLE+" SET "+COL_DELETED+"="+TRUE+" WHERE "+COL_ROWID+
+                        " IN (SELECT "+COL_ROWID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" ORDER BY "+COL_ROWID+" ASC LIMIT "+(1+overflow)+");");
             }
 
             if(message.length() > MAX_MESSAGE_SIZE) message = message.substring(0, MAX_MESSAGE_SIZE);

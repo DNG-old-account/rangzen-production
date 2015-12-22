@@ -230,7 +230,7 @@ public class PostActivity extends ActionBarActivity {
                 String messageId = Base64.encodeToString(Crypto.encodeString(String.valueOf(idLong)), Base64.NO_WRAP);
 
 
-                messageStore.addMessage(messageId, messageBody, trust, priority, pseudonym, timestamp, true, timebound, myLocation, messageParent);
+                messageStore.addMessage(PostActivity.this, messageId, messageBody, trust, priority, pseudonym, timestamp, true, timebound, myLocation, messageParent);
                 Toast.makeText(PostActivity.this, "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 ExchangeHistoryTracker.getInstance().cleanHistory(null);

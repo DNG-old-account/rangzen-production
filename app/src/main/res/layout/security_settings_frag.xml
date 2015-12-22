@@ -178,6 +178,51 @@
                     android:text="@string/profile_share_location_desc"/>
             </TableRow>
 
+            <!--use trust-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_use_trust_title"/>
+                <CheckBox
+                    style="@style/Settings_checkbox"
+                    android:id="@+id/checkbox_use_trust" />
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_use_trust_desc"/>
+            </TableRow>
+
+            <!--Enforce lock-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_enforce_lock_title"/>
+                <CheckBox
+                    style="@style/Settings_checkbox"
+                    android:id="@+id/checkbox_enforce_lock" />
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_enforce_lock_desc"/>
+            </TableRow>
+
+            <!--Randomize exchange-->
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_title"
+                    android:text="@string/profile_random_exchange_title"/>
+                <CheckBox
+                    style="@style/Settings_checkbox"
+                    android:id="@+id/checkbox_random_exchange" />
+            </TableRow>
+            <TableRow style="@style/Settings_table_row">
+                <TextView
+                    style="@style/Settings_checkbox_description"
+                    android:text="@string/profile_random_exchange_desc"/>
+            </TableRow>
+
             <!--Min contacts-->
             <TableRow style="@style/Settings_table_row">
                 <TextView

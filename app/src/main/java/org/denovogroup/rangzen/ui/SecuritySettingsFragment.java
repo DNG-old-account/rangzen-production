@@ -2,6 +2,7 @@ package org.denovogroup.rangzen.ui;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -90,6 +91,15 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
                 break;
             case R.id.checkbox_timestamp:
                 currentProfile.setTimestamp(isChecked);
+                break;
+            case R.id.checkbox_use_trust:
+                currentProfile.setUseTrust(isChecked);
+                break;
+            case R.id.checkbox_enforce_lock:
+                currentProfile.setEnforceLock(isChecked);
+                break;
+            case R.id.checkbox_random_exchange:
+                currentProfile.setRandomExchange(isChecked);
                 break;
         }
 
@@ -192,6 +202,18 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
         ((CheckBox) v.findViewById(R.id.checkbox_share_location)).setChecked(currentProfile.isShareLocation());
         ((CheckBox) v.findViewById(R.id.checkbox_share_location)).setOnCheckedChangeListener(this);
 
+        ((CheckBox) v.findViewById(R.id.checkbox_use_trust)).setOnCheckedChangeListener(null);
+        ((CheckBox) v.findViewById(R.id.checkbox_use_trust)).setChecked(currentProfile.isUseTrust());
+        ((CheckBox) v.findViewById(R.id.checkbox_use_trust)).setOnCheckedChangeListener(this);
+
+        ((CheckBox) v.findViewById(R.id.checkbox_enforce_lock)).setOnCheckedChangeListener(null);
+        ((CheckBox) v.findViewById(R.id.checkbox_enforce_lock)).setChecked(currentProfile.isEnforceLock());
+        ((CheckBox) v.findViewById(R.id.checkbox_enforce_lock)).setOnCheckedChangeListener(this);
+
+        ((CheckBox) v.findViewById(R.id.checkbox_random_exchange)).setOnCheckedChangeListener(null);
+        ((CheckBox) v.findViewById(R.id.checkbox_random_exchange)).setChecked(currentProfile.isRandomExchange());
+        ((CheckBox) v.findViewById(R.id.checkbox_random_exchange)).setOnCheckedChangeListener(this);
+
         ((EditText) v.findViewById(R.id.editText_feedsize)).setOnEditorActionListener(null);
         ((EditText) v.findViewById(R.id.editText_feedsize)).setText(String.valueOf(currentProfile.getFeedSize()));
         ((EditText) v.findViewById(R.id.editText_feedsize)).setOnEditorActionListener(this);
@@ -199,6 +221,7 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
         ((EditText) v.findViewById(R.id.editText_min_contacts)).setOnEditorActionListener(null);
         ((EditText) v.findViewById(R.id.editText_min_contacts)).setText(String.valueOf(currentProfile.getMinSharedContacts()));
         ((EditText) v.findViewById(R.id.editText_min_contacts)).setOnEditorActionListener(this);
+        ((EditText) v.findViewById(R.id.editText_min_contacts)).setEnabled(currentProfile.isUseTrust());
 
         ((EditText) v.findViewById(R.id.editText_max_messages)).setOnEditorActionListener(null);
         ((EditText) v.findViewById(R.id.editText_max_messages)).setText(String.valueOf(currentProfile.getMaxMessages()));
@@ -227,5 +250,7 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
         currentProfile.setName(SecurityManager.CUSTOM_PROFILE_NAME);
         SecurityManager.setCurrentProfile(getActivity(), currentProfile);
         profileSeekBar.setProgress(0);
+        trustThresholdSeekBar.setEnabled(currentProfile.isAutodelete() && currentProfile.isUseTrust());
+        ((EditText) getView().findViewById(R.id.editText_min_contacts)).setEnabled(currentProfile.isUseTrust());
     }
 }

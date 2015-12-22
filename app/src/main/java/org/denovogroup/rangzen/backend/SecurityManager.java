@@ -20,13 +20,6 @@ public class SecurityManager {
     /** list of privacy profiles available */
     private static List<SecurityProfile> profiles;
 
-    /**an index for the position of the LOW security profile in the list */
-    public static final int SECURITY_LOW = 0;
-    /**an index for the position of the MEDIUM security profile in the list */
-    public static final int SECURITY_MEDIUM = 1;
-    /**an index for the position of the HIGH security profile in the list */
-    public static final int SECURITY_HIGH = 2;
-
     /** the shared preference file where security settings are stored */
     public static final String SETTINGS_FILE = "Settings";
     /** the key under which use pseudonym is set in the file*/
@@ -48,21 +41,57 @@ public class SecurityManager {
     private static final String PROFILE_MAX_MESSAGES_KEY = "maxMessagesPerExchange";
     private static final String PROFILE_COOLDOWN_KEY = "exchangeCooldown";
     private static final String PROFILE_TIMEBOUND_KEY = "timebound";
+    private static final String PROFILE_ENFORCE_LOCK_KEY = "enforceLock";
+    private static final String PROFILE_USE_TRUST_KEY = "useTrust";
+    private static final String PROFILE_RANDOM_EXCHANGE_KEY = "randomExchange";
 
 
     /** Default security profile value if none is stored */
-    public static final int DEFAULT_SECURITY_PROFILE = SECURITY_MEDIUM;
+    public static final int DEFAULT_SECURITY_PROFILE = 0;
     /** Default trust threshold value if none is stored */
-    public static final float DEFAULT_TRUST_THRESHOLD = 0.01f;
+    public static final float DEFAULT_TRUST_THRESHOLD = 0.0f;
     /** Default pseudonym value if none is stored */
     public static final String DEFAULT_PSEUDONYM = "John snow";
 
     /** initiate the managers parameters such as the profiles list */
     private void init(){
         profiles = new ArrayList<>();
-        profiles.add(new SecurityProfile(1,"Basic", true, true, 999999999, true, true, false, 0f, 0, true, 0, 300, 5, 60));
-        profiles.add(new SecurityProfile(2,"Moderate", true, false, 1000, true, true, true, 0.01f, 14, true, 3, 200, 15, 30));
-        profiles.add(new SecurityProfile(3,"Strict", false, false, 500, false, true, true, 0.05f, 14, false, 5, 100, 30, 14));
+        profiles.add(new SecurityProfile(1)
+                .setName("Flexible")
+                .setTimestamp(true)
+                .setPseudonyms(true)
+                .setFeedSize(1000)
+                .setFriendsViaBook(true)
+                .setFriendsViaQR(true)
+                .setAutodelete(true)
+                .setAutodeleteTrust(0f)
+                .setAutodeleteAge(0)
+                .setShareLocation(true)
+                .setMinSharedContacts(0)
+                .setMaxMessages(0)
+                .setCooldown(5)
+                .setEnforceLock(false)
+                .setUseTrust(false)
+                .setRandomExchange(false)
+                .setTimeboundPeriod(0));
+        profiles.add(new SecurityProfile(2)
+                .setName("Limited")
+                .setTimestamp(false)
+                .setPseudonyms(false)
+                .setFeedSize(1000)
+                .setFriendsViaBook(false)
+                .setFriendsViaQR(true)
+                .setAutodelete(true)
+                .setAutodeleteTrust(0.05f)
+                .setAutodeleteAge(14)
+                .setShareLocation(false)
+                .setMinSharedContacts(5)
+                .setMaxMessages(250)
+                .setCooldown(30)
+                .setEnforceLock(true)
+                .setUseTrust(true)
+                .setRandomExchange(true)
+                .setTimeboundPeriod(30));
     }
 
     /** return the existing instance of the manager if exists. create new if not*/
@@ -134,7 +163,10 @@ public class SecurityManager {
                 pref.getInt(PROFILE_MIN_SHARED_CONTACTS_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getMinSharedContacts()),
                 pref.getInt(PROFILE_MAX_MESSAGES_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getMaxMessages()),
                 pref.getInt(PROFILE_COOLDOWN_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getCooldown()),
-                pref.getInt(PROFILE_TIMEBOUND_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getTimeboundPeriod())
+                pref.getInt(PROFILE_TIMEBOUND_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getTimeboundPeriod()),
+                pref.getBoolean(PROFILE_ENFORCE_LOCK_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isEnforceLock()),
+                pref.getBoolean(PROFILE_USE_TRUST_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isUseTrust()),
+                pref.getBoolean(PROFILE_RANDOM_EXCHANGE_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isRandomExchange())
         );
 
         return customProfile;
@@ -161,7 +193,7 @@ public class SecurityManager {
         SharedPreferences.Editor pref = context.getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE).edit();
             pref.putString(PROFILE_NAME_KEY, profile.getName());
             pref.putBoolean(PROFILE_TIMESTAMP_KEY, profile.isTimestamp());
-        pref.putBoolean(PROFILE_PSEUDONYM_KEY, profile.isPseudonyms());
+            pref.putBoolean(PROFILE_PSEUDONYM_KEY, profile.isPseudonyms());
             pref.putInt(PROFILE_FEED_SIZE_KEY, profile.getFeedSize());
             pref.putBoolean(PROFILE_FRIEND_VIA_BOOK_KEY, profile.friendsViaBook);
             pref.putBoolean(PROFILE_FRIEND_VIA_QR_KEY, profile.friendsViaQR);
@@ -169,10 +201,13 @@ public class SecurityManager {
             pref.putFloat(PROFILE_AUTO_DELETE_TRUST_KEY, profile.getAutodeleteTrust());
             pref.putInt(PROFILE_AUTO_DELETE_AGE_KEY, profile.getAutodeleteAge());
             pref.putBoolean(PROFILE_SHARE_LOCATIONS_KEY, profile.isShareLocation());
-        pref.putInt(PROFILE_MIN_SHARED_CONTACTS_KEY, profile.getMinSharedContacts());
+            pref.putInt(PROFILE_MIN_SHARED_CONTACTS_KEY, profile.getMinSharedContacts());
             pref.putInt(PROFILE_MAX_MESSAGES_KEY, profile.getMaxMessages());
             pref.putInt(PROFILE_COOLDOWN_KEY, profile.getCooldown());
             pref.putInt(PROFILE_TIMEBOUND_KEY, profile.getTimeboundPeriod());
+            pref.putBoolean(PROFILE_ENFORCE_LOCK_KEY, profile.isEnforceLock());
+            pref.putBoolean(PROFILE_USE_TRUST_KEY, profile.isUseTrust());
+            pref.putBoolean(PROFILE_RANDOM_EXCHANGE_KEY, profile.isRandomExchange());
             pref.commit();
 
         RangzenService.TIME_BETWEEN_EXCHANGES_MILLIS = profile.getCooldown() * 1000;

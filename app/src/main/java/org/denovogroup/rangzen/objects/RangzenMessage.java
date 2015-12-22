@@ -19,7 +19,7 @@ import java.util.Calendar;
 public final class RangzenMessage extends Message {
 
   public static final String DEFAULT_TEXT = "";
-  public static final Double DEFAULT_TRUST = 0.01D;
+  public static final Double DEFAULT_TRUST = 0.5D;
     public static final int DEFAULT_PRIORITY = 0;
     public static final String DEFAULT_PSEUDONYM = "";
 
@@ -151,7 +151,6 @@ public final class RangzenMessage extends Message {
         try {
             result.put(MESSAGE_ID_KEY, this.messageid);
             result.put(TEXT_KEY, this.text);
-            result.put(TRUST_KEY, this.trust + Utils.makeNoise(0d, 0.003d));
             result.put(PRIORITY_KEY, this.priority);
             if(parent != null) result.put(PARENT_KEY, this.parent);
             if(timebound > 0) result.put(TIMEBOUND_KEY, this.timebound);
@@ -159,6 +158,7 @@ public final class RangzenMessage extends Message {
             SecurityProfile profile = SecurityManager.getCurrentProfile(context);
 
             //put optional items based on security profile settings
+            if(profile.isUseTrust()) result.put(TRUST_KEY, this.trust + Utils.makeNoise(0d, 0.003d));
             if(profile.isPseudonyms()) result.put(PSEUDONYM_KEY, this.pseudonym);
             if(profile.isShareLocation()) result.put(LATLONG_KEY, this.latlong);
 
