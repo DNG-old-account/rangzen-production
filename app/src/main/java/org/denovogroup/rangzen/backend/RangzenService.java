@@ -30,6 +30,7 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import android.animation.ObjectAnimator;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -40,6 +41,7 @@ import android.content.ComponentName;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -51,14 +53,24 @@ import android.net.NetworkInfo;
 import android.os.IBinder;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.objects.BetaExchangeHistory;
 import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.denovogroup.rangzen.ui.BetaExchangeHistoryFragment;
 import org.denovogroup.rangzen.ui.Opener;
 import org.denovogroup.rangzen.ui.PreferencesActivity;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.StreamCorruptedException;
 import java.io.UnsupportedEncodingException;
 import java.lang.System;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -74,6 +86,9 @@ import java.util.Set;
  * indefinitely to perform the background tasks of Rangzen.
  */
 public class RangzenService extends Service {
+
+    private static List<BetaExchangeHistory> exchangeHistoryList;
+
     /** The running instance of RangzenService. */
     protected static RangzenService sRangzenServiceInstance;
 
@@ -175,6 +190,8 @@ public class RangzenService extends Service {
     @Override
     public void onCreate() {
         Log.i(TAG, "RangzenService created.");
+
+        loadHistory(this);
 
         sRangzenServiceInstance = this;
 
@@ -324,6 +341,8 @@ public class RangzenService extends Service {
                             Log.d(TAG, "Backoff from peer: " + peer +
                                     " [previously interacted:" + hasHistory + ", store ready:" + storeVersionChanged + " ,backoff timeout:" + waitedMuch + "]");
                         }
+                    } else {
+                        Log.d(TAG,"Peer is in change of initiating conversation:"+peer);
                     }
                 } catch (NoSuchAlgorithmException e) {
                     Log.e(TAG, "No such algorithm for hashing in thisDeviceSpeaksTo!? " + e);
@@ -452,6 +471,9 @@ public class RangzenService extends Service {
         Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
         Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
           Set<String> myFriends = mFriendStore.getAllFriends();
+
+          int ofWhichNew = 0;
+
         for (RangzenMessage message : newMessages) {
           double stored = mMessageStore.getTrust(message.text);
           double remote = message.trust;
@@ -464,11 +486,12 @@ public class RangzenService extends Service {
                 mMessageStore.updateTrust(message.text, newTrust, true);
             } else {
                 hasNew = true;
-
+                ofWhichNew++;
                 mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent);
                 //mark this message as unread
                 mMessageStore.setRead(message.text, false);
             }
+
           } catch (IllegalArgumentException e) {
             Log.e(TAG, String.format("Attempted to add/update message %s with trust (%f/%f)" +
                                     ", %d friends, %d friends in common",
@@ -476,6 +499,9 @@ public class RangzenService extends Service {
                                     myFriends.size(), friendOverlap));
           }
         }
+
+          exchangeHistoryList.add(0,new BetaExchangeHistory(newMessages.size(), ofWhichNew, System.currentTimeMillis()));
+          saveHistory(RangzenService.this);
 
           if(hasNew){
               mMessageStore.updateStoreVersion();
@@ -505,6 +531,9 @@ public class RangzenService extends Service {
       public void failure(Exchange exchange, String reason) {
         Log.e(TAG, "Exchange failed, reason: " + reason);
         RangzenService.this.cleanupAfterExchange();
+
+          exchangeHistoryList.add(0, new BetaExchangeHistory(-1, 0, System.currentTimeMillis()));
+          saveHistory(RangzenService.this);
       }
 
         @Override
@@ -515,7 +544,10 @@ public class RangzenService extends Service {
             int friendOverlap = Math.max(exchange.getCommonFriends(), 0);
             Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
             Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
+            int ofWhichNew = 0;
+
             if(newMessages != null) {
+
                 for (RangzenMessage message : newMessages) {
                     Set<String> myFriends = mFriendStore.getAllFriends();
                     double stored = mMessageStore.getTrust(message.text);
@@ -528,6 +560,7 @@ public class RangzenService extends Service {
                             //update existing message priority unless its marked as removed by user
                             mMessageStore.updateTrust(message.text, newTrust, true);
                         } else {
+                            ofWhichNew++;
                             hasNew = true;
                             mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent);
                             //mark this message as unread
@@ -540,6 +573,9 @@ public class RangzenService extends Service {
                                 myFriends.size(), friendOverlap));
                     }
                 }
+
+                exchangeHistoryList.add(0, new BetaExchangeHistory(newMessages.size(), ofWhichNew, System.currentTimeMillis()));
+                saveHistory(RangzenService.this);
             }
 
             if(hasNew){
@@ -704,5 +740,49 @@ public class RangzenService extends Service {
     private void cleanupMessageStore(){
         SecurityProfile currentProfile = SecurityManager.getCurrentProfile(this);
             MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile);
+    }
+
+    private static void saveHistory(Context service){
+        try {
+            File dir = service.getFilesDir();
+
+            if(!dir.exists()){
+                dir.mkdirs();
+            }
+
+            File file = new File(dir, BetaExchangeHistoryFragment.HISTORY_FILE);
+
+            FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream ois = new ObjectOutputStream(fos);
+            ois.writeObject(exchangeHistoryList);
+            ois.close();
+
+
+            Intent intent = new Intent(BetaExchangeHistoryFragment.HISTORY_UPDATED_INTENT);
+            service.sendBroadcast(intent);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void clearHistory(Context context){
+        exchangeHistoryList = new ArrayList<>();
+        saveHistory(context);
+    }
+
+    private static void loadHistory(Context service){
+        try {
+
+            File dir = service.getFilesDir();
+            File file = new File(dir, BetaExchangeHistoryFragment.HISTORY_FILE);
+
+            FileInputStream fis = new FileInputStream(file);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            exchangeHistoryList = (List<BetaExchangeHistory>) ois.readObject();
+            ois.close();
+        } catch (ClassNotFoundException | IOException e) {
+            e.printStackTrace();
+            exchangeHistoryList = new ArrayList<BetaExchangeHistory>();
+        }
     }
 }

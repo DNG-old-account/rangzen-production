@@ -374,7 +374,7 @@ public class MessageStore extends SQLiteOpenHelper {
             }
 
             Cursor cursor = db.rawQuery("SELECT "+COL_ROWID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" ORDER BY "+COL_ROWID+" ASC;",null);
-            int overflow = cursor.getCount() - SecurityManager.getCurrentProfile(context).getMaxMessages();
+            int overflow = cursor.getCount() - SecurityManager.getCurrentProfile(context).getFeedSize();
             cursor.close();
             if(overflow >= 0){
                 db.execSQL("UPDATE "+TABLE+" SET "+COL_DELETED+"="+TRUE+" WHERE "+COL_ROWID+

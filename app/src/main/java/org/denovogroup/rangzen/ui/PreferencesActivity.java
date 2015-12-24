@@ -35,7 +35,7 @@ public class PreferencesActivity extends ActionBarActivity implements FriendsFra
 
         pager.setAdapter(new FragmentStatePagerAdapter(getSupportFragmentManager()) {
 
-            int[] titles = new int[]{R.string.pager_title_security, R.string.pager_title_profile, R.string.pager_title_friends,R.string.killswitch};
+            int[] titles = new int[]{R.string.pager_title_security, R.string.pager_title_profile, R.string.pager_title_friends,R.string.killswitch, R.string.beta_tools, R.string.beta_nearby, R.string.beta_history};
 
             @Override
             public Fragment getItem(int position) {
@@ -53,6 +53,15 @@ public class PreferencesActivity extends ActionBarActivity implements FriendsFra
                         break;
                     case 3:
                         page = new KillswitchFragment();
+                        break;
+                    case 4:
+                        page = new BetaFragment();
+                        break;
+                    case 5:
+                        page = new BetaNearbyFragment();
+                        break;
+                    case 6:
+                        page = new BetaExchangeHistoryFragment();
                         break;
                 }
                 return page;

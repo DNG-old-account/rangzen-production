@@ -34,7 +34,6 @@ public class FeedAdapter extends CursorAdapter {
     private int timebound_colIndex;
     private int read_colIndex;
     private int location_colIndex;
-    private int parent_colIndex;
     private int messageId_colIndex;
 
     private SecurityProfile currentProfile;
@@ -90,7 +89,6 @@ public class FeedAdapter extends CursorAdapter {
         timebound_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_EXPIRE);
         location_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_LATLONG);
         currentProfile = org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(context);
-        parent_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_PARENT);
         messageId_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_MESSAGE_ID);
     }
 
@@ -126,10 +124,6 @@ public class FeedAdapter extends CursorAdapter {
                 .findViewById(R.id.timebound_marker);
         mViewHolder.btn_navigate = (ImageButton) convertView
                 .findViewById(R.id.item_navigate);
-        mViewHolder.btn_reply = (ImageButton) convertView
-                .findViewById(R.id.item_reply);
-        mViewHolder.comments_holder = (ListView) convertView
-                .findViewById(R.id.comments_holder);
         convertView.setTag(mViewHolder);
         return convertView;
     }
@@ -143,7 +137,6 @@ public class FeedAdapter extends CursorAdapter {
     private void setProperties(View view, ViewHolder viewHolder, Cursor cursor){
 
         boolean isRead = cursor.getInt(read_colIndex) == MessageStore.TRUE;
-        boolean isComment = cursor.getString(parent_colIndex) != null;
 
         //view.setBackgroundResource(isRead ? R.drawable.feed_item_background_gradient : R.drawable.feed_item_background_gradient_unread);
         //view.setBackgroundResource(isComment ? R.drawable.feed_item_comment_background_gradient : R.drawable.feed_item_background_gradient);
@@ -275,20 +268,6 @@ public class FeedAdapter extends CursorAdapter {
         viewHolder.timebound_marker.setVisibility(isTimebound ? View.VISIBLE : View.GONE);
         viewHolder.btn_navigate.setOnClickListener(clickListener);
         viewHolder.btn_navigate.setVisibility(hasLocation ? View.VISIBLE : View.GONE);
-        if(viewHolder.btn_reply != null) viewHolder.btn_reply.setOnClickListener(clickListener);
-
-        if(viewHolder.comments_holder != null) {
-            if (!isComment) {
-                Cursor commentsCursor = MessageStore.getInstance().getComments(cursor.getString(messageId_colIndex));
-                if (commentsCursor != null && commentsCursor.getCount() > 0) {
-                    viewHolder.comments_holder.setAdapter(new FeedAdapter(context, commentsCursor, false, R.layout.feed_item_comment));
-                } else {
-                    viewHolder.comments_holder.setAdapter(null);
-                }
-            } else {
-                viewHolder.comments_holder.setAdapter(null);
-            }
-        }
     }
 
     /** set hashtag links to any hashtag in the supplied text and assign the text to the supplied
@@ -364,14 +343,6 @@ public class FeedAdapter extends CursorAdapter {
          * The view object that act as navigate button.
          */
         private ImageButton btn_navigate;
-        /**
-         * The view object that act as reply button.
-         */
-        private ImageButton btn_reply;
-        /**
-         * The view object that act as navigate button.
-         */
-        private ListView comments_holder;
     }
 
     public void setAdapterCallbacks(FeedAdapterCallbacks callbacks){
