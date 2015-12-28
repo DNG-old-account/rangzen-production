@@ -38,8 +38,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.ComponentName;
 import android.content.SharedPreferences;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -52,8 +50,8 @@ import android.os.IBinder;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.objects.RangzenMessage;
-import org.denovogroup.rangzen.ui.Opener;
-import org.denovogroup.rangzen.ui.PreferencesActivity;
+import org.denovogroup.rangzen.uiold.Opener;
+import org.denovogroup.rangzen.uiold.PreferencesActivity;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

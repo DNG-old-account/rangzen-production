@@ -44,7 +44,6 @@ import android.provider.Settings;
 import android.util.Log;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.ui.Opener;
 
 
 /**

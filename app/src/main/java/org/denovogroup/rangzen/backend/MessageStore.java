@@ -70,7 +70,7 @@ public class MessageStore extends SQLiteOpenHelper {
     private static final double DEFAULT_PRIORITY = 0;
 
     private static final String DATABASE_NAME = "MessageStore.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String TABLE = "Messages";
     public static final String COL_ROWID = "_id";
@@ -86,6 +86,8 @@ public class MessageStore extends SQLiteOpenHelper {
     public static final String COL_EXPIRE = "expire";
     public static final String COL_LATLONG = "location";
     public static final String COL_PARENT = "parent";
+    public static final String COL_FAVIRITE = "favorited";
+    public static final String COL_CHECKED = "checked";
 
     private static final String[] defaultSort = new String[]{COL_DELETED,COL_READ};
 
@@ -127,6 +129,8 @@ public class MessageStore extends SQLiteOpenHelper {
                 + COL_LATLONG + " TEXT,"
                 + COL_LIKED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_LIKED + " IN(" + TRUE + "," + FALSE + ")),"
                 + COL_DELETED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_DELETED + " IN(" + TRUE + "," + FALSE + ")),"
+                + COL_FAVIRITE + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_FAVIRITE + " IN(" + TRUE + "," + FALSE + ")),"
+                + COL_CHECKED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_CHECKED + " IN(" + TRUE + "," + FALSE + ")),"
                 + COL_READ + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_READ + " IN(" + TRUE + "," + FALSE + "))"
                 + ");");
     }
@@ -374,7 +378,7 @@ public class MessageStore extends SQLiteOpenHelper {
             }
 
             Cursor cursor = db.rawQuery("SELECT "+COL_ROWID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" ORDER BY "+COL_ROWID+" ASC;",null);
-            int overflow = cursor.getCount() - SecurityManager.getCurrentProfile(context).getMaxMessages();
+            int overflow = cursor.getCount() - SecurityManager.getCurrentProfile(context).getFeedSize();
             cursor.close();
             if(overflow >= 0){
                 db.execSQL("UPDATE "+TABLE+" SET "+COL_DELETED+"="+TRUE+" WHERE "+COL_ROWID+
@@ -433,6 +437,23 @@ public class MessageStore extends SQLiteOpenHelper {
             return  true;
         }
         Log.d(TAG, "Message not added to store, either message or database is null. ["+message+"]");
+        return false;
+    }
+
+    /**
+     * Remove the given all checked messages from the store, the message data is retained with its deleted
+     * state set to true.
+     *
+     * @return Returns true if the message was removed. If the message was not
+     * found, returns false.
+     */
+    public boolean removeCheckedMessage(){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_DELETED + "=" + TRUE + " WHERE " + COL_CHECKED + "=" + TRUE + ";");
+            return  true;
+        }
+        Log.d(TAG, "Message not added to store, database is null.");
         return false;
     }
 
@@ -582,6 +603,45 @@ public class MessageStore extends SQLiteOpenHelper {
         return false;
     }
 
+    /** set the favorite state of the specified message as true or false */
+    public boolean favoriteMessage(String message, boolean favorite){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_FAVIRITE + "=" + (favorite ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE + " AND " + COL_MESSAGE + " ='" + Utils.makeTextSafeForSQL(message) + "';");
+            return true;
+        }
+        return false;
+    }
+
+    /** set the checked state of the specified message as true or false */
+    public boolean checkMessage(String message, boolean check){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null && message != null){
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE + " AND " + COL_MESSAGE + " ='" + Utils.makeTextSafeForSQL(message) + "';");
+            return true;
+        }
+        return false;
+    }
+
+    /** set the checked state of the all messages as true or false */
+    public boolean checkAllMessages(boolean check){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE+";");
+            return true;
+        }
+        return false;
+    }
+
+    /** return a cursor pointing at all the messages in the store with checked state set to true */
+    public Cursor getCheckedMessages(){
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+            return db.rawQuery("SELECT * FROM " + TABLE + " WHERE " + COL_CHECKED + "="+TRUE + " AND " +COL_DELETED+"="+FALSE+ ";", null);
+        }
+        return null;
+    }
+
     /** Return the current version of the store */
     public String getStoreVersion(){
         if(storeVersion == null) updateStoreVersion();
@@ -661,6 +721,7 @@ public class MessageStore extends SQLiteOpenHelper {
             Cursor cursor = db.rawQuery(pretext + query + posttext, null);
             return cursor;
         } catch (Exception e){
+            e.printStackTrace();
             return null;
         }
     }
@@ -721,5 +782,12 @@ public class MessageStore extends SQLiteOpenHelper {
             return db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_PARENT+"='"+parentId+"';",null);
         }
         return null;
+    }
+
+    public int getCommentCount(String parentId){
+        Cursor c = getComments(parentId);
+        int count = c.getCount();
+        c.close();
+        return count;
     }
 }

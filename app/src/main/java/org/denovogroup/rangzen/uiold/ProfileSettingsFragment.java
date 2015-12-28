@@ -1,11 +1,10 @@
-package org.denovogroup.rangzen.ui;
+package org.denovogroup.rangzen.uiold;
 
 import android.app.AlertDialog;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
@@ -29,11 +28,8 @@ import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
 import org.denovogroup.rangzen.backend.SecurityManager;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 

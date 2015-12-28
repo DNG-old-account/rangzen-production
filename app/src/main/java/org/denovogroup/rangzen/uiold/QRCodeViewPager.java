@@ -29,19 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.denovogroup.rangzen.ui;
+package org.denovogroup.rangzen.uiold;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.StorageBase;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.view.KeyEvent;
 import android.view.MenuItem;
-import android.widget.TextView;
 
 import com.viewpagerindicator.PageIndicator;
 

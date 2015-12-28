@@ -46,14 +46,12 @@ import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
 import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.os.Build;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.util.Log;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.ui.Opener;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

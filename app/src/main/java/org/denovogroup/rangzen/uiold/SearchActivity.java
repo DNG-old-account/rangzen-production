@@ -1,4 +1,4 @@
-package org.denovogroup.rangzen.ui;
+package org.denovogroup.rangzen.uiold;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;

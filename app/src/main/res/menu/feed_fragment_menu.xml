@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:compat="http://schemas.android.com/apk/res-auto" >
+    <item android:id="@+id/search"
+          android:title="@string/search_title"
+          android:icon="@android:drawable/ic_menu_search"
+          compat:showAsAction="collapseActionView|always"
+          compat:actionViewClass="android.support.v7.widget.SearchView"/>
+
+    <group android:id="@+id/checked_only_actions"
+        android:visible="false">
+        <item android:id="@+id/action_retweet"
+              android:title="@string/retweet"
+              android:icon="@drawable/ic_retweet"
+              compat:showAsAction="ifRoom"/>
+
+        <item android:id="@+id/action_share"
+              android:title="@string/share"
+              android:icon="@drawable/ic_share"
+              compat:showAsAction="ifRoom"/>
+
+        <item android:id="@+id/action_delete"
+              android:title="@string/delete"
+              android:icon="@drawable/ic_bin"
+              compat:showAsAction="ifRoom"/>
+
+        <item android:id="@+id/action_delete_from_sender"
+              android:title="@string/delete_from_sender"
+              compat:showAsAction="never"/>
+
+        <item android:id="@+id/action_delete_by_connection"
+              android:title="@string/delete_by_connection"
+              compat:showAsAction="never"/>
+
+        <item android:id="@+id/action_delete_by_exchange"
+              android:title="@string/delete_by_exchange"
+              compat:showAsAction="never"/>
+    </group>
+</menu>

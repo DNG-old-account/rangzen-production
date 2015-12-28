@@ -1,333 +1,455 @@
 package org.denovogroup.rangzen.ui;
 
-import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.location.Location;
-import android.location.LocationManager;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.CursorAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.Spinner;
+import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.backend.*;
-import org.denovogroup.rangzen.objects.RangzenMessage;
+import org.denovogroup.rangzen.backend.MessageStore;
+import org.denovogroup.rangzen.backend.SearchHelper;
+import org.denovogroup.rangzen.uiold.Opener;
+import org.denovogroup.rangzen.uiold.PostActivity;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class FeedFragment extends Fragment implements Refreshable{
+/**
+ * Created by Liran on 12/27/2015.
+ *
+ * The fragment which display the message feed overview
+ */
+public class FeedFragment extends Fragment implements View.OnClickListener{
 
-    /** the amount to change the priority of a message by upon clicking on upvote/downvote*/
-    private static final double PRIORITY_INCREMENT = 0.01d;
+    private boolean inSelectionMode = false;
+    private boolean selectAll = false;
 
-    private ListView listView;
-    private FeedAdapter mFeedListAdaper;
+    private ListView feedListView;
+    private Button newPostButton;
+
+    private ViewGroup newMessagesNotification;
+    private TextView newMessagesNotification_text;
+    private Button newMessagesNotification_button;
+    private Spinner sortSpinner;
+    private TextView leftText;
+    private sortOption currentSort = sortOption.NEWEST;
+
+    Menu menu;
+
     private String query = "";
-    private AsyncTask<String, Void, Cursor> searchTask;
-    private int itemOffset = 0;
-    private int firstItem = 0;
-    private ImageButton addButton;
 
-    @Nullable
+    private enum sortOption{
+        NEWEST, OLDEST, MOST_ENDORSED, LEAST_ENDORSED, MOST_CONNECTED, LEAST_CONNECTED
+    }
+
+    private List<Object[]> sortOptions = new ArrayList<Object[]>(){{
+        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_newest, sortOption.NEWEST});
+        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_oldest, sortOption.OLDEST});
+        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_mostendorsed, sortOption.MOST_ENDORSED});
+        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_leastendorsed, sortOption.LEAST_ENDORSED});
+        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_mostconnected, sortOption.MOST_CONNECTED});
+        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_leastconnected, sortOption.LEAST_CONNECTED});
+    }};
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.feed, container, false);
-        listView = (ListView) view.findViewById(R.id.list);
-        setupListView();
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.feed);
 
-        addButton = (ImageButton) view.findViewById(R.id.new_post_button);
-        addButton.setOnClickListener(new View.OnClickListener() {
+        leftText = (TextView) ((MainActivity) getActivity()).getToolbar().findViewById(R.id.leftText);
+
+        initSortSpinner();
+
+        View v = inflater.inflate(R.layout.feed_fragment, container, false);
+
+        feedListView = (ListView) v.findViewById(R.id.feed_listView);
+        newPostButton = (Button) v.findViewById(R.id.new_post_button);
+            newPostButton.setOnClickListener(this);
+        newMessagesNotification = (ViewGroup) v.findViewById(R.id.new_message_notification);
+        newMessagesNotification_text = (TextView) v.findViewById(R.id.new_message_notification_desc);
+        newMessagesNotification_button = (Button) v.findViewById(R.id.new_message_notification_btn);
+            newMessagesNotification_button.setOnClickListener(this);
+
+        //TODO temp add stuff to the store
+        MessageStore.getInstance(getActivity()).addMessage(getActivity(), "" + System.currentTimeMillis(), "#message " + System.currentTimeMillis(), 0.98d, 123, "Mario", System.currentTimeMillis(), true, System.currentTimeMillis() + (400000000L), null, null);
+
+        setListView();
+
+        return v;
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.new_post_button:
+                //TODO
+                break;
+            case R.id.new_message_notification_btn:
+                //TODO
+                break;
+        }
+    }
+
+    private void initSortSpinner(){
+        if(getActivity() instanceof MainActivity) {
+            sortSpinner = (Spinner) ((MainActivity) getActivity()).getToolbar().findViewById(R.id.sortSpinner);
+            sortSpinner.setVisibility(View.VISIBLE);
+            sortSpinner.setAdapter(new FeedSortSpinnerAdapter(getActivity(), sortOptions));
+            for(int i=0; i<sortOptions.size();i++){
+                if(sortOptions.get(i)[2] == currentSort){
+                    sortSpinner.setSelection(i);
+                    break;
+                }
+            }
+            sortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    currentSort = (sortOption) sortOptions.get(position)[2];
+
+                    MessageStore store = MessageStore.getInstance(getActivity());
+
+                    switch(currentSort){
+                        case LEAST_CONNECTED:
+                            store.setSortOption(new String[]{MessageStore.COL_TRUST}, true);
+                            break;
+                        case MOST_CONNECTED:
+                            store.setSortOption(new String[]{MessageStore.COL_TRUST}, false);
+                            break;
+                        case LEAST_ENDORSED:
+                            store.setSortOption(new String[]{MessageStore.COL_LIKES}, true);
+                            break;
+                        case MOST_ENDORSED:
+                            store.setSortOption(new String[]{MessageStore.COL_LIKES}, false);
+                            break;
+                        case NEWEST:
+                            store.setSortOption(new String[]{MessageStore.COL_TIMESTAMP}, true);
+                            break;
+                        case OLDEST:
+                            store.setSortOption(new String[]{MessageStore.COL_TIMESTAMP}, false);
+                            break;
+                    }
+
+                    feedListView.setAdapter(new FeedAdapter(getActivity(), getCursor(), inSelectionMode, feedAdapterCallbacks));
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                    // do nothing
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.feed_fragment_menu, menu);
+        this.menu = menu;
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    /** callback handler from clicks on buttons inside the feed list view */
+    FeedAdapter.FeedAdapterCallbacks feedAdapterCallbacks = new FeedAdapter.FeedAdapterCallbacks() {
+        @Override
+        public void onUpvote(String message, int oldPriority) {
+            MessageStore.getInstance(getActivity()).likeMessage(
+                    message,
+                    true);
+            swapCursor();
+        }
+
+        @Override
+        public void onDownvote(String message, int oldPriority) {
+            MessageStore.getInstance(getActivity()).likeMessage(
+                    message,
+                    false);
+            swapCursor();
+        }
+
+        @Override
+        public void onFavorite(String message, boolean isFavoriteBefore) {
+            MessageStore.getInstance(getActivity()).favoriteMessage(
+                    message,
+                    !isFavoriteBefore);
+            swapCursor();
+        }
+
+        @Override
+        public void onNavigate(String message, String latxLon) {
+            double lat = Double.parseDouble(latxLon.substring(0, latxLon.indexOf("x")));
+            double lon = Double.parseDouble(latxLon.substring(latxLon.indexOf("x") + 1));
+
+            Uri gmmIntentUri = Uri.parse("geo:"+lat+","+lon);
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+            mapIntent.setPackage("com.google.android.apps.maps");
+            if (mapIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                startActivity(mapIntent);
+            }
+
+        }
+
+        @Override
+        public void onReply(String parentId) {
+            Intent intent = new Intent(getActivity(), PostActivity.class);
+            intent.putExtra(PostActivity.MESSAGE_PARENT, parentId);
+            startActivityForResult(intent, Opener.Message);
+        }
+    };
+
+    private Cursor getCursor(){
+        String sqlQuery = SearchHelper.searchToSQL(query);
+        return (sqlQuery != null) ?
+                MessageStore.getInstance(getActivity()).getMessagesByQuery(sqlQuery) :
+                MessageStore.getInstance(getActivity()).getMessagesContainingCursor(query, false, true, -1);
+    }
+
+    private void swapCursor(){
+
+        int offsetFromTop = 0;
+        int firstVisiblePosition = Math.max(0, feedListView.getFirstVisiblePosition());
+        if(feedListView.getChildCount() > 0) {
+            offsetFromTop = feedListView.getChildAt(0).getTop();
+        }
+
+        CursorAdapter newAdapter = ((CursorAdapter) feedListView.getAdapter());
+        newAdapter.swapCursor(getCursor());
+        feedListView.setAdapter(newAdapter);
+
+        feedListView.setSelectionFromTop(firstVisiblePosition, offsetFromTop);
+    }
+
+    private void setListView(){
+        feedListView.setAdapter(new FeedAdapter(getActivity(), getCursor(), inSelectionMode, feedAdapterCallbacks));
+        if(inSelectionMode) {
+            setListInSelectionMode();
+        } else {
+            setListInDisplayMode();
+        }
+    }
+
+    AdapterView.OnItemLongClickListener longClickListener = new AdapterView.OnItemLongClickListener() {
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            setListInSelectionMode();
+            return false;
+        }
+    };
+
+    private void setListInSelectionMode(){
+        inSelectionMode = true;
+        ((FeedAdapter) feedListView.getAdapter()).setSelectionMode(true);
+        swapCursor();
+        feedListView.setOnItemLongClickListener(null);
+        feedListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onClick(View v) {
-                if (getActivity().getClass() == Opener.class) {
-                    ((Opener) getActivity()).showFragment(1);
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Cursor c = ((CursorAdapter) feedListView.getAdapter()).getCursor();
+                c.moveToPosition(position);
+                boolean isChecked = c.getInt(c.getColumnIndex(MessageStore.COL_CHECKED)) == MessageStore.TRUE;
+                String message = c.getString(c.getColumnIndex(MessageStore.COL_MESSAGE));
+
+                MessageStore.getInstance(getActivity()).checkMessage(message, !isChecked);
+                swapCursor();
+
+                int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
+
+                ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
+
+                if (menu != null) {
+                    menu.findItem(R.id.action_delete).setEnabled(checkedCount > 0);
+                    menu.findItem(R.id.action_delete_by_connection).setEnabled(checkedCount == 1);
+                    menu.findItem(R.id.action_delete_by_exchange).setEnabled(checkedCount == 1);
+                    menu.findItem(R.id.action_delete_from_sender).setEnabled(checkedCount == 1);
+                    menu.findItem(R.id.action_retweet).setEnabled(checkedCount == 1);
+                    menu.findItem(R.id.action_share).setEnabled(checkedCount == 1);
                 }
             }
         });
 
-        final LinearLayout sortOptions = (LinearLayout) view.findViewById(R.id.sort_options);
+        setActionbar();
 
-        View.OnClickListener sortListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //get child index
-                for(int i=0; i<sortOptions.getChildCount();i++) {
-                    View child = sortOptions.getChildAt(i);
-                    if (child instanceof CheckBox){
-                        child.setActivated(child == v);
-                    }
-                }
-                switch (v.getId()){
-                    case R.id.sort_trust:
-                        MessageStore.getInstance(getActivity()).setSortOption(new String[]{MessageStore.COL_TRUST}, ((CheckBox)v).isChecked());
-                        break;
-                    case R.id.sort_date:
-                        MessageStore.getInstance(getActivity()).setSortOption(new String[]{MessageStore.COL_ROWID}, ((CheckBox) v).isChecked());
-                        break;
-                }
-
-                setQuery(query, false);
-            }
-        };
-
-        for(int i=0; i<sortOptions.getChildCount();i++){
-            View child = sortOptions.getChildAt(i);
-            if(child instanceof CheckBox){
-                child.setOnClickListener(sortListener);
-            }
-        }
-
-        return view;
+        newPostButton.setVisibility(View.INVISIBLE);
     }
 
-    public void setQuery(String query, final boolean retainScroll){
-        this.query = query;
-
-        if(!retainScroll){
-            firstItem = 0;
-            firstItem = 0;
-        }
-
-        if (searchTask != null) {
-            searchTask.cancel(true);
-        }
-
-        searchTask = new AsyncTask<String, Void, Cursor>() {
-
-            @Override
-            protected Cursor doInBackground(String... params) {
-                MessageStore store = MessageStore.getInstance(getActivity());
-                String sqlQuery = SearchHelper.searchToSQL(params[0]);
-
-                Cursor cursor = (sqlQuery != null) ?
-                        store.getMessagesByQuery(sqlQuery) :
-                        store.getMessagesContainingCursor(params[0],false, true, -1);
-
-                if(cursor == null){
-                    cursor = store.getMessagesContainingCursor("", false, false, -1);
-                }
-
-                return cursor;
-            }
-
-            @Override
-            protected void onPostExecute(Cursor messages) {
-                super.onPostExecute(messages);
-
-                if (messages != null) {
-                    refreshView(messages, retainScroll);
-                }
-            }
-        };
-
-        searchTask.execute(query);
+    private void setListInDisplayMode(){
+        inSelectionMode = false;
+        MessageStore.getInstance(getActivity()).checkAllMessages(false);
+                ((FeedAdapter) feedListView.getAdapter()).setSelectionMode(false);
+        feedListView.setOnItemLongClickListener(longClickListener);
+        swapCursor();
+        setActionbar();
+        newPostButton.setVisibility(View.VISIBLE);
     }
 
-
-    /** Create all the necessary components for the swipe menu of the items in the list and assign
-     * a list adapter to the feed list view
-      */
-    private void setupListView(){
-        SecurityProfile currentProfile = org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(getActivity());
-        MessageStore.getInstance(getActivity()).deleteOutdatedOrIrrelevant(currentProfile);
-
-        resetListAdapter(null, false);
-    }
-
-    AlertDialog deleteManyDialog;
-
-    /** set a feed list adapter to the list using the supplied list as source or using the default
-     * items set if supplied list is null
-     * @param items List of messages to be displayed by the attached listView or null to set
-     * @param keepApperance whether or not the view should retain its relative position before updating
-     * default list of items to the adapter*/
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)//this line is required to overcome a bug in the documentation, the problematic call is actually available since API 1 not 21
-    public void resetListAdapter(Cursor items, final Boolean keepApperance) {
-
-        if(items == null) {
-            items = MessageStore.getInstance(getActivity()).getMessagesCursor(false, false, 500);
+    private void setActionbar(){
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources().getColor(inSelectionMode ? R.color.toolbar_grey : R.color.app_purple)));
+            actionBar.setTitle(inSelectionMode ? R.string.empty_string : R.string.feed);
         }
-
-        mFeedListAdaper = new FeedAdapter(getActivity(), items, false);
-        if (listView != null) {
-            int position = listView.getFirstVisiblePosition();
-            int offset = (listView.getChildAt(0) != null) ? listView.getChildAt(0).getTop() : 0;
-
-            listView.setAdapter(mFeedListAdaper);
-            mFeedListAdaper.setAdapterCallbacks(new FeedAdapter.FeedAdapterCallbacks() {
+        if(menu != null) {
+            menu.setGroupVisible(R.id.checked_only_actions, inSelectionMode);
+            menu.findItem(R.id.search).setVisible(!inSelectionMode);
+        }
+        if(sortSpinner != null) sortSpinner.setVisibility(inSelectionMode ? View.GONE : View.VISIBLE);
+        if(leftText != null){
+            leftText.setText(inSelectionMode ? R.string.select_all : R.string.empty_string);
+            leftText.setVisibility(inSelectionMode ? View.VISIBLE : View.GONE);
+            leftText.setOnClickListener(inSelectionMode ? new View.OnClickListener() {
                 @Override
-                public void onDelete(final String message) {
-                    AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
-                    dialog.setTitle(R.string.confirm_delete_title);
-                    dialog.setMessage(R.string.confirm_delete);
-                    dialog.setIcon(R.drawable.ic_bin);
-                    dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            MessageStore.getInstance(getActivity())
-                                    .removeMessage(message);
-                            //refresh the listView
-                            firstItem = listView.getFirstVisiblePosition();
-                            firstItem = listView.getChildAt(0).getTop();
-                            setQuery(query, keepApperance);
-                        }
-                    });
-                    dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    });
+                public void onClick(View v) {
+                    MessageStore.getInstance(getActivity()).checkAllMessages(!selectAll);
+                    selectAll = !selectAll;
+                    swapCursor();
 
-                    dialog.show();
+                    int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
+                    ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
                 }
-
-                @Override
-                public void onDeleteMany(final String message, final float trust, final String pseudonym, final int likes) {
-                    if(deleteManyDialog != null && deleteManyDialog.isShowing()) deleteManyDialog.dismiss();
-                    deleteManyDialog = null;
-                    AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
-                    dialog.setTitle(R.string.confirm_delete_many_title);
-                    dialog.setMessage(R.string.confirm_delete_many);
-                    dialog.setIcon(R.drawable.ic_bin);
-                    View contentView = getLayoutInflater(null).inflate(R.layout.delete_many_dialog, null);
-                    contentView.findViewById(R.id.button_same_sender).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            MessageStore.getInstance(getActivity()).deleteBySender(pseudonym);
-                            setQuery(query, false);
-                            if (deleteManyDialog != null) deleteManyDialog.dismiss();
-                            deleteManyDialog = null;
-                        }
-                    });
-                    contentView.findViewById(R.id.button_lower_trust).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            MessageStore.getInstance(getActivity()).deleteByTrust(trust);
-                            setQuery(query, false);
-                            if (deleteManyDialog != null) deleteManyDialog.dismiss();
-                            deleteManyDialog = null;
-                        }
-                    });
-                    contentView.findViewById(R.id.button_lower_likes).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            MessageStore.getInstance(getActivity()).deleteByLikes(likes);
-                            setQuery(query, false);
-                            if (deleteManyDialog != null) deleteManyDialog.dismiss();
-                            deleteManyDialog = null;
-                        }
-                    });
-                    dialog.setView(contentView);
-                    dialog.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    });
-
-                    deleteManyDialog = dialog.show();
-                }
-
-                @Override
-                public void onUpvote(String message, int oldPriority) {
-                    MessageStore.getInstance(getActivity()).likeMessage(
-                            message,
-                            true);
-                    //refresh the listView
-                    firstItem = listView.getFirstVisiblePosition();
-                    firstItem = listView.getChildAt(0).getTop();
-                    setQuery(query, true);
-                }
-
-                @Override
-                public void onDownvote(String message, int oldPriority) {
-                    MessageStore.getInstance(getActivity()).likeMessage(
-                            message,
-                            false);
-                    //refresh the listView
-                    firstItem = listView.getFirstVisiblePosition();
-                    firstItem = listView.getChildAt(0).getTop();
-                    setQuery(query, true);
-                }
-
-                @Override
-                public void onRetweet(String message) {
-                    Intent intent = new Intent(getActivity(), PostActivity.class);
-                    intent.putExtra(PostActivity.MESSAGE_BODY, message);
-                    startActivityForResult(intent, Opener.Message);
-                }
-
-                @Override
-                public void onReply(String parentId) {
-                    Intent intent = new Intent(getActivity(), PostActivity.class);
-                    intent.putExtra(PostActivity.MESSAGE_PARENT, parentId);
-                    startActivityForResult(intent, Opener.Message);
-                }
-
-                @Override
-                public void onShare(String message) {
-                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                    shareIntent.setType("text/plain");
-                    shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Sent with Rangzen");
-                    shareIntent.putExtra(Intent.EXTRA_TEXT, message);
-                    startActivity(Intent.createChooser(shareIntent, getString(R.string.share_using)));
-                }
-
-                @Override
-                public void onTimeboundClick(String message, long timebound) {
-                    int days = Utils.convertTimestampToRelativeDays(timebound);
-                    Toast.makeText(getActivity(), "Message will expire "+
-                            (days > 0 ?
-                                    "in "+days+" days" : "today"),
-                            Toast.LENGTH_LONG).show();
-                }
-
-                @Override
-                public void onNavigate(String message, String latxLon) {
-                    double lat = Double.parseDouble(latxLon.substring(0, latxLon.indexOf("x")));
-                    double lon = Double.parseDouble(latxLon.substring(latxLon.indexOf("x") + 1));
-
-                    Uri gmmIntentUri = Uri.parse("geo:"+lat+","+lon);
-                    Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                    mapIntent.setPackage("com.google.android.apps.maps");
-                    if (mapIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                        startActivity(mapIntent);
-                    }
-
-                }
-            });
-
-            if(keepApperance && listView.getFirstVisiblePosition() > -1) {
-                listView.setSelectionFromTop(position,offset);
-            }
+            } : null);
+        }
+        if(getActivity() instanceof DrawerActivityHelper){
+            ActionBarDrawerToggle toogle = ((DrawerActivityHelper) getActivity()).getDrawerToggle();
+            toogle.setDrawerIndicatorEnabled(!inSelectionMode);
+            toogle.syncState();
         }
     }
 
     @Override
-    public void refreshView(Cursor items, boolean retainScroll) {
-        resetListAdapter(items, retainScroll);
-        listView.smoothScrollToPositionFromTop(firstItem, itemOffset, 0);
-    }
+    public boolean onOptionsItemSelected(MenuItem item) {
 
-    public void setAddButtonVisible(boolean visible){
-        if(addButton != null){
-            addButton.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        final Cursor checkedMessages = MessageStore.getInstance(getActivity()).getCheckedMessages();
+        checkedMessages.moveToFirst();
+        AlertDialog.Builder dialog = null;
+
+        switch (item.getItemId()){
+            case android.R.id.home:
+                ActionBarDrawerToggle toogle = ((DrawerActivityHelper) getActivity()).getDrawerToggle();
+                if(!toogle.isDrawerIndicatorEnabled()){
+                    setListInDisplayMode();
+                }
+                break;
+            case R.id.action_retweet:
+                //TODO fix this to new assets
+                Intent intent = new Intent(getActivity(), PostActivity.class);
+                intent.putExtra(PostActivity.MESSAGE_BODY, checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_MESSAGE)));
+                startActivityForResult(intent, MainActivity.REQ_CODE_MESSAGE);
+                break;
+            case R.id.action_share:
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("text/plain");
+                shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Sent with Rangzen");
+                shareIntent.putExtra(Intent.EXTRA_TEXT, checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_MESSAGE)));
+                startActivity(Intent.createChooser(shareIntent, getString(R.string.share_using)));
+                break;
+            case R.id.action_delete:
+                dialog = new AlertDialog.Builder(getActivity());
+                dialog.setTitle(R.string.delete_dialog_title);
+                dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
+                dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        MessageStore.getInstance(getActivity()).removeCheckedMessage();
+                        setListInDisplayMode();
+                        dialog.dismiss();
+                    }
+                });
+                break;
+            case R.id.action_delete_by_connection:
+                dialog = new AlertDialog.Builder(getActivity());
+                dialog.setTitle(R.string.delete_dialog_title);
+                dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
+                dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        checkedMessages.getFloat(checkedMessages.getColumnIndex(MessageStore.COL_TRUST));
+                        setListInDisplayMode();
+                        dialog.dismiss();
+                    }
+                });
+                break;
+            case R.id.action_delete_by_exchange:
+                dialog = new AlertDialog.Builder(getActivity());
+                dialog.setTitle(R.string.delete_dialog_title);
+                dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
+                dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        /*TODO delete by exchange
+                        MessageStore.getInstance(getActivity()).deleteBySender(
+                                checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_PSEUDONYM))
+                        );*/
+                        setListInDisplayMode();
+                        dialog.dismiss();
+                    }
+                });
+                break;
+            case R.id.action_delete_from_sender:
+                dialog = new AlertDialog.Builder(getActivity());
+                dialog.setTitle(R.string.delete_dialog_title);
+                dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
+                dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        MessageStore.getInstance(getActivity()).deleteBySender(
+                                checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_PSEUDONYM))
+                        );
+                        setListInDisplayMode();
+                        dialog.dismiss();
+                    }
+                });
+                break;
         }
+
+        if(dialog != null) dialog.show();
+        checkedMessages.close();
+        return super.onOptionsItemSelected(item);
     }
 }

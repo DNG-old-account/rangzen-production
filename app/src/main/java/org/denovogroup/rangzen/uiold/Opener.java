@@ -29,12 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.denovogroup.rangzen.ui;
+package org.denovogroup.rangzen.uiold;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
-import org.denovogroup.rangzen.backend.SecurityManager;
-import org.denovogroup.rangzen.ui.FragmentOrganizer.FragmentType;
+import org.denovogroup.rangzen.uiold.FragmentOrganizer.FragmentType;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -51,7 +50,6 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -68,19 +66,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
-
-import java.util.List;
-import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * This class is the manager of all of the fragments that are clickable in the
@@ -145,7 +132,6 @@ public class Opener extends ActionBarActivity implements OnItemClickListener {
             Intent intent = new Intent(this, PostActivity.class);
             intent.putExtra(PostActivity.MESSAGE_BODY, getIntent().getStringExtra(Intent.EXTRA_TEXT));
             startActivityForResult(intent,Message);
-
         }
 
         setContentView(R.layout.drawer_layout);

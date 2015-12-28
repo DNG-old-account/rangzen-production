@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.denovogroup.rangzen.ui;
+package org.denovogroup.rangzen.uiold;
 
 import android.content.Context;
 import android.view.LayoutInflater;

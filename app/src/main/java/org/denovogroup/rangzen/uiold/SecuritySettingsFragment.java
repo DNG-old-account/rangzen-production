@@ -1,8 +1,7 @@
-package org.denovogroup.rangzen.ui;
+package org.denovogroup.rangzen.uiold;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
