@@ -779,9 +779,19 @@ public class MessageStore extends SQLiteOpenHelper {
     public Cursor getComments(String parentId){
         SQLiteDatabase db = getReadableDatabase();
         if(db != null){
-            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_PARENT+"='"+parentId+"';",null);
+            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_PARENT+"='"+parentId+"' "+sortOption+";",null);
         }
         return null;
+    }
+
+    /** return comments of a certain message parent */
+    public Cursor getCommentsByQuery(String parentId, String query){
+        return getMessagesByQuery("AND "+COL_PARENT+"='"+parentId+"' "+query);
+    }
+
+    /** return comments of a certain message parent containing the query in the message */
+    public Cursor getCommentsContaining(String parentId, String query){
+        return getCommentsByQuery(parentId, "AND "+COL_MESSAGE + " LIKE '%" + Utils.makeTextSafeForSQL(query)+"%'");
     }
 
     public int getCommentCount(String parentId){
@@ -789,5 +799,14 @@ public class MessageStore extends SQLiteOpenHelper {
         int count = c.getCount();
         c.close();
         return count;
+    }
+
+    /** return a cursor with a single message based on passed messageId */
+    public Cursor getMessageById(String messageId){
+        SQLiteDatabase db = getReadableDatabase();
+        if(db != null){
+            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_MESSAGE_ID+"='"+messageId+"' LIMIT 1;",null);
+        }
+        return null;
     }
 }

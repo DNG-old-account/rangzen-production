@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import org.denovogroup.rangzen.R;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class SecurityManager {
     public static final String PSEUDONYM_KEY = "pseudonym";
 
     // profile settings
-    public static final String CUSTOM_PROFILE_NAME = "Custom";
+    public static final int CUSTOM_PROFILE_NAME = R.id.radio_profile_custom;
     private static final String PROFILE_NAME_KEY = "name";
     private static final String PROFILE_TIMESTAMP_KEY = "useTimestamp";
     private static final String PROFILE_PSEUDONYM_KEY = "usePseudonym";
@@ -57,7 +59,7 @@ public class SecurityManager {
     private void init(){
         profiles = new ArrayList<>();
         profiles.add(new SecurityProfile(1)
-                .setName("Flexible")
+                .setName(R.id.radio_profile_flexible)
                 .setTimestamp(true)
                 .setPseudonyms(true)
                 .setFeedSize(1000)
@@ -75,7 +77,7 @@ public class SecurityManager {
                 .setRandomExchange(false)
                 .setTimeboundPeriod(0));
         profiles.add(new SecurityProfile(2)
-                .setName("Limited")
+                .setName(R.id.radio_profile_strict)
                 .setTimestamp(false)
                 .setPseudonyms(false)
                 .setFeedSize(1000)
@@ -107,27 +109,11 @@ public class SecurityManager {
         //an empty constructor
     }
 
-    /** Return the names of available profiles managed by this manager */
-    public String[] getProfiles(){
-        String[] names = new String[profiles.size()+1];
-        names[0] = CUSTOM_PROFILE_NAME;
-        for(int i=1; i<names.length; i++){
-            names[i] = profiles.get(i-1).getName();
-        }
-
-        return names;
-    }
-
-    /** return the SecurityProfile object located in the i position in the profiles list of this adapter */
-    public SecurityProfile getProfile(int i){
-        return profiles.get(i);
-    }
-
     /** return the SecurityProfile object with the supplied name in the profiles list of this adapter or null if using custom profile*/
-    public SecurityProfile getProfile(String name){
+    public SecurityProfile getProfile(int name){
 
         for(SecurityProfile profile : profiles) {
-            if(profile.name.equals(name)) return profile.clone();
+            if(profile.name == name) return profile.clone();
         }
         return null;
     }
@@ -138,11 +124,11 @@ public class SecurityManager {
 
         SharedPreferences pref = context.getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE);
 
-        String profile_name = pref.getString(PROFILE_NAME_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getName());
+        int profile_name = pref.getInt(PROFILE_NAME_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getName());
 
         if(profile_name != CUSTOM_PROFILE_NAME){
             for(SecurityProfile profile : profiles) {
-                if(profile.name.equals(profile_name)){
+                if(profile.name == profile_name){
                     return profile.clone();
                 }
             }
@@ -174,11 +160,11 @@ public class SecurityManager {
 
     /** write the properties of specified profile as the current profile in the local storage.
      * return true if specified name recognized and saved, false otherwise */
-    public static boolean setCurrentProfile(Context context, String profileName){
+    public static boolean setCurrentProfile(Context context, int profileName){
         if(instance == null) getInstance();
 
         for(SecurityProfile profile : profiles){
-            if(profile.getName().equals(profileName)){
+            if(profile.getName() == profileName){
                 setCurrentProfile(context, profile);
                 return true;
             }
@@ -191,7 +177,7 @@ public class SecurityManager {
         if(instance == null) getInstance();
 
         SharedPreferences.Editor pref = context.getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE).edit();
-            pref.putString(PROFILE_NAME_KEY, profile.getName());
+            pref.putInt(PROFILE_NAME_KEY, profile.getName());
             pref.putBoolean(PROFILE_TIMESTAMP_KEY, profile.isTimestamp());
             pref.putBoolean(PROFILE_PSEUDONYM_KEY, profile.isPseudonyms());
             pref.putInt(PROFILE_FEED_SIZE_KEY, profile.getFeedSize());

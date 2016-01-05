@@ -8,7 +8,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Base64;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Random;
 
 /** This activity crates the message sending page. It also handles back button. */
-public class PostActivity extends ActionBarActivity {
+public class PostActivity extends AppCompatActivity {
 
     public static final String MESSAGE_BODY = "MESSAGE_BODY";
     public static final String MESSAGE_PARENT = "MESSAGE_PARENT";
@@ -284,12 +284,12 @@ public class PostActivity extends ActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.post_message_menu, menu);
-        characterCounter = menu.findItem(R.id.characterCount);
+        /*characterCounter = menu.findItem(R.id.characterCount);
         if(messageBox != null) {
             characterCounter.setTitle(String.valueOf(maxChars - messageBody.length()));
         } else {
             characterCounter.setTitle(String.valueOf(maxChars));
-        }
+        }*/
         return true;
     }
 

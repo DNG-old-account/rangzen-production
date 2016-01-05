@@ -4,8 +4,7 @@
     <item android:id="@+id/search"
           android:title="@string/search_title"
           android:icon="@android:drawable/ic_menu_search"
-          compat:showAsAction="collapseActionView|always"
-          compat:actionViewClass="android.support.v7.widget.SearchView"/>
+          compat:showAsAction="always"/>
 
     <group android:id="@+id/checked_only_actions"
         android:visible="false">

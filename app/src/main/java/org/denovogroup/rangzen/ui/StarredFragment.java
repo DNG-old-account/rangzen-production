@@ -18,10 +18,8 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -50,7 +48,7 @@ import java.util.List;
  *
  * The fragment which display the message feed overview
  */
-public class FeedFragment extends Fragment implements View.OnClickListener, TextWatcher{
+public class StarredFragment extends Fragment implements View.OnClickListener, TextWatcher{
 
     public static final int REQ_CODE_MESSAGE = 100;
     public static final int REQ_CODE_SEARCH = 101;
@@ -143,12 +141,13 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.feed);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.starred);
 
         searchView = (EditText) ((MainActivity)getActivity()).getToolbar().findViewById(R.id.searchView);
 
@@ -168,6 +167,8 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
 
         setListView();
 
+        setActionbar();
+
         return v;
     }
 
@@ -175,7 +176,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.new_post_button:
-                Intent intent = new Intent(getActivity(), org.denovogroup.rangzen.ui.PostActivity.class);
+                Intent intent = new Intent(getActivity(), PostActivity.class);
                 startActivityForResult(intent, REQ_CODE_MESSAGE);
                 break;
             case R.id.new_message_notification_btn:
@@ -294,10 +295,11 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     };
 
     private Cursor getCursor(){
+        String baseCondition = "AND "+MessageStore.COL_FAVIRITE+"="+MessageStore.TRUE;
         String sqlQuery = SearchHelper.searchToSQL(query);
         return (sqlQuery != null) ?
-                MessageStore.getInstance(getActivity()).getMessagesByQuery(sqlQuery) :
-                MessageStore.getInstance(getActivity()).getMessagesContainingCursor(query, false, true, -1);
+                MessageStore.getInstance(getActivity()).getMessagesByQuery(sqlQuery+baseCondition) :
+                MessageStore.getInstance(getActivity()).getMessagesByQuery(baseCondition);
     }
 
     private void swapCursor(){
@@ -399,7 +401,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     private void setActionbar(){
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if(actionBar != null) {
-            actionBar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources().getColor(inSelectionMode ? R.color.toolbar_grey : inSearchMode ? android.R.color.white : R.color.app_purple)));
+            actionBar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources().getColor(inSelectionMode ? R.color.toolbar_grey : inSearchMode ? android.R.color.white : R.color.app_yellow)));
             actionBar.setTitle(inSelectionMode ? R.string.empty_string : (inSearchMode ? R.string.empty_string : R.string.feed));
         }
         if(menu != null) {
@@ -492,7 +494,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
             case R.id.action_share:
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("text/plain");
-                shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Sent with Rangzen");
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Sent with Rangzen");
                 shareIntent.putExtra(Intent.EXTRA_TEXT, checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_MESSAGE)));
                 getActivity().startActivity(Intent.createChooser(shareIntent, getString(R.string.share_using)));
                 break;
@@ -657,5 +659,6 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     public void onDestroy() {
         super.onDestroy();
         if(searchView != null) searchView.removeTextChangedListener(this);
+        ((AppCompatActivity)getActivity()).getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.app_purple)));
     }
 }

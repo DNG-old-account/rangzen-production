@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+    <LinearLayout
+                  android:orientation="vertical"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content">
+
+        <RadioGroup
+            style="@style/SettingsBlock"
+            android:id="@+id/radiogroup_profiles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                style="@style/SettingsTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/select_profile_title"
+                android:layout_margin="@dimen/settings_fragment_margin"/>
+
+            <RadioButton
+                style="@style/SettingsRadioButton"
+                android:id="@+id/radio_profile_flexible"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/profile_flexible"
+                android:layout_margin="@dimen/settings_fragment_margin"/>
+
+            <View style="@style/SettingsDivider"/>
+
+            <RadioButton
+                style="@style/SettingsRadioButton"
+                android:id="@+id/radio_profile_strict"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/profile_strict"
+                android:layout_margin="@dimen/settings_fragment_margin"/>
+
+            <View style="@style/SettingsDivider"/>
+
+            <RadioButton
+                style="@style/SettingsRadioButton"
+                android:id="@+id/radio_profile_custom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/profile_custom"
+                android:layout_marginBottom="0dp"
+                android:layout_marginRight="@dimen/settings_fragment_margin"
+                android:layout_marginTop="@dimen/settings_fragment_margin"
+                android:layout_marginLeft="@dimen/settings_fragment_margin"/>
+
+            <TextView
+                style="@style/SettingsAnnotation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/profile_custom_annotation"
+                android:layout_marginBottom="@dimen/settings_fragment_margin"
+                android:layout_marginRight="@dimen/settings_fragment_margin"
+                android:layout_marginTop="0dp"
+                android:layout_marginLeft="70dp"/>
+
+            <View style="@style/SettingsDivider"/>
+
+        </RadioGroup>
+
+        <org.denovogroup.rangzen.ui.DisableableLinearLayout
+            android:id="@+id/general_block"
+            style="@style/SettingsBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <View style="@style/SettingsDivider"/>
+
+            <TextView
+                style="@style/SettingsTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_general_title"
+                android:layout_margin="@dimen/settings_fragment_margin"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+               <TextView
+                   style="@style/SettingsText"
+                   android:layout_width="0dp"
+                   android:layout_height="wrap_content"
+                   android:layout_weight="1"
+                   android:text="@string/settings_timestamp"/>
+
+                <Switch
+                    style="@style/SettingsAction"
+                    android:id="@+id/switch_timestamp"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <TextView
+                    style="@style/SettingsText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_trust"/>
+
+                <Switch
+                    style="@style/SettingsAction"
+                    android:id="@+id/switch_trust"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <TextView
+                    style="@style/SettingsText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_location_tagging"/>
+
+                <Switch
+                    style="@style/SettingsAction"
+                    android:id="@+id/switch_location_tagging"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <TextView
+                    style="@style/SettingsText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_pseudonym"/>
+
+                <Switch
+                    style="@style/SettingsAction"
+                    android:id="@+id/switch_pseudonym"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/SettingsText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_self_dest"/>
+
+                    <TextView
+                        style="@style/SettingsAnnotation"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_self_dest_annotation"/>
+
+                </LinearLayout>
+
+                <EditText
+                    style="@style/SettingsAction"
+                    android:id="@+id/edit_self_dest"
+                    android:gravity="right"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/SettingsText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_restricted"/>
+
+                    <TextView
+                        style="@style/SettingsAnnotation"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_restricted_annotation"/>
+
+                </LinearLayout>
+
+                <EditText
+                    style="@style/SettingsAction"
+                    android:id="@+id/edit_restricted"
+                    android:gravity="right"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+        </org.denovogroup.rangzen.ui.DisableableLinearLayout>
+
+        <org.denovogroup.rangzen.ui.DisableableLinearLayout
+            android:id="@+id/feed_block"
+            style="@style/SettingsBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <View style="@style/SettingsDivider"/>
+
+            <TextView
+                style="@style/SettingsTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_feed_title"
+                android:layout_margin="@dimen/settings_fragment_margin"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <TextView
+                    style="@style/SettingsText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_max_messages"/>
+
+                <EditText
+                    style="@style/SettingsAction"
+                    android:id="@+id/edit_max_messages"
+                    android:gravity="right"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <TextView
+                    style="@style/SettingsText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_autodelete"/>
+
+                <Switch
+                    style="@style/SettingsAction"
+                    android:id="@+id/switch_auto_delete"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/SettingsAnnotation"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_autodelete_trust_annotation"/>
+
+                    <org.denovogroup.rangzen.ui.CustomSeekbar
+                        android:id="@+id/seekbar_autodelete_trust"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <EditText
+                    android:layout_gravity="bottom"
+                    style="@style/SettingsAction"
+                    android:id="@+id/edit_autodelete_trust"
+                    android:gravity="right"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/SettingsAnnotation"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_autodelete_age_annotation"/>
+
+                    <org.denovogroup.rangzen.ui.CustomSeekbar
+                        android:id="@+id/seekbar_autodelete_age"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <EditText
+                    android:layout_gravity="bottom"
+                    style="@style/SettingsAction"
+                    android:id="@+id/edit_autodelete_age"
+                    android:gravity="right"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+        </org.denovogroup.rangzen.ui.DisableableLinearLayout>
+
+        <org.denovogroup.rangzen.ui.DisableableLinearLayout
+            android:id="@+id/contacts_block"
+            style="@style/SettingsBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <View style="@style/SettingsDivider"/>
+
+            <TextView
+                style="@style/SettingsTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_contacts_title"
+                android:layout_margin="@dimen/settings_fragment_margin"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <TextView
+                    style="@style/SettingsText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_add_via_phonebook"/>
+
+                <Switch
+                    style="@style/SettingsAction"
+                    android:id="@+id/switch_add_via_phone"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <TextView
+                    style="@style/SettingsText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_add_via_qr"/>
+
+                <Switch
+                    style="@style/SettingsAction"
+                    android:id="@+id/switch_add_via_qr"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+        </org.denovogroup.rangzen.ui.DisableableLinearLayout>
+
+        <org.denovogroup.rangzen.ui.DisableableLinearLayout
+            android:id="@+id/exchange_block"
+            style="@style/SettingsBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <View style="@style/SettingsDivider"/>
+
+            <TextView
+                style="@style/SettingsTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_exchange_title"
+                android:layout_margin="@dimen/settings_fragment_margin"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <TextView
+                    style="@style/SettingsText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_max_messages_p_exchange"/>
+
+                <EditText
+                    style="@style/SettingsAction"
+                    android:id="@+id/edit_max_messages_p_exchange"
+                    android:gravity="right"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="@dimen/settings_fragment_margin">
+
+                <TextView
+                    style="@style/SettingsText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_timeout_p_exchange"/>
+
+                <EditText
+                    style="@style/SettingsAction"
+                    android:id="@+id/edit_timeout_p_exchange"
+                    android:gravity="right"/>
+
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider"/>
+
+        </org.denovogroup.rangzen.ui.DisableableLinearLayout>
+
+    </LinearLayout>
+
+
+</ScrollView>

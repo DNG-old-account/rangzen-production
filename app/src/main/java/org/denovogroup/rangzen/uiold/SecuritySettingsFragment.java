@@ -17,6 +17,7 @@ import android.widget.TextView;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
 import org.denovogroup.rangzen.backend.SecurityManager;
+import org.denovogroup.rangzen.ui.DisableableLinearLayout;
 
 /**
  * Created by Liran on 12/2/2015.
@@ -32,7 +33,7 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
     SeekBar profileSeekBar;
     SeekBar trustThresholdSeekBar;
     SeekBar ageThresholdSeekBar;
-    String[] availableProfiles = SecurityManager.getInstance().getProfiles();
+    String[] availableProfiles = null;//String[] availableProfiles = SecurityManager.getInstance().getProfiles();
 
     @Nullable
     @Override
@@ -49,7 +50,7 @@ public class SecuritySettingsFragment extends android.support.v4.app.Fragment im
         seekbarTitles.removeAllViews();
         for(int i=0; i<availableProfiles.length; i++){
 
-            if(currentProfile.getName().equals(availableProfiles[i])){
+            if(currentProfile.getName() == 0){//if(currentProfile.getName().equals(availableProfiles[i])){
                 profileSeekBar.setProgress(i);
             }
 

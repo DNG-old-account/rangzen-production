@@ -55,6 +55,8 @@ public class FeedAdapter extends CursorAdapter {
     int normalBgColor;
     int checkedBgColor;
 
+    String highlight;
+
     public interface FeedAdapterCallbacks{
         void onUpvote(String message, int oldPriority);
         void onDownvote(String message, int oldPriority);
@@ -75,6 +77,9 @@ public class FeedAdapter extends CursorAdapter {
         this(context, cursor, selectionMode, null);
     }
 
+    public void setHighlight(String highlight) {
+        this.highlight = highlight;
+    }
 
     private void init(Context context , Cursor cursor){
         linkColor = context.getResources().getColor(R.color.app_purple);
@@ -155,8 +160,9 @@ public class FeedAdapter extends CursorAdapter {
             viewHolder.time.setText("");
         }
 
+        viewHolder.connection.setVisibility(currentProfile.isUseTrust() ? View.VISIBLE : View.INVISIBLE);
         viewHolder.connection.setText(currentProfile.isUseTrust() ?
-                String.valueOf(Math.round(cursor.getFloat(trust_colIndex))) : "");
+                String.valueOf(Math.round(100 * cursor.getFloat(trust_colIndex))) : "");
 
         viewHolder.likes.setText(String.valueOf(cursor.getInt(priority_colIndex)));
         viewHolder.likes.setActivated(cursor.getInt(liked_colIndex) == MessageStore.TRUE);

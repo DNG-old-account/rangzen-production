@@ -24,6 +24,7 @@
     <color name="feed_item_extra_activated">@color/app_purple</color>
 
     <color name="feed_list_divider">#e0e0e0</color>
+    <color name="feed_list_divider_dark">#d7d7d7</color>
 
     <color name="toolbar_grey">#6d6d6d</color>
     <color name="foreground_material_dark">#303030</color>

@@ -166,12 +166,16 @@
         <item name="android:colorBackground">@android:color/white</item>
         <item name="android:colorForeground">@color/foreground_material_dark</item>
         <item name="android:textColorPrimary">@color/drawer_menu_text_grey</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="windowActionModeOverlay">true</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="windowActionModeOverlay">true</item>
     </style>
 
     <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
@@ -233,6 +237,52 @@
 
     <style name="FeedListItem_ExtraActive" parent="FeedListItem_Extra">
         <item name="android:textColor">@color/feed_item_extra</item>
+    </style>
+
+    <style name="PostMessageAction">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:layout_marginLeft">7dp</item>
+        <item name="android:layout_marginRight">7dp</item>
+        <item name="android:layout_marginBottom">7dp</item>
+    </style>
+
+    <style name="SettingsTitle">
+        <item name="android:textColor">@color/app_purple</item>
+        <item name="android:textSize">17dp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="SettingsText">
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textSize">18dp</item>
+    </style>
+
+    <style name="SettingsBlock">
+        <item name="android:background">#f8f8f8</item>
+        <item name="android:layout_marginBottom">10dp</item>
+    </style>
+
+    <style name="SettingsDivider">
+        <item name="android:background">@drawable/divider</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+    </style>
+
+    <style name="SettingsRadioButton" parent="@style/SettingsText">
+        <item name="android:paddingLeft">20dp</item>
+    </style>
+
+    <style name="SettingsAnnotation">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">#adadad</item>
+    </style>
+
+    <style name="SettingsAction">
+        <item name="android:layout_width">80dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:inputType">number</item>
     </style>
 
 </resources>

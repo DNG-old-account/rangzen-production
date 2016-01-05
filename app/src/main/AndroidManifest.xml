@@ -38,18 +38,18 @@
             </intent-filter>
         </receiver>
 
-        <activity
+        <!--<activity
             android:name=".uiold.Opener"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/rangzen_app_name"
             android:screenOrientation="portrait"
             android:theme="@style/MyThemeDrawer"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize">-->
             <!--<intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>-->
-            <intent-filter>
+            <!--<intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
                 <action android:name="android.intent.action.VIEW" />
                 <data android:scheme="org.denovogroup.rangzen" />
@@ -59,7 +59,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
-        </activity>
+        </activity>-->
         <activity
             android:name="uiold.QRCodeViewPager"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -69,17 +69,17 @@
             android:windowSoftInputMode="adjustResize">
         </activity>
         <activity
-            android:name=".uiold.PostActivity"
+            android:name=".ui.PostActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/rangzen_app_name"
+            android:label="@string/app_name"
             android:screenOrientation="portrait"
-            android:theme="@style/MyTheme1"
+            android:theme="@style/AppTheme"
             android:windowSoftInputMode="adjustResize"
-            android:parentActivityName=".uiold.Opener" >
+            android:parentActivityName=".ui.MainActivity" >
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".uiold.Opener" />
+                android:value=".ui.MainActivity" />
         </activity>
 
         <activity

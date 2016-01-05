@@ -383,11 +383,15 @@ public class FriendStore extends SQLiteOpenHelper{
         return friends;
     }
 
-    public Cursor getFriendsCursor(){
+    public Cursor getFriendsCursor(String query){
         SQLiteDatabase db = getWritableDatabase();
         if(db == null) return null;
 
-        return db.rawQuery("SELECT * FROM "+TABLE+";",null);
+        if(query == null || query.length() == 0){
+            return db.rawQuery("SELECT * FROM "+TABLE+" ORDER BY "+COL_DISPLAY_NAME+" ASC;",null);
+        } else {
+            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DISPLAY_NAME+" LIKE '%"+Utils.makeTextSafeForSQL(query)+"%' ORDER BY "+COL_DISPLAY_NAME+" ASC;",null);
+        }
     }
 
     private Cursor getFriendWithKey(String key){
@@ -450,5 +454,14 @@ public class FriendStore extends SQLiteOpenHelper{
             db.execSQL("DROP TABLE IF EXISTS " + TABLE);
             onCreate(db);
         }
+    }
+
+    public long getCheckedCount(){
+        SQLiteDatabase db = getReadableDatabase();
+        if(db != null){
+            Cursor c = db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_CHECKED+"="+TRUE+";", null);
+            if(c != null) return c.getCount();
+        }
+        return 0;
     }
 }

@@ -12,7 +12,7 @@ public class SecurityProfile {
     /** profile security strength*/
     int strength;
     /** profile display name*/
-    String name;
+    int name;
     /** allow display/storage of timestamps*/
     boolean timestamp;
     /** allow display/storage of pseudonym from sender*/
@@ -45,7 +45,7 @@ public class SecurityProfile {
     }
 
     public SecurityProfile(int strength,
-                           String name,
+                           int name,
                            boolean timestamp,
                            boolean pseudonyms,
                            int feedSize,
@@ -87,11 +87,11 @@ public class SecurityProfile {
         return strength;
     }
 
-    public String getName() {
+    public int getName() {
         return name;
     }
 
-    public SecurityProfile setName(String name) {
+    public SecurityProfile setName(int name) {
         this.name = name;
         return this;
     }

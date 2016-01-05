@@ -146,7 +146,7 @@ public class FeedAdapter extends CursorAdapter {
         //view.setBackgroundResource(isComment ? R.drawable.feed_item_comment_background_gradient : R.drawable.feed_item_background_gradient);
 
         viewHolder.mPriorityView.setText(cursor.getString(priority_colIndex));
-        viewHolder.mTrustView.setText(String.valueOf(cursor.getFloat(trust_colIndex) * 100));
+        viewHolder.mTrustView.setText(String.valueOf(cursor.getFloat(trust_colIndex) * 100f));
 
         setHashtagLinks(viewHolder.mTextView, cursor.getString(text_colIndex));
 

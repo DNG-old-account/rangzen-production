@@ -1,4 +1,4 @@
-package org.denovogroup.rangzen.uiold;
+package org.denovogroup.rangzen.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -6,12 +6,17 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -25,6 +30,7 @@ import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.zxing.integration.android.IntentIntegrator;
@@ -32,30 +38,28 @@ import com.google.zxing.integration.android.IntentResult;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
-import org.denovogroup.rangzen.backend.SecurityManager;
 
 /**
- * Created by Liran on 12/6/2015.
+ * Created by Liran on 1/3/2016.
  */
-public class FriendsFragment extends Fragment implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener{
+public class ContactFragment extends Fragment implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
 
-    private static final String TAG = "FriendsFragment";
+    private static final String TAG = "ContactFragment";
     private static final int PICK_CONTACT = 100;
 
+    private Menu menu;
     private ListView listView;
-    private FriendsFragmentLock callbacks;
+    private TextView leftText;
 
-    Menu menu;
+    private boolean inSelectionMode = false;
+    private boolean selectAll = false;
 
-    boolean areAllChecked;
-
-    public interface FriendsFragmentLock{
-        void onFriendsFragmentCreated(FriendsFragment lock);
-    }
+    private String query;
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setHasOptionsMenu(true);
     }
 
@@ -63,20 +67,104 @@ public class FriendsFragment extends Fragment implements AdapterView.OnItemClick
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        if(getActivity() instanceof FriendsFragmentLock){
-            callbacks = (FriendsFragmentLock) getActivity();
-            callbacks.onFriendsFragmentCreated(this);
-        }
+        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(R.string.drawer_menu_contact);
 
-        View v = inflater.inflate(R.layout.friends_fragment, container, false);
+        leftText = (TextView) ((MainActivity) getActivity()).getToolbar().findViewById(R.id.leftText);
 
-        listView = (ListView) v.findViewById(R.id.friends_list);
+        View view = inflater.inflate(R.layout.contact_fragment, container, false);
+
+        listView = (ListView) view.findViewById(R.id.listView);
         listView.setOnItemClickListener(this);
         listView.setOnItemLongClickListener(this);
 
-        listView.setAdapter(new FriendsAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(null), false));
+        listView.setAdapter(new ContactAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(null), false));
 
-        return v;
+        setActionbar();
+
+        return view;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+        inflater.inflate(R.menu.contact_fragment, menu);
+        this.menu = menu;
+
+        MenuItem item = menu.findItem(R.id.action_delete);
+        if(item != null) item.setVisible(inSelectionMode);
+
+        SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String queryText) {
+                query = queryText;
+                listView.setAdapter(new ContactAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(query), false));
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return onQueryTextSubmit(newText);
+            }
+        });
+        searchView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                query = null;
+                listView.setAdapter(new ContactAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(query), false));
+                inSelectionMode = false;
+                setActionbar();
+            }
+        });
+
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch(item.getItemId()){
+            case android.R.id.home:
+                ActionBarDrawerToggle toggle = ((DrawerActivityHelper) getActivity()).getDrawerToggle();
+                if(!toggle.isDrawerIndicatorEnabled()){
+                    toggle.setDrawerIndicatorEnabled(true);
+                    query = null;
+                    listView.setAdapter(new ContactAdapter(getActivity(),FriendStore.getInstance(getActivity()).getFriendsCursor(null), false));
+                    inSelectionMode = false;
+                    setActionbar();
+                }
+                break;
+            case R.id.add_friend:
+                startAddFriend();
+                break;
+            case R.id.action_delete:
+                AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
+                dialog.setTitle(R.string.delete_dialog_title);
+                dialog.setMessage(getString(R.string.delete_dialog_friend1) + " " + FriendStore.getInstance(getActivity()).getCheckedCount() + " " + getString(R.string.delete_dialog_friend2));
+                dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        FriendStore.getInstance(getActivity()).deleteChecked();
+                        listView.setAdapter(new ContactAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(null), false));
+                        inSelectionMode = false;
+                        dialog.dismiss();
+                    }
+                });
+                dialog.show();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -84,14 +172,19 @@ public class FriendsFragment extends Fragment implements AdapterView.OnItemClick
         final Cursor cursor = ((CursorAdapter) parent.getAdapter()).getCursor();
         cursor.moveToPosition(position);
 
-        if(((FriendsAdapter) parent.getAdapter()).isInEditMode()){
+        if(((ContactAdapter) parent.getAdapter()).isSelectionMode()){
             String publicKey = cursor.getString(cursor.getColumnIndex(FriendStore.COL_PUBLIC_KEY));
 
             boolean checkedState =  cursor.getInt(cursor.getColumnIndex(FriendStore.COL_CHECKED)) == FriendStore.TRUE;
 
             FriendStore.getInstance(getActivity()).setChecked(publicKey, !checkedState);
-            ((FriendsAdapter) parent.getAdapter()).changeCursor(FriendStore.getInstance(getActivity()).getFriendsCursor(null));
-            ((FriendsAdapter) parent.getAdapter()).notifyDataSetChanged();
+            ((ContactAdapter) parent.getAdapter()).changeCursor(FriendStore.getInstance(getActivity()).getFriendsCursor(query));
+            ((ContactAdapter) parent.getAdapter()).notifyDataSetChanged();
+
+            long checkedCount = FriendStore.getInstance(getActivity()).getCheckedCount();
+
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
+
         } else {
             boolean isFromPhone = cursor.getInt(cursor.getColumnIndex(FriendStore.COL_ADDED_VIA)) == FriendStore.ADDED_VIA_PHONE;
 
@@ -133,7 +226,7 @@ public class FriendsFragment extends Fragment implements AdapterView.OnItemClick
                                     number
                             );
 
-                            ((FriendsAdapter) parent.getAdapter()).notifyDataSetChanged();
+                            ((ContactAdapter) parent.getAdapter()).notifyDataSetChanged();
                             alertdialog.dismiss();
                         }
                     });
@@ -145,57 +238,15 @@ public class FriendsFragment extends Fragment implements AdapterView.OnItemClick
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        if(!((FriendsAdapter)parent.getAdapter()).isInEditMode()){
-            areAllChecked = false;
+        if(!((ContactAdapter)parent.getAdapter()).isSelectionMode()){
+            inSelectionMode = true;
 
             FriendStore.getInstance(getActivity()).setCheckedAll(false);
-            listView.setAdapter(new FriendsAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(null), true));
+            listView.setAdapter(new ContactAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(query), true));
 
-            menu.setGroupVisible(R.id.delete_group, true);
-            menu.setGroupVisible(R.id.normal_group, false);
+            setActionbar();
         }
         return false;
-    }
-
-    public void restoreViewState(){
-        if(menu != null && listView != null) {
-            listView.setAdapter(new FriendsAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(null), false));
-            menu.setGroupVisible(R.id.delete_group, false);
-            menu.setGroupVisible(R.id.normal_group, true);
-        }
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.friends_fragment, menu);
-
-        this.menu = menu;
-        menu.setGroupVisible(R.id.delete_group, false);
-        menu.setGroupVisible(R.id.normal_group, true);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
-            case R.id.item_selectAll:
-                areAllChecked = !areAllChecked;
-                FriendStore.getInstance(getActivity()).setCheckedAll(areAllChecked);
-                ((FriendsAdapter) listView.getAdapter()).changeCursor(FriendStore.getInstance(getActivity()).getFriendsCursor(null));
-                ((FriendsAdapter) listView.getAdapter()).notifyDataSetChanged();
-                break;
-            case R.id.item_delete:
-                FriendStore.getInstance(getActivity()).deleteChecked();
-                restoreViewState();
-                break;
-            case R.id.item_cancel:
-                restoreViewState();
-                break;
-            case R.id.item_add:
-                startAddFriend();
-                break;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     public void startAddFriend(){
@@ -216,7 +267,7 @@ public class FriendsFragment extends Fragment implements AdapterView.OnItemClick
                 }
             });
         }
-        if(SecurityManager.getCurrentProfile(getActivity()).isFriendsViaBook()){
+        if(org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(getActivity()).isFriendsViaBook()){
             dialogBuilder.setPositiveButton(R.string.add_friend_phonebook, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -247,18 +298,19 @@ public class FriendsFragment extends Fragment implements AdapterView.OnItemClick
      *
      */
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        Log.i(TAG, "Got activity result back in FriendsFragment!");
+        Log.i(TAG, "Got activity result back in ContactFragment!");
 
         // Check whether the activity that returned was the QR code activity,
         // and whether it succeeded.
         IntentResult intentResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
+        Log.d(TAG,"result "+intentResult);
         if(intentResult != null){
             // Grab the string extra containing the QR code that was scanned.
             final FriendStore fs = FriendStore.getInstance(getActivity());
             String code = intentResult.getContents();
             // Convert the code into a public Rangzen ID.
             final byte[] publicIDBytes = intentResult.getRawBytes();
-            Log.i(TAG, "In Opener, received intent with code " + code);
+            Log.i(TAG, "received intent with code " + code);
 
             // Try to add the friend to the FriendStore, if they're not null.
             if (publicIDBytes != null) {
@@ -288,8 +340,6 @@ public class FriendsFragment extends Fragment implements AdapterView.OnItemClick
 
                                 boolean wasAdded = fs.addFriendBytes(name, publicIDBytes, FriendStore.ADDED_VIA_QR, null);
 
-                                restoreViewState();
-
                                 Log.i(TAG, "Now have " + fs.getAllFriends().size()
                                         + " friends.");
                                 if (wasAdded) {
@@ -301,6 +351,8 @@ public class FriendsFragment extends Fragment implements AdapterView.OnItemClick
 
                                 }
                                 alertdialog.dismiss();
+                                query = null;
+                                listView.setAdapter(new ContactAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(null), false));
                             }
                         });
                     }
@@ -357,8 +409,8 @@ public class FriendsFragment extends Fragment implements AdapterView.OnItemClick
                         }
                         if(phoneCursor != null) contactCursor.close();
 
-                        restoreViewState();
-
+                        query = null;
+                        listView.setAdapter(new ContactAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(null),false));
                     } else {
                         Toast.makeText(getActivity(), "Selected item doesnt have a phone number", Toast.LENGTH_SHORT).show();
                     }
@@ -366,5 +418,48 @@ public class FriendsFragment extends Fragment implements AdapterView.OnItemClick
                 if(contactCursor != null) contactCursor.close();
             }
         }
+    }
+
+    private void setActionbar(){
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources().getColor(inSelectionMode ? R.color.toolbar_grey : R.color.app_purple)));
+            actionBar.setTitle(inSelectionMode ? R.string.empty_string : R.string.feed);
+        }
+        if(menu != null) {
+            menu.findItem(R.id.action_delete).setVisible(inSelectionMode);
+            MenuItem searchItem = menu.findItem(R.id.search);
+            if(searchItem != null) searchItem.setVisible(!inSelectionMode);
+            if(searchItem != null) menu.findItem(R.id.add_friend).setVisible(!inSelectionMode);
+        }
+        if(leftText != null){
+            leftText.setText(inSelectionMode ? R.string.select_all : R.string.empty_string);
+            leftText.setVisibility(inSelectionMode ? View.VISIBLE : View.GONE);
+            leftText.setOnClickListener(inSelectionMode ? new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    FriendStore.getInstance(getActivity()).setCheckedAll(!selectAll);
+                    selectAll = !selectAll;
+
+                    ((ContactAdapter) listView.getAdapter()).changeCursor(FriendStore.getInstance(getActivity()).getFriendsCursor(query));
+                    ((ContactAdapter) listView.getAdapter()).notifyDataSetChanged();
+
+                    long checkedCount = FriendStore.getInstance(getActivity()).getCheckedCount();
+                    ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
+                }
+            } : null);
+        }
+        if(getActivity() instanceof DrawerActivityHelper){
+            ActionBarDrawerToggle toggle = ((DrawerActivityHelper) getActivity()).getDrawerToggle();
+            toggle.setDrawerIndicatorEnabled(!inSelectionMode);
+            //toggle.syncState();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        inSelectionMode = false;
+        setActionbar();
     }
 }
