@@ -39,6 +39,8 @@ public class SecurityProfile {
     boolean useTrust;
     /** if exchange should be randomized between all devices in the vicinity or as round robin */
     boolean randomExchange;
+    /** minimum contacts required for restericted messages to be exchanged */
+    int minContactsForHop;
 
     public SecurityProfile(int strength){
         this.strength = strength;
@@ -61,7 +63,8 @@ public class SecurityProfile {
                            int timeboundPeriod,
                            boolean enforceLock,
                            boolean useTrust,
-                           boolean randomExchange
+                           boolean randomExchange,
+                           int minContactsForHop
                             ) {
         this.strength = strength;
         this.name = name;
@@ -81,6 +84,7 @@ public class SecurityProfile {
         this.enforceLock = enforceLock;
         this.useTrust = useTrust;
         this.randomExchange = randomExchange;
+        this.minContactsForHop = minContactsForHop;
     }
 
     public int getStrength(){
@@ -196,7 +200,8 @@ public class SecurityProfile {
                 timeboundPeriod,
                 enforceLock,
                 useTrust,
-                randomExchange);
+                randomExchange,
+                minContactsForHop);
     }
 
     public float getAutodeleteTrust() {
@@ -260,5 +265,14 @@ public class SecurityProfile {
     public SecurityProfile setRandomExchange(boolean randomExchange) {
         this.randomExchange = randomExchange;
         return this;
+    }
+
+    public SecurityProfile setMinContactsForHop(int minContactsForHop) {
+        this.minContactsForHop = minContactsForHop;
+        return this;
+    }
+
+    public int getMinContactsForHop() {
+        return minContactsForHop;
     }
 }

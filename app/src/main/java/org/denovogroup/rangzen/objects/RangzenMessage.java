@@ -31,6 +31,7 @@ public final class RangzenMessage extends Message {
     public static final String LATLONG_KEY = "latlang";
     public static final String TIMEBOUND_KEY = "timebound";
     public static final String PARENT_KEY = "parent";
+    public static final String HOP_KEY = "hop";
 
     /**
      * The message's id, as a String.
@@ -77,7 +78,12 @@ public final class RangzenMessage extends Message {
      */
     public final String parent;
 
-  public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, long timestamp, String latlong, long timebound, String parent) {
+    /**
+     * The message's hop count
+     */
+    public final int hop;
+
+  public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, long timestamp, String latlong, long timebound, String parent, int hop) {
       this.messageid = messageid;
     this.text = text;
     this.trust = trust;
@@ -87,9 +93,10 @@ public final class RangzenMessage extends Message {
       this.latlong = latlong;
       this.timebound = timebound;
       this.parent = parent;
+      this.hop = hop;
   }
 
-    public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, String latlong, long timebound, String parent) {
+    public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, String latlong, long timebound, String parent, int hop) {
         this.messageid = messageid;
         this.text = text;
         this.trust = trust;
@@ -99,6 +106,7 @@ public final class RangzenMessage extends Message {
         this.latlong = latlong;
         this.timebound = timebound;
         this.parent = parent;
+        this.hop = hop;
     }
 
     public RangzenMessage(String messageid, String text, Double trust) {
@@ -111,6 +119,7 @@ public final class RangzenMessage extends Message {
         this.latlong = null;
         this.timebound = -1;
         this.parent = null;
+        this.hop = 0;
     }
 
     public static RangzenMessage fromJSON(Context context, JSONObject json){
@@ -130,7 +139,8 @@ public final class RangzenMessage extends Message {
                 securityProfile.isShareLocation() ?
                         json.optString(LATLONG_KEY, null) : null,
                 json.optLong(TIMEBOUND_KEY, -1L),
-                json.optString(PARENT_KEY, null)
+                json.optString(PARENT_KEY, null),
+                json.optInt(HOP_KEY, 0)
         );
     }
 
@@ -152,13 +162,15 @@ public final class RangzenMessage extends Message {
             result.put(MESSAGE_ID_KEY, this.messageid);
             result.put(TEXT_KEY, this.text);
             result.put(PRIORITY_KEY, this.priority);
+            result.put(HOP_KEY, this.hop + 1);
             if(parent != null) result.put(PARENT_KEY, this.parent);
             if(timebound > 0) result.put(TIMEBOUND_KEY, this.timebound);
 
             SecurityProfile profile = SecurityManager.getCurrentProfile(context);
 
             //put optional items based on security profile settings
-            if(profile.isUseTrust()) result.put(TRUST_KEY, this.trust + Utils.makeNoise(0d, 0.003d));
+            if(profile.isUseTrust()) result.put(TRUST_KEY, this.trust +
+                    (profile.isUseTrust() ? Utils.makeNoise(0d, 0.003d) : 0));
             if(profile.isPseudonyms()) result.put(PSEUDONYM_KEY, this.pseudonym);
             if(profile.isShareLocation()) result.put(LATLONG_KEY, this.latlong);
 

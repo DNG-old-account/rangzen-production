@@ -187,10 +187,11 @@ public class RangzenService extends Service {
         mStore = new StorageBase(this, StorageBase.ENCRYPTION_DEFAULT);
         mFriendStore = FriendStore.getInstance(this);
 
-        mWifiDirectSpeaker = new WifiDirectSpeaker(this, 
-                                                   mPeerManager, 
-                                                   mBluetoothSpeaker,
-                                                   new WifiDirectFrameworkGetter());
+        mWifiDirectSpeaker = WifiDirectSpeaker.getInstance();
+        mWifiDirectSpeaker.init(this,
+                mPeerManager,
+                mBluetoothSpeaker,
+                new WifiDirectFrameworkGetter());
 
         mMessageStore = MessageStore.getInstance(this);
 
@@ -332,8 +333,7 @@ public class RangzenService extends Service {
                 }
             }
         } else {
-          Log.v(TAG, String.format("Not connecting (%d peers, ready to connect is %s)",
-                                   peers.size(), readyToConnect()));
+          Log.v(TAG, String.format("Not connecting (%d peers, ready to connect is %s)", peers.size(), readyToConnect()));
         }
         mBackgroundTaskRunCount++;
 
@@ -463,7 +463,7 @@ public class RangzenService extends Service {
             } else {
                 hasNew = true;
 
-                mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent);
+                mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop);
                 //mark this message as unread
                 mMessageStore.setRead(message.text, false);
             }
@@ -527,7 +527,7 @@ public class RangzenService extends Service {
                             mMessageStore.updateTrust(message.text, newTrust, true);
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent);
+                            mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop);
                             //mark this message as unread
                             mMessageStore.setRead(message.text, false);
                         }

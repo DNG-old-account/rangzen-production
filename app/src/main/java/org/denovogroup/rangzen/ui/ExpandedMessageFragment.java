@@ -1,6 +1,7 @@
 package org.denovogroup.rangzen.ui;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -10,8 +11,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,8 +24,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -40,7 +47,7 @@ import java.util.List;
  * when creating this fragment MESSAGE_ID_KEY must be passed as an argument with the messageId of
  * the parent message
  */
-public class ExpandedMessageFragment extends Fragment {
+public class ExpandedMessageFragment extends Fragment implements TextWatcher {
 
     public static final String MESSAGE_ID_KEY = "messageId";
 
@@ -52,7 +59,8 @@ public class ExpandedMessageFragment extends Fragment {
     ListView listView;
     Spinner sortSpinner;
 
-    private SearchView searchView;
+    private boolean inSearchMode = false;
+    private EditText searchView;
 
     Menu menu;
 
@@ -85,9 +93,9 @@ public class ExpandedMessageFragment extends Fragment {
         this.menu = menu;
 
         //Setup the search view
-        MenuItem searchItem = menu.findItem(R.id.search);
+        /*MenuItem searchItem = menu.findItem(R.id.search);
         searchView = (SearchView) searchItem.getActionView();
-        setSearchView(searchView);
+        setSearchView(searchView);*/
 
         super.onCreateOptionsMenu(menu, inflater);
     }
@@ -105,6 +113,8 @@ public class ExpandedMessageFragment extends Fragment {
 
         listView = (ListView) view.findViewById(R.id.listView);
         listView.setAdapter(new FeedReplyAdapter(getActivity(), getCursor()));
+
+        searchView = (EditText) ((MainActivity) getActivity()).getToolbar().findViewById(R.id.searchView);
 
         initSortSpinner();
 
@@ -194,7 +204,7 @@ public class ExpandedMessageFragment extends Fragment {
         if(getActivity() instanceof MainActivity) {
             sortSpinner = (Spinner) ((MainActivity) getActivity()).getToolbar().findViewById(R.id.sortSpinner);
             sortSpinner.setVisibility(View.VISIBLE);
-            sortSpinner.setAdapter(new FeedSortSpinnerAdapter(getActivity(), sortOptions));
+            sortSpinner.setAdapter(new FeedSortSpinnerAdapter(getActivity(), sortOptions, inSearchMode));
             for(int i=0; i<sortOptions.size();i++){
                 if(sortOptions.get(i)[2] == currentSort){
                     sortSpinner.setSelection(i);
@@ -324,10 +334,86 @@ public class ExpandedMessageFragment extends Fragment {
         });
     }
 
+    public void setSearchView(){
+        if(searchView == null) return;
+
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources().getColor(inSearchMode ? android.R.color.white : R.color.app_purple)));
+            actionBar.setTitle(inSearchMode ? R.string.empty_string : R.string.feed);
+        }
+
+        if(menu != null){
+            menu.findItem(R.id.search).setVisible(!inSearchMode);
+        }
+
+        initSortSpinner();
+
+        searchView.setVisibility(inSearchMode ? View.VISIBLE : View.GONE);
+        searchView.setText(query);
+        if(inSearchMode){
+            searchView.addTextChangedListener(this);
+            searchView.requestFocus();
+            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(searchView, InputMethodManager.SHOW_IMPLICIT);
+        } else {
+            query = "";
+            searchView.removeTextChangedListener(this);
+            searchView.setText("");
+        }
+
+        //reset the list to its normal state
+        swapCursor();
+    }
+
     private Cursor getCursor(){
         String sqlQuery = SearchHelper.searchToSQL(query);
         return (sqlQuery != null) ?
                 MessageStore.getInstance(getActivity()).getCommentsByQuery(messageId, sqlQuery) :
                 MessageStore.getInstance(getActivity()).getCommentsContaining(messageId, query);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        query = "";
+        inSearchMode = false;
+        setSearchView();
+        if(searchView != null) searchView.removeTextChangedListener(this);
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+        query = s.toString();
+        swapCursor();
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {}
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                if (inSearchMode) {
+                    query = "";
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (searchView != null)
+                        imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
+                    inSearchMode = false;
+                    setSearchView();
+                    return true;
+                }
+                break;
+            case R.id.search:
+                inSearchMode = true;
+                setSearchView();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }

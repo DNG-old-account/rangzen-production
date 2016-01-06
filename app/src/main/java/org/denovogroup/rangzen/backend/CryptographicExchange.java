@@ -54,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import okio.ByteString;
@@ -216,7 +217,7 @@ public class CryptographicExchange extends Exchange {
   private void sendClientMessage() throws IOException, JSONException {
       //create a message pool to be sent and send each message individually to allow partial data recovery in case of connection loss
       boolean success = true;
-      List<RangzenMessage> messagesPool = getMessages();
+      List<RangzenMessage> messagesPool = getMessages(commonFriends);
       //notify the recipient how many items we expect to send him.
       JSONObject exchangeInfoMessage = new JSONObject("{\""+MESSAGE_COUNT_KEY+"\":"+messagesPool.size()+"}");
 
@@ -414,4 +415,6 @@ public class CryptographicExchange extends Exchange {
 
       mContext = context;
   }
+
+
 }

@@ -70,7 +70,7 @@ public class MessageStore extends SQLiteOpenHelper {
     private static final double DEFAULT_PRIORITY = 0;
 
     private static final String DATABASE_NAME = "MessageStore.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 1;
 
     private static final String TABLE = "Messages";
     public static final String COL_ROWID = "_id";
@@ -88,6 +88,8 @@ public class MessageStore extends SQLiteOpenHelper {
     public static final String COL_PARENT = "parent";
     public static final String COL_FAVIRITE = "favorited";
     public static final String COL_CHECKED = "checked";
+    public static final String COL_MIN_CONTACTS_FOR_HOP = "min_contacts_hop";
+    public static final String COL_HOP = "hop";
 
     private static final String[] defaultSort = new String[]{COL_DELETED,COL_READ};
 
@@ -125,6 +127,8 @@ public class MessageStore extends SQLiteOpenHelper {
                 + COL_EXPIRE + " INTEGER NOT NULL,"
                 + COL_TRUST + " REAL NOT NULL DEFAULT " + MIN_TRUST + ","
                 + COL_LIKES + " INT NOT NULL DEFAULT " + DEFAULT_PRIORITY + ","
+                + COL_HOP + " INT NOT NULL DEFAULT " + 0 + ","
+                + COL_MIN_CONTACTS_FOR_HOP + " INT NOT NULL DEFAULT " + 0 + ","
                 + COL_PSEUDONYM + " VARCHAR(255) NOT NULL,"
                 + COL_LATLONG + " TEXT,"
                 + COL_LIKED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_LIKED + " IN(" + TRUE + "," + FALSE + ")),"
@@ -192,6 +196,7 @@ public class MessageStore extends SQLiteOpenHelper {
         int latlongColIndex = cursor.getColumnIndex(COL_LATLONG);
         int timeboundColIndex = cursor.getColumnIndex(COL_EXPIRE);
         int parentColIndex = cursor.getColumnIndex(COL_PARENT);
+        int hopColIndex = cursor.getColumnIndex(COL_HOP);
 
         if (cursor.getCount() > 0) {
             while (!cursor.isAfterLast()){
@@ -204,7 +209,8 @@ public class MessageStore extends SQLiteOpenHelper {
                         cursor.getLong(timestampColIndex),
                         cursor.getString(latlongColIndex),
                         cursor.getLong(timeboundColIndex),
-                        cursor.getString(parentColIndex)
+                        cursor.getString(parentColIndex),
+                        cursor.getInt(hopColIndex)
                 ));
                 cursor.moveToNext();
             }
@@ -367,7 +373,7 @@ public class MessageStore extends SQLiteOpenHelper {
      *                     if set to false and value is outside of limit, an exception is thrown
      * @return Returns true if the message was added. If message already exists, update its values
      */
-    public boolean addMessage(Context context, String messageId, String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location, String parent){
+    public boolean addMessage(Context context, String messageId, String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location, String parent, boolean isRead, int minContactsHop, int hop){
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
@@ -397,6 +403,7 @@ public class MessageStore extends SQLiteOpenHelper {
                         +COL_DELETED+"="+FALSE+","
                         + COL_LIKES +"="+priority+","
                         +COL_PSEUDONYM+"='"+pseudonym+"',"
+                        + COL_READ +"="+(isRead ? TRUE : FALSE)+","
                         + ((location != null) ? (COL_LATLONG+"='"+location.getLatitude()+"x"+location.getLongitude()+"',") : "")
                         +COL_TIMESTAMP+"="+reducedTimestamp.getTimeInMillis()+","
                         +COL_EXPIRE+"="+timebound
@@ -413,6 +420,9 @@ public class MessageStore extends SQLiteOpenHelper {
                 content.put(COL_EXPIRE, timebound);
                 content.put(COL_TIMESTAMP, reducedTimestamp.getTimeInMillis());
                 content.put(COL_PARENT, parent);
+                content.put(COL_READ, isRead ? TRUE : FALSE);
+                content.put(COL_MIN_CONTACTS_FOR_HOP, minContactsHop);
+                content.put(COL_HOP, hop);
                 db.insert(TABLE, null, content);
                 Log.d(TAG, "Message added to store.");
             }
@@ -791,7 +801,7 @@ public class MessageStore extends SQLiteOpenHelper {
 
     /** return comments of a certain message parent containing the query in the message */
     public Cursor getCommentsContaining(String parentId, String query){
-        return getCommentsByQuery(parentId, "AND "+COL_MESSAGE + " LIKE '%" + Utils.makeTextSafeForSQL(query)+"%'");
+        return getCommentsByQuery(parentId, "AND " + COL_MESSAGE + " LIKE '%" + Utils.makeTextSafeForSQL(query) + "%'");
     }
 
     public int getCommentCount(String parentId){
@@ -808,5 +818,13 @@ public class MessageStore extends SQLiteOpenHelper {
             return db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_MESSAGE_ID+"='"+messageId+"' LIMIT 1;",null);
         }
         return null;
+    }
+
+    public List<RangzenMessage> getMessagesForExchange(int sharedContacts){
+        SQLiteDatabase db = getReadableDatabase();
+        if(db != null){
+            return convertToMessages(db.rawQuery("SELECT * FROM " + TABLE + " WHERE " + COL_DELETED + "=" + FALSE + " AND ((" + COL_HOP + " = " + 0 + " AND " +COL_MIN_CONTACTS_FOR_HOP +" > 0 AND " +COL_MIN_CONTACTS_FOR_HOP + " <= " + sharedContacts + ") OR ("+COL_MIN_CONTACTS_FOR_HOP +" <= 0));", null));
+        }
+        return new ArrayList<RangzenMessage>();
     }
 }

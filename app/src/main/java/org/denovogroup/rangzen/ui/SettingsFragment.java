@@ -104,6 +104,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         selfDestEditText.removeTextChangedListener(this);
         maxFeedEditText.removeTextChangedListener(this);
         maxMessagesPerExchangeEditText.removeTextChangedListener(this);
+        restrictedEditText.removeTextChangedListener(this);
 
         profilesGroup.setOnCheckedChangeListener(null);
         profilesGroup.check(currentProfile.getName());
@@ -139,7 +140,9 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
 
         selfDestEditText.setText(String.valueOf(currentProfile.getTimeboundPeriod()));
         selfDestEditText.addTextChangedListener(this);
-        //TODO restrict
+
+        restrictedEditText.setText(String.valueOf(currentProfile.getMinContactsForHop()));
+        restrictedEditText.addTextChangedListener(this);
 
         maxFeedEditText.setText(String.valueOf(currentProfile.getFeedSize()));
         maxFeedEditText.addTextChangedListener(this);
@@ -262,39 +265,43 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         if(v == null) return;
 
         boolean reload = true;
+
+        int valueAsInt = 0;
+        try{
+            valueAsInt = Integer.parseInt(s.toString());
+        } catch (NumberFormatException e){}
+
         switch(v.getId()){
             case R.id.edit_autodelete_age:
-                int age = Integer.parseInt(s.toString());
-                if(age > autodelMaxAge){
-                    age = autodelMaxAge;
-                    autodelAgeEditText.setText(String.valueOf(age));
+                if(valueAsInt > autodelMaxAge){
+                    valueAsInt = autodelMaxAge;
+                    autodelAgeEditText.setText(String.valueOf(valueAsInt));
                 }
-                autodelAgeSeekbar.setProgress(age);
-                currentProfile.setAutodeleteAge(age);
+                autodelAgeSeekbar.setProgress(valueAsInt);
+                currentProfile.setAutodeleteAge(valueAsInt);
                 break;
             case R.id.edit_autodelete_trust:
-                int trust = Integer.parseInt(s.toString());
-                if(trust > autodelMaxTrust){
-                    trust = autodelMaxAge;
-                    autodelTrustEditText.setText(String.valueOf(trust));
+                if(valueAsInt > autodelMaxTrust){
+                    valueAsInt = autodelMaxAge;
+                    autodelTrustEditText.setText(String.valueOf(valueAsInt));
                 }
-                autodelAgeSeekbar.setProgress(trust);
-                currentProfile.setAutodeleteTrust(trust / 100f);
+                autodelAgeSeekbar.setProgress(valueAsInt);
+                currentProfile.setAutodeleteTrust(valueAsInt / 100f);
                 break;
             case R.id.edit_self_dest:
-                currentProfile.setTimeboundPeriod(Integer.parseInt(s.toString()));
+                currentProfile.setTimeboundPeriod(valueAsInt);
                 break;
             case R.id.edit_restricted:
-                //TODO
+                currentProfile.setMinContactsForHop(Math.max(1,valueAsInt));
                 break;
             case R.id.edit_max_messages:
-                currentProfile.setFeedSize(Integer.parseInt(s.toString()));
+                currentProfile.setFeedSize(valueAsInt);
                 break;
             case R.id.edit_max_messages_p_exchange:
-                currentProfile.setMaxMessages(Integer.parseInt(s.toString()));
+                currentProfile.setMaxMessages(Math.max(1,valueAsInt));
                 break;
             case R.id.edit_timeout_p_exchange:
-                currentProfile.setCooldown(Integer.parseInt(s.toString()));
+                currentProfile.setCooldown(valueAsInt);
                 break;
             default:
                 reload = false;

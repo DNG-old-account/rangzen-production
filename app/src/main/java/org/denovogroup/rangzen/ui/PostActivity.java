@@ -320,10 +320,7 @@ public class PostActivity extends AppCompatActivity {
                 long idLong = System.nanoTime() * (1 + random.nextInt());
                 String messageId = Base64.encodeToString(Crypto.encodeString(String.valueOf(idLong)), Base64.NO_WRAP);
 
-
-                //TODO add restriction restrictedButton.isActivated();
-
-                messageStore.addMessage(PostActivity.this, messageId, messageBody, trust, priority, pseudonym, timestamp, true, timebound * 24 * 60 * 60 * 1000, myLocation, messageParent);
+                messageStore.addMessage(PostActivity.this, messageId, messageBody, trust, priority, pseudonym, timestamp, true, timebound * 24 * 60 * 60 * 1000, myLocation, messageParent, true, restrictButton.isActivated() ? currentProfile.getMinContactsForHop() : 0, 0);
                 Toast.makeText(PostActivity.this, "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 ExchangeHistoryTracker.getInstance().cleanHistory(null);

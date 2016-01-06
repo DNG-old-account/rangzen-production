@@ -216,8 +216,8 @@ public class Exchange implements Runnable {
    *
    * @return The top NUM_MESSAGES_TO_EXCHANGE in the MessageStore.
    */
-  /* package */ List<RangzenMessage> getMessages() {
-    return MessageStore.getInstance().getMessages(false, true,NUM_MESSAGES_TO_EXCHANGE);
+  /* package */ List<RangzenMessage> getMessages(int sharedContacts) {
+    return MessageStore.getInstance().getMessagesForExchange(sharedContacts);
   }
 
   /**
@@ -226,7 +226,7 @@ public class Exchange implements Runnable {
    */
   private void sendMessages() {
       // get messages to send
-      List<RangzenMessage> messages = getMessages();
+      List<RangzenMessage> messages = getMessages(0);
       //notify the recipient how many items we expect to send him.
       RangzenMessage exchangeInfoMessage = new RangzenMessage("ExchangeAgreement", Integer.toString(messages.size()),1d);
       if(lengthValueWrite(out, exchangeInfoMessage.toJSON(RangzenApplication.getContext()))) {

@@ -46,6 +46,7 @@ public class SecurityManager {
     private static final String PROFILE_ENFORCE_LOCK_KEY = "enforceLock";
     private static final String PROFILE_USE_TRUST_KEY = "useTrust";
     private static final String PROFILE_RANDOM_EXCHANGE_KEY = "randomExchange";
+    private static final String PROFILE_MIN_CONTACTS_FOR_HOP_KEY = "minContactsForHop";
 
 
     /** Default security profile value if none is stored */
@@ -75,7 +76,9 @@ public class SecurityManager {
                 .setEnforceLock(false)
                 .setUseTrust(false)
                 .setRandomExchange(false)
-                .setTimeboundPeriod(0));
+                .setTimeboundPeriod(0)
+                .setMinContactsForHop(0)
+        );
         profiles.add(new SecurityProfile(2)
                 .setName(R.id.radio_profile_strict)
                 .setTimestamp(false)
@@ -92,8 +95,10 @@ public class SecurityManager {
                 .setCooldown(30)
                 .setEnforceLock(true)
                 .setUseTrust(true)
-                .setRandomExchange(true)
-                .setTimeboundPeriod(30));
+                .setRandomExchange(false)
+                .setTimeboundPeriod(30)
+                .setMinContactsForHop(3)
+        );
     }
 
     /** return the existing instance of the manager if exists. create new if not*/
@@ -152,7 +157,8 @@ public class SecurityManager {
                 pref.getInt(PROFILE_TIMEBOUND_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getTimeboundPeriod()),
                 pref.getBoolean(PROFILE_ENFORCE_LOCK_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isEnforceLock()),
                 pref.getBoolean(PROFILE_USE_TRUST_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isUseTrust()),
-                pref.getBoolean(PROFILE_RANDOM_EXCHANGE_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isRandomExchange())
+                pref.getBoolean(PROFILE_RANDOM_EXCHANGE_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).isRandomExchange()),
+                pref.getInt(PROFILE_MIN_CONTACTS_FOR_HOP_KEY, profiles.get(DEFAULT_SECURITY_PROFILE).getMinContactsForHop())
         );
 
         return customProfile;
@@ -194,6 +200,7 @@ public class SecurityManager {
             pref.putBoolean(PROFILE_ENFORCE_LOCK_KEY, profile.isEnforceLock());
             pref.putBoolean(PROFILE_USE_TRUST_KEY, profile.isUseTrust());
             pref.putBoolean(PROFILE_RANDOM_EXCHANGE_KEY, profile.isRandomExchange());
+            pref.putInt(PROFILE_MIN_CONTACTS_FOR_HOP_KEY, profile.getMinContactsForHop());
             pref.commit();
 
         RangzenService.TIME_BETWEEN_EXCHANGES_MILLIS = profile.getCooldown() * 1000;

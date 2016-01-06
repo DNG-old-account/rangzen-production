@@ -71,7 +71,7 @@ import java.util.Date;
  * TODO(lerner): Implement the ability to send messages that aren't just
  * pings to other devices, from higher levels of the app.
  */
-public class WifiDirectSpeaker extends BroadcastReceiver {
+public class WifiDirectSpeaker {
   /** 
    * A default int value to be returned when getIntExtra fails to find
    * the requested key.
@@ -128,16 +128,29 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
   /** Logging tag, attached to all Android log messages. */
   private static final String TAG = "WifiDirectSpeaker";
 
+    private static WifiDirectSpeaker instance;
+    private boolean initialized = false;
+
+    public WifiDirectSpeaker(){}
+
+    public static synchronized WifiDirectSpeaker getInstance(){
+        if(instance == null){
+            instance = new WifiDirectSpeaker();
+            instance.initialized = false;
+        }
+        return instance;
+    }
+
   /**
    * @param context A context, from which to access the Wifi Direct subsystem.
    * @param peerManager The app's PeerManager instance.
    * @param frameworkGetter The WifiDirectFrameworkGetter to be used to 
    * retrieve an instance of WifiP2pSpeaker.
    */
-  public WifiDirectSpeaker(Context context, PeerManager peerManager, 
+  public void init(Context context, PeerManager peerManager,
                            BluetoothSpeaker bluetoothSpeaker,
                            WifiDirectFrameworkGetter frameworkGetter) {
-    super();
+    //super();
 
     this.mContext = context;
     this.mBluetoothSpeaker = bluetoothSpeaker;
@@ -164,19 +177,20 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
     // Wifi Direct subsystem. When these events arrive, the onReceive method
     // of this class is called, which dispatches them to other instance methods,
     // one per event.
-    IntentFilter intentFilter = new IntentFilter();
+    /*IntentFilter intentFilter = new IntentFilter();
     intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
     intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
     intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
     intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
     intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
-    context.registerReceiver(this, intentFilter);
+    context.registerReceiver(this, intentFilter);*/
 
     Log.d(TAG, "Finished creating WifiDirectSpeaker.");
+      initialized = true;
   }
 
   /**
-   * Handle incoming messages. This class handles broadcasts sent by WifiP2pManager. 
+   * Handle incoming messages. This class handles broadcasts sent by WifiP2pManager.
    * We handle them by calling other methods in the class as appropriate to handle
    * each type of event. One specific method is called for each type of event
    * and handles all the logic related to that event.
@@ -184,9 +198,14 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
    * @see android.content.BroadcastReceiver#onReceive(android.content.Context,
    * android.content.Intent)
    */
-  @Override
   public void onReceive(Context context, Intent intent) {
     String action = intent.getAction();
+
+      if(!initialized){
+          Log.w(TAG,"received action:"+action+", but speaker not yet initialized, ignoring transmission");
+          return;
+      }
+
     if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
       onWifiP2pStateChanged(context, intent);
     } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
@@ -261,10 +280,12 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
         else {
           Log.w(TAG, "Address from peer doesn't look like BT address or is reserved: " + bluetoothAddress);
         }
-
+      } else {
+          if(device != null) Log.v(TAG, "Found device? "+device);
+          else Log.v(TAG, "Got null device");
       }
     }
-    Log.v(TAG, "P2P peers changed");
+    Log.v(TAG, "P2P peers changed "+peerDevices.getDeviceList().size());
 
       ExchangeHistoryTracker.getInstance().cleanHistory(mPeerManager.getPeers());
   }
@@ -418,7 +439,7 @@ public class WifiDirectSpeaker extends BroadcastReceiver {
       }
       });
     } else {
-      Log.v(TAG, "Attempted to seek peers while already seeking, not doing it.");
+      //Log.v(TAG, "Attempted to seek peers while already seeking, not doing it.");
     }
 
   }

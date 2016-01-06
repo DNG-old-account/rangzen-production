@@ -391,7 +391,7 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
                                 String unformattedNumber = phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
 
                                 TelephonyManager tm = (TelephonyManager)getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-                                String countryCode = tm.getSimCountryIso();
+                                String countryCode = "us";//tm.getSimCountryIso();
 
                                 String formattedNumber;
                                 if(Build.VERSION.SDK_INT >= 21) {
