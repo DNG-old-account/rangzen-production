@@ -33,6 +33,7 @@ import org.denovogroup.rangzen.backend.SecurityManager;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Liran on 12/29/2015.
@@ -113,7 +114,7 @@ public class PostActivity extends AppCompatActivity {
         characterCounter = (TextView) findViewById(R.id.character_count);
 
         shareLocationButton = findViewById(R.id.action_share_location);
-        shareLocationButton.setVisibility((org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(this).isShareLocation()) ? View.VISIBLE : View.INVISIBLE);
+        shareLocationButton.setVisibility((org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(this).isShareLocation()) ? View.VISIBLE : View.GONE);
         shareLocationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -162,7 +163,7 @@ public class PostActivity extends AppCompatActivity {
                     @Override
                     public void onShow(DialogInterface dialog) {
                         final SeekBar seekBar = (SeekBar) viewGroup.findViewById(R.id.seeker);
-                        seekBar.setMax(365);
+                        seekBar.setMax(240);
 
                         seekBar.setProgress(timebound > 0 ? timebound : SecurityManager.getCurrentProfile(PostActivity.this).getTimeboundPeriod());
                         ((TextView) viewGroup.findViewById(R.id.unit_id)).setText(R.string.hours_short);
@@ -193,10 +194,11 @@ public class PostActivity extends AppCompatActivity {
                             @Override
                             public void onTextChanged(CharSequence s, int start, int before, int count) {
                                 int value = 0;
+                                final SeekBar seekBar = (SeekBar) viewGroup.findViewById(R.id.seeker);
                                 try {
                                     value = Integer.parseInt(s.toString());
-                                    if (value > 365) {
-                                        value = 365;
+                                    if (value > seekBar.getMax()) {
+                                        value = seekBar.getMax();
                                         seekBarTv.setText(String.valueOf(value));
                                     }
                                 } catch (NumberFormatException e){
@@ -320,7 +322,7 @@ public class PostActivity extends AppCompatActivity {
                 long idLong = System.nanoTime() * (1 + random.nextInt());
                 String messageId = Base64.encodeToString(Crypto.encodeString(String.valueOf(idLong)), Base64.NO_WRAP);
 
-                messageStore.addMessage(PostActivity.this, messageId, messageBody, trust, priority, pseudonym, timestamp, true, timebound * 24 * 60 * 60 * 1000, myLocation, messageParent, true, restrictButton.isActivated() ? currentProfile.getMinContactsForHop() : 0, 0);
+                messageStore.addMessage(PostActivity.this, messageId, messageBody, trust, priority, pseudonym, timestamp, true, TimeUnit.HOURS.toMillis(timebound), myLocation, messageParent, true, restrictButton.isActivated() ? currentProfile.getMinContactsForHop() : 0, 0, null);
                 Toast.makeText(PostActivity.this, "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 ExchangeHistoryTracker.getInstance().cleanHistory(null);

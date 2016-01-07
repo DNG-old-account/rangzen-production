@@ -1,7 +1,10 @@
 package org.denovogroup.rangzen.backend;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
+
+import org.denovogroup.rangzen.ui.RangzenApplication;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +24,8 @@ public class ExchangeHistoryTracker {
 
     private List<ExchangeHistoryItem> history = new ArrayList<>();
 
+    private int exchangeCount = 0;
+
     /** Get an instance of the tracker, create one if necessary */
     public static ExchangeHistoryTracker getInstance() {
         if (instance == null){
@@ -31,6 +36,8 @@ public class ExchangeHistoryTracker {
 
     private ExchangeHistoryTracker() {
         //an empty private constructor to enforce singleton pattern.
+        exchangeCount = RangzenApplication.getContext().getSharedPreferences("count",Context.MODE_PRIVATE).getInt("count",0);
+
     }
 
     /** Remove items from history based on passed collection. Any item not found in
@@ -96,6 +103,22 @@ public class ExchangeHistoryTracker {
             }
         }
         return null;
+    }
+
+    public int getExchangeHistory(){
+        return exchangeCount;
+    }
+
+    public void incrementExchangeCount(){
+        exchangeCount++;
+        SharedPreferences preferences = RangzenApplication.getContext().getSharedPreferences("count",Context.MODE_PRIVATE);
+        preferences.edit().putInt("count",exchangeCount).commit();
+    }
+
+    public void resetExchangeCount(){
+        exchangeCount = 0;
+        SharedPreferences preferences = RangzenApplication.getContext().getSharedPreferences("count",Context.MODE_PRIVATE);
+        preferences.edit().putInt("count",exchangeCount).commit();
     }
 
     public class ExchangeHistoryItem{

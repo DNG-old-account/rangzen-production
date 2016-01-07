@@ -39,6 +39,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.backend.ExchangeHistoryTracker;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.SearchHelper;
 
@@ -92,12 +93,12 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     }
 
     private List<Object[]> sortOptions = new ArrayList<Object[]>(){{
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_newest, sortOption.NEWEST});
+        add(new Object[]{R.drawable.sort_spinner_least_connected, R.string.sort_opt_newest, sortOption.NEWEST});
         add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_oldest, sortOption.OLDEST});
         add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_mostendorsed, sortOption.MOST_ENDORSED});
         add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_leastendorsed, sortOption.LEAST_ENDORSED});
         add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_mostconnected, sortOption.MOST_CONNECTED});
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_leastconnected, sortOption.LEAST_CONNECTED});
+        add(new Object[]{R.drawable.sort_spinner_least_connected,R.string.sort_opt_leastconnected, sortOption.LEAST_CONNECTED});
     }};
 
     // Create reciever object
@@ -516,6 +517,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                 });
                 break;
             case R.id.action_delete_by_connection:
+                final float trust = checkedMessages.getFloat(checkedMessages.getColumnIndex(MessageStore.COL_TRUST));
                 dialog = new AlertDialog.Builder(getActivity());
                 dialog.setTitle(R.string.delete_dialog_title);
                 dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
@@ -528,13 +530,16 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                 dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        checkedMessages.getFloat(checkedMessages.getColumnIndex(MessageStore.COL_TRUST));
+                        MessageStore.getInstance(getActivity()).deleteByTrust(
+                                trust
+                        );
                         setListInDisplayMode();
                         dialog.dismiss();
                     }
                 });
                 break;
             case R.id.action_delete_by_exchange:
+                final String exchange = checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_EXCHANGE));
                 dialog = new AlertDialog.Builder(getActivity());
                 dialog.setTitle(R.string.delete_dialog_title);
                 dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
@@ -547,16 +552,14 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                 dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        /*TODO delete by exchange
-                        MessageStore.getInstance(getActivity()).deleteBySender(
-                                checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_PSEUDONYM))
-                        );*/
+                        MessageStore.getInstance(getActivity()).deleteByExchange(exchange);
                         setListInDisplayMode();
                         dialog.dismiss();
                     }
                 });
                 break;
             case R.id.action_delete_from_sender:
+                final String senderName = checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_PSEUDONYM));
                 dialog = new AlertDialog.Builder(getActivity());
                 dialog.setTitle(R.string.delete_dialog_title);
                 dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
@@ -570,7 +573,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         MessageStore.getInstance(getActivity()).deleteBySender(
-                                checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_PSEUDONYM))
+                                senderName
                         );
                         setListInDisplayMode();
                         dialog.dismiss();
@@ -589,7 +592,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         long unreadCount = MessageStore.getInstance(getActivity()).getUnreadCount();
         if(newMessagesNotification != null){
             if(unreadCount > 0) {
-                String countString = (unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? unreadCount +" "+getString(R.string.new_messages_notification_desc) : "+"+MAX_NEW_MESSAGES_DISPLAY;
+                String countString = ((unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? unreadCount +" "+getString(R.string.new_messages_notification_desc) : "+"+MAX_NEW_MESSAGES_DISPLAY) +", "+ ExchangeHistoryTracker.getInstance().getExchangeHistory()+" "+getString(R.string.exchanges);
 
                 ((TextView)newMessagesNotification.findViewById(R.id.new_message_notification_desc)).setText(countString);
                 newMessagesNotification.setVisibility(View.VISIBLE);
@@ -657,5 +660,6 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     public void onDestroy() {
         super.onDestroy();
         if(searchView != null) searchView.removeTextChangedListener(this);
+        MessageStore.getInstance(getActivity()).setAllAsRead();
     }
 }

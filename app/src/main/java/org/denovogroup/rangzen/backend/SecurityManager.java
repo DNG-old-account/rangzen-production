@@ -76,7 +76,7 @@ public class SecurityManager {
                 .setEnforceLock(false)
                 .setUseTrust(false)
                 .setRandomExchange(false)
-                .setTimeboundPeriod(0)
+                .setTimeboundPeriod(1)
                 .setMinContactsForHop(0)
         );
         profiles.add(new SecurityProfile(2)
@@ -96,8 +96,8 @@ public class SecurityManager {
                 .setEnforceLock(true)
                 .setUseTrust(true)
                 .setRandomExchange(false)
-                .setTimeboundPeriod(30)
-                .setMinContactsForHop(3)
+                .setTimeboundPeriod(3)
+                .setMinContactsForHop(5)
         );
     }
 

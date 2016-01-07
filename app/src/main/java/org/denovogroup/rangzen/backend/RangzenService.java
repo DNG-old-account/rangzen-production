@@ -138,8 +138,8 @@ public class RangzenService extends Service {
     private static final int NOTIFICATION_ID = R.string.unread_notification_title;
     private static final int RENAME_DELAY = 1000;
     private static final String DUMMY_MAC_ADDRESS = "02:00:00:00:00:00";
-    private static final int BACKOFF_FOR_ATTEMPT_MILLIS = 20 * 1000;
-    private static final int BACKOFF_MAX = BACKOFF_FOR_ATTEMPT_MILLIS * 6;
+    private static final int BACKOFF_FOR_ATTEMPT_MILLIS = 10 * 1000;
+    private static final int BACKOFF_MAX = BACKOFF_FOR_ATTEMPT_MILLIS * (int)Math.pow(2,9);
 
     private static final boolean USE_MINIMAL_LOGGING = true;
 
@@ -213,7 +213,7 @@ public class RangzenService extends Service {
             public void run() {
                 cleanupMessageStore();
             }
-        }, 0, 1, TimeUnit.DAYS);
+        }, 0, 5, TimeUnit.MINUTES);
 
         TIME_BETWEEN_EXCHANGES_MILLIS = SecurityManager.getCurrentProfile(this).getCooldown() * 1000;
     }
@@ -313,7 +313,8 @@ public class RangzenService extends Service {
 
                         if (hasHistory) {
                             storeVersionChanged = !historyItem.storeVersion.equals(MessageStore.getInstance(RangzenService.this).getStoreVersion());
-                            waitedMuch = historyItem.lastExchangeTime + Math.min(historyItem.attempts * BACKOFF_FOR_ATTEMPT_MILLIS, BACKOFF_MAX) < System.currentTimeMillis();
+                            waitedMuch = historyItem.lastExchangeTime + Math.min(
+                                    Math.pow(2 , historyItem.attempts) * BACKOFF_FOR_ATTEMPT_MILLIS, BACKOFF_MAX) < System.currentTimeMillis();
                         }
 
                         if (!hasHistory || storeVersionChanged || waitedMuch) {
@@ -463,7 +464,7 @@ public class RangzenService extends Service {
             } else {
                 hasNew = true;
 
-                mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop);
+                mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop, exchange.toString());
                 //mark this message as unread
                 mMessageStore.setRead(message.text, false);
             }
@@ -477,6 +478,7 @@ public class RangzenService extends Service {
 
           if(hasNew){
               mMessageStore.updateStoreVersion();
+              ExchangeHistoryTracker.getInstance().incrementExchangeCount();
               ExchangeHistoryTracker.getInstance().updateHistory(RangzenService.this, exchange.getPeerAddress());
               if(isAppInForeground()) {
                   Intent intent = new Intent();
@@ -489,7 +491,7 @@ public class RangzenService extends Service {
               // Has history, should increment the attempts counter
               ExchangeHistoryTracker.getInstance().updateAttemptsHistory(exchange.getPeerAddress());
               Log.d(TAG,"Exchange finished without receiving new messages, back-off timeout increased to:"+
-                    Math.min(BACKOFF_MAX , BACKOFF_FOR_ATTEMPT_MILLIS*ExchangeHistoryTracker.getInstance().getHistoryItem(exchange.getPeerAddress()).attempts));
+                    Math.min(BACKOFF_MAX , Math.pow(2, ExchangeHistoryTracker.getInstance().getHistoryItem(exchange.getPeerAddress()).attempts) * BACKOFF_FOR_ATTEMPT_MILLIS));
           } else {
               // No history file, create one
               Log.d(TAG, "Exchange finished without receiving new messages from new peer, creating history track");
@@ -527,7 +529,7 @@ public class RangzenService extends Service {
                             mMessageStore.updateTrust(message.text, newTrust, true);
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop);
+                            mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop, exchange.toString());
                             //mark this message as unread
                             mMessageStore.setRead(message.text, false);
                         }

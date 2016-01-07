@@ -88,6 +88,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public static final String COL_PARENT = "parent";
     public static final String COL_FAVIRITE = "favorited";
     public static final String COL_CHECKED = "checked";
+    public static final String COL_EXCHANGE = "exchange";
     public static final String COL_MIN_CONTACTS_FOR_HOP = "min_contacts_hop";
     public static final String COL_HOP = "hop";
 
@@ -131,6 +132,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 + COL_MIN_CONTACTS_FOR_HOP + " INT NOT NULL DEFAULT " + 0 + ","
                 + COL_PSEUDONYM + " VARCHAR(255) NOT NULL,"
                 + COL_LATLONG + " TEXT,"
+                + COL_EXCHANGE + " TEXT,"
                 + COL_LIKED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_LIKED + " IN(" + TRUE + "," + FALSE + ")),"
                 + COL_DELETED + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_DELETED + " IN(" + TRUE + "," + FALSE + ")),"
                 + COL_FAVIRITE + " BOOLEAN DEFAULT " + FALSE + " NOT NULL CHECK(" + COL_FAVIRITE + " IN(" + TRUE + "," + FALSE + ")),"
@@ -268,10 +270,30 @@ public class MessageStore extends SQLiteOpenHelper {
      */
     public Cursor getMessagesContainingCursor(String message, boolean getDeleted, boolean getReplies, int limit){
         if(message == null) message = "";
+        message = Utils.makeTextSafeForSQL(message);
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null) {
-            String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + " LIKE '%" + message + "%'"
+
+            String likeQuery ="";
+
+            if(message.length() == 0) likeQuery =  (COL_MESSAGE + " LIKE '%" + message + "%'");
+
+            if(likeQuery.length() == 0){
+                message = message.replaceAll("[\n\"]", " ");
+
+                String[] words = message.split("\\s");
+
+                for(int i=0; i<words.length; i++){
+                    if(i > 0){
+                        likeQuery +=" OR ";
+                    }
+
+                    likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
+                }
+            }
+
+            String query = "SELECT * FROM " + TABLE + " WHERE (" + likeQuery +")"
                     + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
                     + (!getReplies ? " AND " + COL_PARENT + "IS NULL" : "")
                     + " "+sortOption
@@ -373,7 +395,7 @@ public class MessageStore extends SQLiteOpenHelper {
      *                     if set to false and value is outside of limit, an exception is thrown
      * @return Returns true if the message was added. If message already exists, update its values
      */
-    public boolean addMessage(Context context, String messageId, String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location, String parent, boolean isRead, int minContactsHop, int hop){
+    public boolean addMessage(Context context, String messageId, String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location, String parent, boolean isRead, int minContactsHop, int hop, String exchange){
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
@@ -395,7 +417,7 @@ public class MessageStore extends SQLiteOpenHelper {
 
             Calendar tempCal = Calendar.getInstance();
             tempCal.setTimeInMillis(timestamp);
-            Calendar reducedTimestamp = Utils.reduceCalendar(tempCal);
+            Calendar reducedTimestamp = Utils.reduceCalendarMin(tempCal);
 
             if(containsOrRemoved(message)) {
                 db.execSQL("UPDATE "+TABLE+" SET "
@@ -406,6 +428,7 @@ public class MessageStore extends SQLiteOpenHelper {
                         + COL_READ +"="+(isRead ? TRUE : FALSE)+","
                         + ((location != null) ? (COL_LATLONG+"='"+location.getLatitude()+"x"+location.getLongitude()+"',") : "")
                         +COL_TIMESTAMP+"="+reducedTimestamp.getTimeInMillis()+","
+                        + ((exchange != null) ? (COL_EXCHANGE+"="+exchange+",") : "")
                         +COL_EXPIRE+"="+timebound
                         +" WHERE " + COL_MESSAGE + "='" + message + "';");
                 Log.d(TAG, "Message was already in store and was simply updated.");
@@ -421,6 +444,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 content.put(COL_TIMESTAMP, reducedTimestamp.getTimeInMillis());
                 content.put(COL_PARENT, parent);
                 content.put(COL_READ, isRead ? TRUE : FALSE);
+                if(exchange != null) content.put(COL_EXCHANGE, exchange);
                 content.put(COL_MIN_CONTACTS_FOR_HOP, minContactsHop);
                 content.put(COL_HOP, hop);
                 db.insert(TABLE, null, content);
@@ -685,6 +709,8 @@ public class MessageStore extends SQLiteOpenHelper {
             db.execSQL("UPDATE "+TABLE+" SET "+COL_READ+"="+TRUE+";");
 
             Log.d(TAG, "Messages read state changed in the store.");
+            //clear exchange history
+            ExchangeHistoryTracker.getInstance().resetExchangeCount();
             return true;
         }
         Log.d(TAG, "Messages not edited, database is null.");
@@ -746,14 +772,21 @@ public class MessageStore extends SQLiteOpenHelper {
     public void deleteByTrust(float trust){
         SQLiteDatabase db = getWritableDatabase();
         if (db != null) {
-            db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_TRUST + "<=" + trust + ";");
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_DELETED+"="+TRUE+ " WHERE " + COL_TRUST + "<=" + trust + ";");
         }
     }
 
     public void deleteBySender(String sender){
         SQLiteDatabase db = getWritableDatabase();
         if (db != null && sender != null && sender.length() > 0) {
-            db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_PSEUDONYM + "='" + sender + "';");
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_DELETED+"="+TRUE+ " WHERE " + COL_PSEUDONYM + "='" + sender + "';");
+        }
+    }
+
+    public void deleteByExchange(String exchange){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null && exchange != null && exchange.length() > 0) {
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_DELETED+"="+TRUE+ " WHERE " + COL_EXCHANGE + "='" + exchange + "';");
         }
     }
 
@@ -823,8 +856,16 @@ public class MessageStore extends SQLiteOpenHelper {
     public List<RangzenMessage> getMessagesForExchange(int sharedContacts){
         SQLiteDatabase db = getReadableDatabase();
         if(db != null){
-            return convertToMessages(db.rawQuery("SELECT * FROM " + TABLE + " WHERE " + COL_DELETED + "=" + FALSE + " AND ((" + COL_HOP + " = " + 0 + " AND " +COL_MIN_CONTACTS_FOR_HOP +" > 0 AND " +COL_MIN_CONTACTS_FOR_HOP + " <= " + sharedContacts + ") OR ("+COL_MIN_CONTACTS_FOR_HOP +" <= 0));", null));
+            return convertToMessages(db.rawQuery("SELECT * FROM " + TABLE + " WHERE " + COL_DELETED + "=" + FALSE + " AND ((" + COL_HOP + " = " + 0 + " AND " + COL_MIN_CONTACTS_FOR_HOP + " > 0 AND " + COL_MIN_CONTACTS_FOR_HOP + " <= " + sharedContacts + ") OR (" + COL_MIN_CONTACTS_FOR_HOP + " <= 0));", null));
         }
         return new ArrayList<RangzenMessage>();
+    }
+
+    /** set the trust level of all the messages in the store to 0.5 */
+    public void setTrustStrict() {
+        SQLiteDatabase db = getReadableDatabase();
+        if(db != null){
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_TRUST+"="+0.5+";");
+        }
     }
 }

@@ -518,6 +518,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 });
                 break;
             case R.id.action_delete_by_connection:
+                final float trust = checkedMessages.getFloat(checkedMessages.getColumnIndex(MessageStore.COL_TRUST));
                 dialog = new AlertDialog.Builder(getActivity());
                 dialog.setTitle(R.string.delete_dialog_title);
                 dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
@@ -530,13 +531,16 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        checkedMessages.getFloat(checkedMessages.getColumnIndex(MessageStore.COL_TRUST));
+                        MessageStore.getInstance(getActivity()).deleteByTrust(
+                                trust
+                        );
                         setListInDisplayMode();
                         dialog.dismiss();
                     }
                 });
                 break;
             case R.id.action_delete_by_exchange:
+                final String exchange = checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_EXCHANGE));
                 dialog = new AlertDialog.Builder(getActivity());
                 dialog.setTitle(R.string.delete_dialog_title);
                 dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
@@ -549,16 +553,14 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 dialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        /*TODO delete by exchange
-                        MessageStore.getInstance(getActivity()).deleteBySender(
-                                checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_PSEUDONYM))
-                        );*/
+                        MessageStore.getInstance(getActivity()).deleteByExchange(exchange);
                         setListInDisplayMode();
                         dialog.dismiss();
                     }
                 });
                 break;
             case R.id.action_delete_from_sender:
+                final String senderName = checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_PSEUDONYM));
                 dialog = new AlertDialog.Builder(getActivity());
                 dialog.setTitle(R.string.delete_dialog_title);
                 dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
@@ -572,7 +574,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         MessageStore.getInstance(getActivity()).deleteBySender(
-                                checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_PSEUDONYM))
+                                senderName
                         );
                         setListInDisplayMode();
                         dialog.dismiss();

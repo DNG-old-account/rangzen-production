@@ -73,7 +73,7 @@ public class Utils {
      * @return the amount of milliseconds representing the date in the string
      */
     public static long convertDateStringCompactToTimstamp(String timestring) throws NullPointerException, NumberFormatException{
-        int dayOfMonth = Integer.parseInt(timestring.substring(0,2));
+        int dayOfMonth = Integer.parseInt(timestring.substring(0, 2));
         int month = Integer.parseInt(timestring.substring(3, 5));
         int year = Integer.parseInt(timestring.substring(6));
 
@@ -96,6 +96,18 @@ public class Utils {
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.HOUR, 0);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
+        return calendar;
+    }
+
+    /** sets the supplied calendar object with 0 values for fields lower than hour
+     *
+     * @param calendar the calendar to reduce
+     * @return the reduced calendar
+     */
+    public static Calendar reduceCalendarMin(Calendar calendar){
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MINUTE, 0);
         return calendar;
     }
 

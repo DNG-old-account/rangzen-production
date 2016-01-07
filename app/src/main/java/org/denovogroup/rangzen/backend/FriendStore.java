@@ -390,7 +390,21 @@ public class FriendStore extends SQLiteOpenHelper{
         if(query == null || query.length() == 0){
             return db.rawQuery("SELECT * FROM "+TABLE+" ORDER BY "+COL_DISPLAY_NAME+" ASC;",null);
         } else {
-            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DISPLAY_NAME+" LIKE '%"+Utils.makeTextSafeForSQL(query)+"%' ORDER BY "+COL_DISPLAY_NAME+" ASC;",null);
+            String likeQuery ="";
+
+            query = query.replaceAll("[\n\"]", " ");
+
+            String[] words = query.split("\\s");
+
+            for(int i=0; i<words.length; i++){
+                if(i > 0){
+                    likeQuery +=" OR ";
+                }
+
+                likeQuery += " "+COL_DISPLAY_NAME + " LIKE '%"+words[i]+"%' ";
+            }
+
+            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE ("+likeQuery+") ORDER BY "+COL_DISPLAY_NAME+" ASC;",null);
         }
     }
 

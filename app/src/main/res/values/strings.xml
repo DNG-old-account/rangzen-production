@@ -244,5 +244,6 @@
     <string name="settings_exchange_title">Exchanges</string>
     <string name="settings_max_messages_p_exchange">Maximum messages per exchange</string>
     <string name="settings_timeout_p_exchange">Timeout between exchanges(s)</string>
+    <string name="exchanges">exchanges</string>
 
 </resources>

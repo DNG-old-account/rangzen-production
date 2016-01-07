@@ -201,6 +201,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
             case R.id.radio_profile_strict:
                 SecurityManager.setCurrentProfile(getActivity(), SecurityManager.getInstance().getProfile(R.id.radio_profile_strict));
                 currentProfile = SecurityManager.getCurrentProfile(getActivity());
+                MessageStore.getInstance(getActivity()).setTrustStrict();
                 isCustom = false;
                 break;
             case R.id.radio_profile_flexible:
