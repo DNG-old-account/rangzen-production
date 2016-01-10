@@ -231,7 +231,7 @@ public class MessageStore extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null) {
             String query = "SELECT * FROM " + TABLE
-                    + " WHERE ("+ COL_PARENT+ " IS NULL OR "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+"))"
+                    + " WHERE ("+ COL_PARENT+ " IS NULL OR "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+"))"
                         + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
                         + (!getReplies ? " AND " + COL_PARENT + " IS NULL" : "")
                     + " " + sortOption
@@ -292,7 +292,7 @@ public class MessageStore extends SQLiteOpenHelper {
                     likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
                 }
             }
-            String query = "SELECT * FROM " + TABLE + " WHERE ("+COL_PARENT+ " IS NULL OR "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+") AND " + likeQuery +")"
+            String query = "SELECT * FROM " + TABLE + " WHERE ("+COL_PARENT+ " IS NULL OR "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND " + likeQuery +")"
                     + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
                     + (!getReplies ? " AND " + COL_PARENT + "IS NULL" : "")
                     + " "+sortOption
