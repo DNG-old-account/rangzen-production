@@ -9,13 +9,13 @@
 
 
     <color name="app_purple">#6734ba</color>
-    <color name="app_yellow">#ffa000</color>
+    <color name="app_yellow">#ff6f43</color>
     <color name="app_bg">#e5e5e5</color>
 
     <color name="drawer_menu_text_grey">#1f1f1f</color>
     <color name="drawer_menu_text_purple">@color/app_purple</color>
     <color name="drawer_menu_grey_icon">#757575</color>
-    <color name="drawer_menu_bg_selected">#e5e5e5</color>
+    <color name="drawer_menu_bg_selected">#e4e4e4</color>
 
     <color name="list_item_bg">#f2f2f2</color>
     <color name="list_item_bg_checked">#d5d5d5</color>
@@ -26,7 +26,7 @@
     <color name="feed_list_divider">#e0e0e0</color>
     <color name="feed_list_divider_dark">#d7d7d7</color>
 
-    <color name="toolbar_grey">#6d6d6d</color>
+    <color name="toolbar_grey">#6c6c6c</color>
     <color name="foreground_material_dark">#303030</color>
 
 </resources>

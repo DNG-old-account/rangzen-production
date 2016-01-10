@@ -33,6 +33,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -62,7 +63,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     private boolean selectAll = false;
 
     private ListView feedListView;
-    private Button newPostButton;
+    private ImageButton newPostButton;
 
     private ViewGroup newMessagesNotification;
     private TextView newMessagesNotification_text;
@@ -93,11 +94,11 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     }
 
     private List<Object[]> sortOptions = new ArrayList<Object[]>(){{
-        add(new Object[]{R.drawable.sort_spinner_least_connected, R.string.sort_opt_newest, sortOption.NEWEST});
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_oldest, sortOption.OLDEST});
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_mostendorsed, sortOption.MOST_ENDORSED});
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_leastendorsed, sortOption.LEAST_ENDORSED});
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_mostconnected, sortOption.MOST_CONNECTED});
+        add(new Object[]{R.drawable.sort_spinner_newest, R.string.sort_opt_newest, sortOption.NEWEST});
+        add(new Object[]{R.drawable.sort_spinner_oldest,R.string.sort_opt_oldest, sortOption.OLDEST});
+        add(new Object[]{R.drawable.sort_spinner_most_endorsed,R.string.sort_opt_mostendorsed, sortOption.MOST_ENDORSED});
+        add(new Object[]{R.drawable.sort_spinner_least_endorsed,R.string.sort_opt_leastendorsed, sortOption.LEAST_ENDORSED});
+        add(new Object[]{R.drawable.sort_spinner_most_connected,R.string.sort_opt_mostconnected, sortOption.MOST_CONNECTED});
         add(new Object[]{R.drawable.sort_spinner_least_connected,R.string.sort_opt_leastconnected, sortOption.LEAST_CONNECTED});
     }};
 
@@ -160,7 +161,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         View v = inflater.inflate(R.layout.feed_fragment, container, false);
 
         feedListView = (ListView) v.findViewById(R.id.feed_listView);
-        newPostButton = (Button) v.findViewById(R.id.new_post_button);
+        newPostButton = (ImageButton) v.findViewById(R.id.new_post_button);
             newPostButton.setOnClickListener(this);
         newMessagesNotification = (ViewGroup) v.findViewById(R.id.new_message_notification);
         newMessagesNotification_text = (TextView) v.findViewById(R.id.new_message_notification_desc);
@@ -427,6 +428,12 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
 
         ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(!(inSearchMode || inSelectionMode));
         ((DrawerActivityHelper) getActivity()).getDrawerToggle().syncState();
+
+        if(actionBar != null) {
+            if (inSearchMode && !inSelectionMode) {
+                actionBar.setHomeAsUpIndicator(R.drawable.x_icon);
+            }
+        }
 
         if(sortSpinner != null) {
             sortSpinner.setVisibility(inSelectionMode ? View.GONE : View.VISIBLE);

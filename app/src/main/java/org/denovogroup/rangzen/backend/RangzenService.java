@@ -38,6 +38,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.ComponentName;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -686,10 +687,14 @@ public class RangzenService extends Service {
                 pref.edit().putString(PreferencesActivity.WIFI_NAME, oldName).commit();
             }
 
+            if(Build.VERSION.SDK_INT >= 23){
+                btAddress = SecurityManager.getStoredMAC(this);
+            }
+
             mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
-            if (mBluetoothSpeaker.getAddress().equals(DUMMY_MAC_ADDRESS)) {
-                Log.w(TAG, "Bluetooth speaker provided a dummy bluetooth" +
-                        " MAC address (" + DUMMY_MAC_ADDRESS + ") scheduling device name change.");
+            if (btAddress.equals(DUMMY_MAC_ADDRESS) || btAddress.equals("")) {
+                Log.w(TAG, "Bluetooth speaker provided a dummy/blank bluetooth" +
+                        " MAC address (" + btAddress + ") scheduling device name change.");
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override

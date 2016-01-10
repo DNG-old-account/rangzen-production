@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_activated="false">
-        <bitmap android:src="@drawable/ic_timebound"
-            android:tint="@color/drawer_menu_grey_icon"/>
-    </item>
-
-    <item android:state_activated="true">
-        <bitmap android:src="@drawable/ic_timebound"
-                android:tint="@color/app_purple"/>
-    </item>
+    <item android:state_activated="true" android:drawable="@drawable/settings_icon_on"/>
+    <item android:drawable="@drawable/settings_icon_off"/>
 </selector>

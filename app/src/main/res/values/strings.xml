@@ -225,6 +225,7 @@
     <string name="profile_custom_annotation">Recommended only for advanced users</string>
 
     <string name="settings_general_title">General</string>
+    <string name="settings_network_title">Network</string>
     <string name="settings_timestamp">Timestamp</string>
     <string name="settings_trust">Connection scrores</string>
     <string name="settings_location_tagging">Location tagging</string>
@@ -245,5 +246,6 @@
     <string name="settings_max_messages_p_exchange">Maximum messages per exchange</string>
     <string name="settings_timeout_p_exchange">Timeout between exchanges(s)</string>
     <string name="exchanges">exchanges</string>
+    <string name="settings_mac_title">Bluetooth MAC address</string>
 
 </resources>

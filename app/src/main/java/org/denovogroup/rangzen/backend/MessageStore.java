@@ -742,7 +742,7 @@ public class MessageStore extends SQLiteOpenHelper {
 
         db.execSQL("DELETE FROM "+TABLE+" WHERE "+COL_TRUST+"<="+currentProfile.getAutodeleteTrust()
                 +" OR ("+COL_TIMESTAMP+"> 0 AND "+COL_TIMESTAMP+"<"+ageThreshold+")"
-                +" OR ("+COL_EXPIRE+"> 0 AND "+COL_EXPIRE+"<"+reducedAge.getTimeInMillis()+");"
+                +" OR ("+COL_EXPIRE+"> 0 AND "+COL_TIMESTAMP+">0 AND ("+COL_EXPIRE  +"+"+COL_TIMESTAMP+") <"+System.currentTimeMillis()+");"//TODO test this
         );
     }
 
@@ -859,13 +859,5 @@ public class MessageStore extends SQLiteOpenHelper {
             return convertToMessages(db.rawQuery("SELECT * FROM " + TABLE + " WHERE " + COL_DELETED + "=" + FALSE + " AND ((" + COL_HOP + " = " + 0 + " AND " + COL_MIN_CONTACTS_FOR_HOP + " > 0 AND " + COL_MIN_CONTACTS_FOR_HOP + " <= " + sharedContacts + ") OR (" + COL_MIN_CONTACTS_FOR_HOP + " <= 0));", null));
         }
         return new ArrayList<RangzenMessage>();
-    }
-
-    /** set the trust level of all the messages in the store to 0.5 */
-    public void setTrustStrict() {
-        SQLiteDatabase db = getReadableDatabase();
-        if(db != null){
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_TRUST+"="+0.5+";");
-        }
     }
 }

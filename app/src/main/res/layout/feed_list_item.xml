@@ -40,7 +40,7 @@
         <TextView
             style="@style/FeedListItem_Extra"
             android:id="@+id/feed_item_connection"
-            android:drawableLeft="@drawable/ic_action_add_person"
+            android:drawableLeft="@drawable/feed_connection_icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
@@ -52,7 +52,7 @@
         <TextView
             style="@style/FeedListItem_Extra"
             android:id="@+id/feed_item_navigate"
-            android:drawableLeft="@drawable/ic_navigate"
+            android:drawableLeft="@drawable/feed_item_navigate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=""/>
@@ -67,7 +67,7 @@
         <TextView
             style="@style/FeedListItem_Extra"
             android:id="@+id/feed_item_replies"
-            android:drawableLeft="@drawable/ic_action_refresh"
+            android:drawableLeft="@drawable/feed_item_reply"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 

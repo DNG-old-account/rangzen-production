@@ -1,5 +1,8 @@
 package org.denovogroup.rangzen.ui;
 
+import android.bluetooth.BluetoothAdapter;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -31,6 +34,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
     SecurityProfile currentProfile;
 
     View generalBlock;
+    View networkBlock;
     View feedBlock;
     View contactsBlock;
     View exchangeBlock;
@@ -53,6 +57,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
     Switch addViaQRSwitch;
     EditText maxMessagesPerExchangeEditText;
     EditText timeoutEditText;
+    EditText macEditText;
 
     int autodelMaxTrust = 100;
     int autodelMaxAge = 365;
@@ -66,6 +71,8 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         currentProfile = org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(getActivity());
 
         generalBlock = view.findViewById(R.id.general_block);
+        networkBlock = view.findViewById(R.id.network_block);
+        networkBlock.setVisibility((Build.VERSION.SDK_INT >= 23) ? View.VISIBLE : View.GONE);
         feedBlock = view.findViewById(R.id.feed_block);
         contactsBlock = view.findViewById(R.id.contacts_block);
         exchangeBlock = view.findViewById(R.id.exchange_block);
@@ -91,6 +98,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         addViaQRSwitch = (Switch) view.findViewById(R.id.switch_add_via_qr);
         maxMessagesPerExchangeEditText = (EditText) view.findViewById(R.id.edit_max_messages_p_exchange);
         timeoutEditText = (EditText) view.findViewById(R.id.edit_timeout_p_exchange);
+        macEditText = (EditText) view.findViewById(R.id.edit_mac);
 
         setupView();
 
@@ -105,6 +113,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         maxFeedEditText.removeTextChangedListener(this);
         maxMessagesPerExchangeEditText.removeTextChangedListener(this);
         restrictedEditText.removeTextChangedListener(this);
+        macEditText.removeTextChangedListener(this);
 
         profilesGroup.setOnCheckedChangeListener(null);
         profilesGroup.check(currentProfile.getName());
@@ -168,6 +177,16 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
 
         timeoutEditText.setText(String.valueOf(currentProfile.getTimeboundPeriod()));
         timeoutEditText.addTextChangedListener(this);
+
+        String mac = SecurityManager.getStoredMAC(getActivity());
+        if(mac != null && mac.length() > 0){
+            macEditText.setText(mac);
+            macEditText.setTextColor(getResources().getColor(BluetoothAdapter.checkBluetoothAddress(mac) ? android.R.color.black : android.R.color.holo_red_dark));
+        } else {
+            macEditText.clearComposingText();
+            macEditText.setTextColor(getResources().getColor(android.R.color.black));
+        }
+        macEditText.addTextChangedListener(this);
     }
 
     @Override
@@ -201,7 +220,6 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
             case R.id.radio_profile_strict:
                 SecurityManager.setCurrentProfile(getActivity(), SecurityManager.getInstance().getProfile(R.id.radio_profile_strict));
                 currentProfile = SecurityManager.getCurrentProfile(getActivity());
-                MessageStore.getInstance(getActivity()).setTrustStrict();
                 isCustom = false;
                 break;
             case R.id.radio_profile_flexible:
@@ -303,6 +321,10 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
                 break;
             case R.id.edit_timeout_p_exchange:
                 currentProfile.setCooldown(valueAsInt);
+                break;
+            case R.id.edit_mac:
+                String mac = s != null ? s.toString() : "";
+                SecurityManager.setStoredMAC(getActivity(), mac);
                 break;
             default:
                 reload = false;

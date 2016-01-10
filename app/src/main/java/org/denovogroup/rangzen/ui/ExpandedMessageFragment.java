@@ -73,12 +73,12 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher {
     private sortOption currentSort = sortOption.NEWEST;
 
     private List<Object[]> sortOptions = new ArrayList<Object[]>(){{
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_newest, sortOption.NEWEST});
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_oldest, sortOption.OLDEST});
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_mostendorsed, sortOption.MOST_ENDORSED});
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_leastendorsed, sortOption.LEAST_ENDORSED});
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_mostconnected, sortOption.MOST_CONNECTED});
-        add(new Object[]{R.drawable.ic_action_about,R.string.sort_opt_leastconnected, sortOption.LEAST_CONNECTED});
+        add(new Object[]{R.drawable.sort_spinner_newest, R.string.sort_opt_newest, sortOption.NEWEST});
+        add(new Object[]{R.drawable.sort_spinner_oldest,R.string.sort_opt_oldest, sortOption.OLDEST});
+        add(new Object[]{R.drawable.sort_spinner_most_endorsed,R.string.sort_opt_mostendorsed, sortOption.MOST_ENDORSED});
+        add(new Object[]{R.drawable.sort_spinner_least_endorsed,R.string.sort_opt_leastendorsed, sortOption.LEAST_ENDORSED});
+        add(new Object[]{R.drawable.sort_spinner_most_connected,R.string.sort_opt_mostconnected, sortOption.MOST_CONNECTED});
+        add(new Object[]{R.drawable.sort_spinner_least_connected,R.string.sort_opt_leastconnected, sortOption.LEAST_CONNECTED});
     }};
 
     @Override
@@ -251,96 +251,19 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher {
         }
     }
 
-    public void setSearchView(final SearchView searchView) {
-
-        //TODO instead of overriding colors like that use ContextActionBar to overflow the regular one with custom actions
-
-        searchView.findViewById(android.support.v7.appcompat.R.id.search_src_text)
-                .setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                    @Override
-                    public void onFocusChange(View v, boolean hasFocus) {
-                        // TODO if(sortSpinner != null) sortSpinner.setVisibility(hasFocus ? View.GONE : View.VISIBLE);
-                    }
-                });
-
-        //Define on close listener which support pre-honycomb devices as well with the app compat
-        searchView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-            @Override
-            public void onViewAttachedToWindow(View v) {
-
-                if (((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
-                    ((AppCompatActivity) getActivity()).getSupportActionBar()
-                            .setBackgroundDrawable(new ColorDrawable(getResources().getColor(android.R.color.white)));
-                }
-
-                if (menu != null && menu.findItem(android.R.id.home) != null) {
-                    menu.findItem(android.R.id.home).getIcon().mutate().setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
-                }
-
-                if (searchView != null) {
-                    //tint the X button for clearing the text field
-                    ImageView closeButton = (ImageView) searchView.findViewById(android.support.v7.appcompat.R.id.search_close_btn);
-                    if (closeButton != null)
-                        closeButton.setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
-
-                    //tint the ? button
-                    ImageView collapseButton = (ImageView) searchView.findViewById(android.support.v7.appcompat.R.id.search_mag_icon);
-                    if (collapseButton != null)
-                        collapseButton.setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
-
-                    //tint the ? button
-                    ImageView goButton = (ImageView) searchView.findViewById(android.support.v7.appcompat.R.id.search_go_btn);
-                    if (goButton != null)
-                        goButton.setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
-
-                    //tint the ? button
-                    ImageView searchButton = (ImageView) searchView.findViewById(android.support.v7.appcompat.R.id.search_button);
-                    if (searchButton != null)
-                        searchButton.setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
-
-                    //tint the ? button
-                    ImageView voiceButton = (ImageView) searchView.findViewById(android.support.v7.appcompat.R.id.search_voice_btn);
-                    if (voiceButton != null)
-                        voiceButton.setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
-                }
-            }
-
-            @Override
-            public void onViewDetachedFromWindow(View v) {
-                if (((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
-                    ((AppCompatActivity) getActivity()).getSupportActionBar()
-                            .setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.app_purple)));
-                }
-
-                //reset the list to its normal state
-                swapCursor();
-            }
-        });
-
-        //Define the search procedure
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String queryText) {
-                query = queryText;
-                listView.setAdapter(new FeedReplyAdapter(getActivity(), getCursor()));
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                onQueryTextSubmit(newText);
-                return false;
-            }
-        });
-    }
-
     public void setSearchView(){
         if(searchView == null) return;
+
+        if(getActivity() instanceof DrawerActivityHelper){
+            ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(!inSearchMode);
+        }
 
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if(actionBar != null) {
             actionBar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources().getColor(inSearchMode ? android.R.color.white : R.color.app_purple)));
             actionBar.setTitle(inSearchMode ? R.string.empty_string : R.string.feed);
+
+            if(inSearchMode) actionBar.setHomeAsUpIndicator(R.drawable.x_icon);
         }
 
         if(menu != null){
@@ -415,5 +338,13 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if(getActivity() instanceof DrawerActivityHelper){
+            ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(true);
+        }
     }
 }

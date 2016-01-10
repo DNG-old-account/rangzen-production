@@ -24,8 +24,10 @@ public class SecurityManager {
 
     /** the shared preference file where security settings are stored */
     public static final String SETTINGS_FILE = "Settings";
-    /** the key under which use pseudonym is set in the file*/
+    /** the key under which pseudonym is set in the file*/
     public static final String PSEUDONYM_KEY = "pseudonym";
+    /** the key under which mac is set in the file*/
+    public static final String MAC_KEY = "mac";
 
     // profile settings
     public static final int CUSTOM_PROFILE_NAME = R.id.radio_profile_custom;
@@ -236,7 +238,23 @@ public class SecurityManager {
     }
 
     public void clearProfileData(Context context){
-        SharedPreferences pref = context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE);
+        SharedPreferences pref = context.getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE);
         pref.edit().clear().commit();
+    }
+
+    public static void setStoredMAC(Context context, String MAC){
+        if(instance == null) getInstance();
+
+        context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE).edit()
+                .putString(MAC_KEY, MAC.toUpperCase())
+                .commit();
+    }
+
+    public static String getStoredMAC(Context context){
+        if(instance == null) getInstance();
+
+        SharedPreferences pref = context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE);
+
+        return pref.getString(MAC_KEY, "");
     }
 }

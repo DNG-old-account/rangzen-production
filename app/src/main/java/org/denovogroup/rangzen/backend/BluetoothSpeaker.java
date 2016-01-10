@@ -141,7 +141,7 @@ public class BluetoothSpeaker {
       try { 
         return mBluetoothAdapter.getRemoteDevice(address);
       } catch (IllegalArgumentException e) {
-        Log.e(TAG, "Passed illegal address to get remote bluetooth device: " + address);
+        Log.e(TAG, "Passed illegal address to get remote bluetooth device: '" + address+"'");
         return null;
       }
     } else {
