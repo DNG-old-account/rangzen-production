@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
 
     DrawerLayout drawerLayout;
     ViewGroup drawerMenu;
+    ViewGroup fixedDrawerMenu;
     ActionBarDrawerToggle drawerToggle;
     View contentHolder;
     Toolbar toolbar;
@@ -112,10 +113,17 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         };
 
         drawerMenu = (ViewGroup) findViewById(R.id.drawer_menu);
+        fixedDrawerMenu = (ViewGroup) findViewById(R.id.fixed_drawer_menu);
 
         int childcount = drawerMenu.getChildCount();
         for(int i=0; i<childcount; i++){
             View v = drawerMenu.getChildAt(i);
+            if(v instanceof TextView) v.setOnClickListener(drawerMenuClickListener);
+        }
+
+        childcount = fixedDrawerMenu.getChildCount();
+        for(int i=0; i<childcount; i++){
+            View v = fixedDrawerMenu.getChildAt(i);
             if(v instanceof TextView) v.setOnClickListener(drawerMenuClickListener);
         }
 
@@ -156,6 +164,11 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                         View child = drawerMenu.getChildAt(i);
                         child.setActivated(child == v);
                     }
+                    childcount = fixedDrawerMenu.getChildCount();
+                    for(int i=0; i<childcount;i++){
+                        View child = fixedDrawerMenu.getChildAt(i);
+                        child.setActivated(child == v);
+                    }
                     break;
             }
 
@@ -170,9 +183,6 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                     break;
                 case R.id.drawer_menu_feed:
                     frag = new FeedFragment();
-                    break;
-                case R.id.drawer_menu_info:
-                    //TODO
                     break;
                 case R.id.drawer_menu_profile:
                     frag = new ProfileFragment();
@@ -225,11 +235,17 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                 case R.id.drawer_menu_settings:
                     frag = new SettingsFragment();
                     break;
+                case R.id.drawer_menu_starred:
+                    frag = new StarredFragment();
+                    break;
+                case R.id.drawer_menu_info:
+                    //TODO
+                    break;
                 case R.id.drawer_menu_share_app:
                     //TODO
                     break;
-                case R.id.drawer_menu_starred:
-                    frag = new StarredFragment();
+                case R.id.drawer_menu_help:
+                    //TODO
                     break;
             }
 
