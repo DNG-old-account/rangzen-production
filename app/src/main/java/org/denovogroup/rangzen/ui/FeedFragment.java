@@ -417,7 +417,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                 searchView.requestFocus();
                 InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.showSoftInput(searchView, InputMethodManager.SHOW_IMPLICIT);
-            } else {
+            } else if(!inSelectionMode){
                 query = "";
                 searchView.removeTextChangedListener(this);
                 searchView.setText("");
