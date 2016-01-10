@@ -231,8 +231,8 @@ public class MessageStore extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null) {
             String query = "SELECT * FROM " + TABLE
-                    + ((!getDeleted || !getReplies) ? " WHERE ": "")
-                        + (!getDeleted ? COL_DELETED + "=" + FALSE : "")
+                    + " WHERE ("+ COL_PARENT+ " IS NULL OR "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+"))"
+                        + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
                         + (!getReplies ? " AND " + COL_PARENT + " IS NULL" : "")
                     + " " + sortOption
                     + (limit > 0 ? " LIMIT " + limit : "")
@@ -292,8 +292,7 @@ public class MessageStore extends SQLiteOpenHelper {
                     likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
                 }
             }
-
-            String query = "SELECT * FROM " + TABLE + " WHERE (" + likeQuery +")"
+            String query = "SELECT * FROM " + TABLE + " WHERE ("+COL_PARENT+ " IS NULL OR "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+") AND " + likeQuery +")"
                     + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
                     + (!getReplies ? " AND " + COL_PARENT + "IS NULL" : "")
                     + " "+sortOption
@@ -856,7 +855,12 @@ public class MessageStore extends SQLiteOpenHelper {
     public List<RangzenMessage> getMessagesForExchange(int sharedContacts){
         SQLiteDatabase db = getReadableDatabase();
         if(db != null){
-            return convertToMessages(db.rawQuery("SELECT * FROM " + TABLE + " WHERE " + COL_DELETED + "=" + FALSE + " AND ((" + COL_HOP + " = " + 0 + " AND " + COL_MIN_CONTACTS_FOR_HOP + " > 0 AND " + COL_MIN_CONTACTS_FOR_HOP + " <= " + sharedContacts + ") OR (" + COL_MIN_CONTACTS_FOR_HOP + " <= 0));", null));
+            return convertToMessages(db.rawQuery("SELECT * FROM " + TABLE + " WHERE "
+                    + COL_DELETED + "=" + FALSE +
+                    " AND ((" + COL_HOP + " = " + 0 + " AND " + COL_MIN_CONTACTS_FOR_HOP + " > 0 AND " + COL_MIN_CONTACTS_FOR_HOP + " <= " + sharedContacts +
+                        ") OR (" + COL_MIN_CONTACTS_FOR_HOP + " <= 0))" +
+                    " ORDER BY "+COL_ROWID+" DESC;"
+                    , null));
         }
         return new ArrayList<RangzenMessage>();
     }
