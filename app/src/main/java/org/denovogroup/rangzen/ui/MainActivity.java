@@ -242,7 +242,11 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                     frag  = new InfoFragment();
                     break;
                 case R.id.drawer_menu_share_app:
-                    //TODO
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("text/plain");
+                    shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Sent with Murmur");
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_app_promo)+" \n"+getString(R.string.apk_url));
+                    startActivity(Intent.createChooser(shareIntent, getString(R.string.share_using)));
                     break;
                 case R.id.drawer_menu_help:
                     //TODO

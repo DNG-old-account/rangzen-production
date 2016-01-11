@@ -249,5 +249,7 @@
 
     <string name="aboutTitle">About Murmur</string>
     <string name="aboutBody">This application is a prototype for a research project done by De Novo Group.</string>
+    <string name="share_app_promo">Check out Murmur!</string>
+    <string name="apk_url">http://www.iWishIHadAUrl.com/</string>
 
 </resources>

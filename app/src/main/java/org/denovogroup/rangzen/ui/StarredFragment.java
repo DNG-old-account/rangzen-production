@@ -501,7 +501,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
             case R.id.action_share:
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("text/plain");
-                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Sent with Rangzen");
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Sent with Murmur");
                 shareIntent.putExtra(Intent.EXTRA_TEXT, checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_MESSAGE)));
                 getActivity().startActivity(Intent.createChooser(shareIntent, getString(R.string.share_using)));
                 break;
