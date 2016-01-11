@@ -249,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                     startActivity(Intent.createChooser(shareIntent, getString(R.string.share_using)));
                     break;
                 case R.id.drawer_menu_help:
-                    //TODO
+                    frag = new HelpFragment();
                     break;
             }
 

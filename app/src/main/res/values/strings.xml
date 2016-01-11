@@ -252,4 +252,14 @@
     <string name="share_app_promo">Check out Murmur!</string>
     <string name="apk_url">http://www.iWishIHadAUrl.com/</string>
 
+    <!-- help content -->
+    <string name="help_title1">help1</string>
+    <string name="help_content1">help1 content</string>
+
+    <string name="help_title2">help2</string>
+    <string name="help_content2">help2 content</string>
+
+    <string name="help_title3">help3</string>
+    <string name="help_content3">help3 content</string>
+
 </resources>
