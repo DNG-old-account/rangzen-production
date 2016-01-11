@@ -31,8 +31,6 @@
 
     <string name="hint">Get the word out</string>
     <string name="app_id">254046681454257</string>
-    <string name="aboutTitle">About Rangzen</string>
-    <string name="aboutBody">This application is a prototype for a research project done by De Novo Group.</string>
     <string name="FirstTitleAbout">About Rangzen</string>
     <string name="FirstAboutParagraph">Recent years have seen the rise of a new type of state-level adversary. Governments have shown themselves willing to both surveil their citizens using Internet infrastructure and impose blackouts to shut off that very infrastructure during times of civil strife. However, it is exactly during such strife that citizens need reliable and anonymous communications the most.\n\nRangzen (freedom in Tibetan) provides an open-source, anonymous, one-to-many messaging layer that requires only users’ smartphones, does not depend on an internet connection and can withstand governments’ adversarial network-level attacks.</string>
 
@@ -248,5 +246,8 @@
     <string name="settings_timeout_p_exchange">Timeout between exchanges(s)</string>
     <string name="exchanges">exchanges</string>
     <string name="settings_mac_title">Bluetooth MAC address</string>
+
+    <string name="aboutTitle">About Murmur</string>
+    <string name="aboutBody">This application is a prototype for a research project done by De Novo Group.</string>
 
 </resources>

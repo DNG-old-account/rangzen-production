@@ -239,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                     frag = new StarredFragment();
                     break;
                 case R.id.drawer_menu_info:
-                    //TODO
+                    frag  = new InfoFragment();
                     break;
                 case R.id.drawer_menu_share_app:
                     //TODO
