@@ -14,10 +14,12 @@
         android:divider="@android:color/transparent"/>
 
     <LinearLayout
+        android:id="@+id/feedback_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@color/list_item_bg">
+        android:background="@color/list_item_bg"
+        android:descendantFocusability="blocksDescendants">
 
         <View
             android:layout_width="match_parent"
@@ -31,7 +33,10 @@
             android:layout_gravity="center"
             android:drawableLeft="@drawable/ic_reply_dark"
             android:drawablePadding="12dp"
-            android:background="@android:color/transparent"/>
+            android:background="@android:color/transparent"
+            android:focusableInTouchMode="false"
+            android:focusable="false"
+            android:clickable="false"/>
 
     </LinearLayout>
 

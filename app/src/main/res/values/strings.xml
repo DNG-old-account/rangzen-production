@@ -253,6 +253,10 @@
     <string name="apk_url">http://www.iWishIHadAUrl.com/</string>
 
     <string name="send_feedback">Send a feedback</string>
+    <string name="feedback_email">rangzen_dev@denovogroup.org</string>
+    <string name="feedback_promo">Help us make Murmur better by sending us a feedback.</string>
+    <string name="include_log_prompt">Include device log</string>
+    <string name="feedback_send">SEND FEEDBACK</string>
 
     <!-- help content -->
     <string name="help_title1">How to use the Feed ?</string>
