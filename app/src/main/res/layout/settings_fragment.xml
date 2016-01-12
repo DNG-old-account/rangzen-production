@@ -295,7 +295,7 @@
                 android:text="@string/settings_feed_title"
                 android:layout_margin="@dimen/settings_fragment_margin"/>
 
-            <LinearLayout
+            <!--<LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -315,7 +315,7 @@
 
             </LinearLayout>
 
-            <View style="@style/SettingsDivider"/>
+            <View style="@style/SettingsDivider"/>-->
 
             <LinearLayout
                 android:layout_width="match_parent"

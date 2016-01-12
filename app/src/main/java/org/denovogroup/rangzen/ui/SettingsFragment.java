@@ -47,7 +47,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
 
     EditText selfDestEditText;
     EditText restrictedEditText;
-    EditText maxFeedEditText;
+    //EditText maxFeedEditText;
     Switch autodelSwitch;
     SeekBar autodelTrustSeekbar;
     EditText autodelTrustEditText;
@@ -86,7 +86,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         pseudonymSwitch = (Switch) view.findViewById(R.id.switch_pseudonym);
         selfDestEditText = (EditText) view.findViewById(R.id.edit_self_dest);
         restrictedEditText = (EditText) view.findViewById(R.id.edit_restricted);
-        maxFeedEditText = (EditText) view.findViewById(R.id.edit_max_messages);
+        //maxFeedEditText = (EditText) view.findViewById(R.id.edit_max_messages);
         autodelSwitch = (Switch) view.findViewById(R.id.switch_auto_delete);
         autodelTrustSeekbar = (SeekBar) view.findViewById(R.id.seekbar_autodelete_trust);
         autodelTrustSeekbar.setMax(autodelMaxTrust);
@@ -110,7 +110,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         autodelTrustEditText.removeTextChangedListener(this);
         autodelAgeEditText.removeTextChangedListener(this);
         selfDestEditText.removeTextChangedListener(this);
-        maxFeedEditText.removeTextChangedListener(this);
+        //maxFeedEditText.removeTextChangedListener(this);
         maxMessagesPerExchangeEditText.removeTextChangedListener(this);
         restrictedEditText.removeTextChangedListener(this);
         macEditText.removeTextChangedListener(this);
@@ -153,8 +153,8 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         restrictedEditText.setText(String.valueOf(currentProfile.getMinContactsForHop()));
         restrictedEditText.addTextChangedListener(this);
 
-        maxFeedEditText.setText(String.valueOf(currentProfile.getFeedSize()));
-        maxFeedEditText.addTextChangedListener(this);
+        //maxFeedEditText.setText(String.valueOf(currentProfile.getFeedSize()));
+        //maxFeedEditText.addTextChangedListener(this);
 
         pseudonymSwitch.setOnCheckedChangeListener(null);
         pseudonymSwitch.setChecked(currentProfile.isAutodelete());
@@ -313,9 +313,9 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
             case R.id.edit_restricted:
                 currentProfile.setMinContactsForHop(Math.max(1,valueAsInt));
                 break;
-            case R.id.edit_max_messages:
+            /*case R.id.edit_max_messages:
                 currentProfile.setFeedSize(valueAsInt);
-                break;
+                break;*/
             case R.id.edit_max_messages_p_exchange:
                 currentProfile.setMaxMessages(Math.max(1,valueAsInt));
                 break;

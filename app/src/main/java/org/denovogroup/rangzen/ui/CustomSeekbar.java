@@ -2,12 +2,14 @@ package org.denovogroup.rangzen.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.SeekBar;
 
 import org.denovogroup.rangzen.R;
@@ -42,14 +44,12 @@ public class CustomSeekbar extends SeekBar {
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
 
-        Drawable thumb  = getThumb();
-        if(thumb != null) thumb.setColorFilter(tintColor, PorterDuff.Mode.SRC_ATOP);
+        Drawable thumb = getThumb();
+        if (thumb != null) thumb.setColorFilter(isEnabled() ? tintColor : Color.GRAY, PorterDuff.Mode.SRC_ATOP);
         Drawable progDrawable = getProgressDrawable();
-        if(progDrawable != null && progDrawable instanceof LayerDrawable){
+        if (progDrawable != null && progDrawable instanceof LayerDrawable) {
             Drawable progClip = ((LayerDrawable) progDrawable).findDrawableByLayerId(android.R.id.progress);
-            if(progClip != null) progClip.setColorFilter(tintColor, PorterDuff.Mode.SRC_ATOP);
+            if (progClip != null) progClip.setColorFilter(isEnabled() ? tintColor : Color.GRAY, PorterDuff.Mode.SRC_ATOP);
         }
     }
-
-
 }

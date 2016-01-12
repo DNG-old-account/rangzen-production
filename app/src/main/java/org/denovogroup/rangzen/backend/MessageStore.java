@@ -378,7 +378,7 @@ public class MessageStore extends SQLiteOpenHelper {
      * @return Message in the K position based on priority or null if position too high
      */
     public RangzenMessage getKthMessage(int position){
-        List<RangzenMessage> result = getMessages(false, false,position + 1);
+        List<RangzenMessage> result = getMessages(false, false, position + 1);
         return (result.size() > position) ? result.get(position) : null;
     }
 
@@ -404,12 +404,14 @@ public class MessageStore extends SQLiteOpenHelper {
                 checkTrust(trust);
             }
 
-            Cursor cursor = db.rawQuery("SELECT "+COL_ROWID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" ORDER BY "+COL_ROWID+" ASC;",null);
-            int overflow = cursor.getCount() - SecurityManager.getCurrentProfile(context).getFeedSize();
-            cursor.close();
-            if(overflow >= 0){
-                db.execSQL("UPDATE "+TABLE+" SET "+COL_DELETED+"="+TRUE+" WHERE "+COL_ROWID+
-                        " IN (SELECT "+COL_ROWID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" ORDER BY "+COL_ROWID+" ASC LIMIT "+(1+overflow)+");");
+            if(SecurityManager.getCurrentProfile(context).getFeedSize() > 0) {
+                Cursor cursor = db.rawQuery("SELECT " + COL_ROWID + " FROM " + TABLE + " WHERE " + COL_DELETED + "=" + FALSE + " ORDER BY " + COL_ROWID + " ASC;", null);
+                int overflow = cursor.getCount() - SecurityManager.getCurrentProfile(context).getFeedSize();
+                cursor.close();
+                if (overflow >= 0) {
+                    db.execSQL("UPDATE " + TABLE + " SET " + COL_DELETED + "=" + TRUE + " WHERE " + COL_ROWID +
+                            " IN (SELECT " + COL_ROWID + " FROM " + TABLE + " WHERE " + COL_DELETED + "=" + FALSE + " ORDER BY " + COL_ROWID + " ASC LIMIT " + (1 + overflow) + ");");
+                }
             }
 
             if(message.length() > MAX_MESSAGE_SIZE) message = message.substring(0, MAX_MESSAGE_SIZE);
