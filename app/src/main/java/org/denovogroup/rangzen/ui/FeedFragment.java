@@ -217,10 +217,10 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                             store.setSortOption(new String[]{MessageStore.COL_LIKES}, false);
                             break;
                         case NEWEST:
-                            store.setSortOption(new String[]{MessageStore.COL_TIMESTAMP}, true);
+                            store.setSortOption(new String[]{MessageStore.COL_ROWID}, false);
                             break;
                         case OLDEST:
-                            store.setSortOption(new String[]{MessageStore.COL_TIMESTAMP}, false);
+                            store.setSortOption(new String[]{MessageStore.COL_ROWID}, true);
                             break;
                     }
 
@@ -288,9 +288,10 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         }
 
         @Override
-        public void onReply(String parentId) {
+        public void onReply(String parentId, String sender) {
             Intent intent = new Intent(getActivity(), PostActivity.class);
             intent.putExtra(PostActivity.MESSAGE_PARENT, parentId);
+            intent.putExtra(PostActivity.MESSAGE_BODY, "@"+sender+" ");
             startActivityForResult(intent, REQ_CODE_MESSAGE);
         }
     };

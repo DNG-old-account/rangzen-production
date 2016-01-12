@@ -101,6 +101,7 @@ public class PostActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.appToolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_dark);
         getSupportActionBar().setTitle(R.string.new_post);
         toolbar.setTitleTextColor(getResources().getColor(R.color.drawer_menu_text_grey));
 
@@ -149,6 +150,7 @@ public class PostActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         timebound = ((SeekBar) viewGroup.findViewById(R.id.seeker)).getProgress();
+                        timeboundButton.setActivated(timebound > 0);
                         dialog.dismiss();
                     }
                 });
@@ -256,6 +258,8 @@ public class PostActivity extends AppCompatActivity {
         markHashtags(messageBox, messageBox.getText().toString());
 
         if(send != null) send.setEnabled(isTextValid(messageBody));
+
+        messageBox.setSelection(messageBox.getText().length());
     }
 
     @Override

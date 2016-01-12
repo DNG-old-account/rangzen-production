@@ -454,9 +454,7 @@ public class RangzenService extends Service {
         for (RangzenMessage message : newMessages) {
           double stored = mMessageStore.getTrust(message.text);
           double remote = message.trust;
-          double newTrust = SecurityManager.getCurrentProfile(RangzenService.this).isUseTrust() ?
-                  Exchange.newPriority(remote, stored, friendOverlap, myFriends.size()) :
-                  0.5d;
+          double newTrust = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
           try {
             if (mMessageStore.containsOrRemoved(message.text)){
                 //update existing message priority unless its marked as removed by user
@@ -520,9 +518,7 @@ public class RangzenService extends Service {
                     Set<String> myFriends = mFriendStore.getAllFriends();
                     double stored = mMessageStore.getTrust(message.text);
                     double remote = message.priority;
-                    double newTrust = SecurityManager.getCurrentProfile(RangzenService.this).isUseTrust() ?
-                            Exchange.newPriority(remote, stored, friendOverlap, myFriends.size()) :
-                            0.5d;
+                    double newTrust = Exchange.newPriority(remote, stored, friendOverlap, myFriends.size());
                     try {
                         if (mMessageStore.containsOrRemoved(message.text)){
                             //update existing message priority unless its marked as removed by user

@@ -156,13 +156,10 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         //maxFeedEditText.setText(String.valueOf(currentProfile.getFeedSize()));
         //maxFeedEditText.addTextChangedListener(this);
 
-        pseudonymSwitch.setOnCheckedChangeListener(null);
-        pseudonymSwitch.setChecked(currentProfile.isAutodelete());
         autodelTrustEditText.setEnabled(currentProfile.isAutodelete());
         autodelAgeEditText.setEnabled(currentProfile.isAutodelete());
         autodelTrustSeekbar.setEnabled(currentProfile.isAutodelete());
         autodelAgeSeekbar.setEnabled(currentProfile.isAutodelete());
-        pseudonymSwitch.setOnCheckedChangeListener(this);
 
         addViaPhoneSwitch.setOnCheckedChangeListener(null);
         addViaPhoneSwitch.setChecked(currentProfile.isFriendsViaBook());
@@ -262,9 +259,15 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
                 break;
             case R.id.switch_add_via_phone:
                 currentProfile.setFriendsViaBook(isChecked);
+                if(!isChecked && !currentProfile.isFriendsViaQR()){
+                    ((Switch) getView().findViewById(R.id.switch_add_via_qr)).setChecked(true);
+                }
                 break;
             case R.id.switch_add_via_qr:
                 currentProfile.setFriendsViaQR(isChecked);
+                if(!isChecked && !currentProfile.isFriendsViaBook()){
+                    ((Switch) getView().findViewById(R.id.switch_add_via_phone)).setChecked(true);
+                }
                 break;
         }
 

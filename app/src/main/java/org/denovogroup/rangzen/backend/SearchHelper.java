@@ -57,7 +57,7 @@ public abstract class SearchHelper {
             try {
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeInMillis(Utils.convertDateStringCompactToTimstamp(value));
-                long timestamp = Utils.reduceCalendar(calendar).getTimeInMillis();
+                long timestamp = Utils.reduceCalendarMin(calendar).getTimeInMillis();
                 return MessageStore.COL_TIMESTAMP+" <= "+timestamp;
             } catch (Exception e){}
         }

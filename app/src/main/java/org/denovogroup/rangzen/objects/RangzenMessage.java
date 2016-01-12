@@ -19,7 +19,7 @@ import java.util.Calendar;
 public final class RangzenMessage extends Message {
 
   public static final String DEFAULT_TEXT = "";
-  public static final Double DEFAULT_TRUST = 0.5D;
+  public static final Double DEFAULT_TRUST = 0.01D;
     public static final int DEFAULT_PRIORITY = 0;
     public static final String DEFAULT_PSEUDONYM = "";
 
@@ -126,7 +126,7 @@ public final class RangzenMessage extends Message {
 
         SecurityProfile securityProfile = SecurityManager.getCurrentProfile(context);
 
-        Calendar currentTime = Utils.reduceCalendar(Calendar.getInstance());
+        Calendar currentTime = Utils.reduceCalendarMin(Calendar.getInstance());
 
         return new RangzenMessage(
                 json.optString(MESSAGE_ID_KEY, DEFAULT_TEXT),

@@ -4,14 +4,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.CursorAdapter;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
@@ -89,10 +85,14 @@ public class FeedReplyAdapter extends CursorAdapter {
 
         //get timestamp in proper format
         long timstamp = cursor.getLong(timestamp_colIndex);
-        int age = timstamp > 0 ? Utils.convertTimestampToRelativeDays(timstamp) : -1;
+        int age = timstamp > 0 ? Utils.convertTimestampToRelativeHours(timstamp) : -1;
         String timestampString = null;
         if(securityProfile.isTimestamp() && age >= 0) {
-            timestampString = (age > 0) ? age + context.getString(R.string.d_ago) : context.getString(R.string.today);
+            if(age == 0) {
+                timestampString = context.getString(R.string.just_now);
+            }else {
+                timestampString = (age < 24) ? age + context.getString(R.string.h_ago) : ((int) Math.floor(age / 24f)) + context.getString(R.string.d_ago);
+            }
         }
 
         viewHolder.time.setText(timestampString != null ? timestampString : "");

@@ -175,7 +175,9 @@
     <string name="delete_by_exchange">Delete messages from same exchange</string>
 
     <string name="days_short">d</string>
+    <string name="just_now">just now</string>
     <string name="today">today</string>
+    <string name="h_ago">hr ago</string>
     <string name="d_ago">d ago</string>
     <string name="self_distruct_in">self-destruct in</string>
 

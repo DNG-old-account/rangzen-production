@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Liran on 9/2/2015.
@@ -57,15 +58,13 @@ public class Utils {
     /** Calculate time difference between current time and supplied value in days
      *
      * @param milli time in milliseconds to be converted
-     * @return the number of days between today and supplied value (always positive)
+     * @return the number of hours between today and supplied value (always positive)
      */
-    public static int convertTimestampToRelativeDays(long milli){
+    public static int convertTimestampToRelativeHours(long milli){
 
         long todaymilli = Calendar.getInstance().getTimeInMillis();
 
-        int days = (int)Math.floor((Math.abs(milli - todaymilli)) / (1000d * 60 * 60 * 24));
-
-        return days;
+        return (int)TimeUnit.MILLISECONDS.toHours(Math.abs(milli - todaymilli));
     }
 
     /** Convert a timestamp in compact format (dd-MM-yyyy) into milliseconds

@@ -2,7 +2,6 @@ package org.denovogroup.rangzen.ui;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
@@ -11,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CursorAdapter;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -61,7 +59,7 @@ public class FeedAdapter extends CursorAdapter {
         void onUpvote(String message, int oldPriority);
         void onDownvote(String message, int oldPriority);
         void onNavigate(String message, String latxLon);
-        void onReply(String messageId);
+        void onReply(String messageId, String sender);
         void onFavorite(String message, boolean isFavoriteBefore);
     }
 
@@ -140,14 +138,18 @@ public class FeedAdapter extends CursorAdapter {
         }
 
         long timebound = cursor.getLong(timebound_colIndex);
-        String timeboundString = (timebound > 0) ?  context.getString(R.string.self_distruct_in)+" "+Utils.convertTimestampToRelativeDays(timebound)+context.getString(R.string.days_short) : null;
-
-        //get timestamp in proper format
         long timstamp = cursor.getLong(timestamp_colIndex);
-        int age = timstamp > 0 ? Utils.convertTimestampToRelativeDays(timstamp) : -1;
+
+        String timeboundString = (timebound > 0) ?  context.getString(R.string.self_distruct_in)+" "+Utils.convertTimestampToRelativeHours(timstamp + timebound)+context.getString(R.string.hours_short) : null;
+
+        int age = timstamp > 0 ? Utils.convertTimestampToRelativeHours(timstamp) : -1;
         String timestampString = null;
         if(currentProfile.isTimestamp() && age >= 0) {
-            timestampString = (age > 0) ? age + context.getString(R.string.d_ago) : context.getString(R.string.today);
+            if(age == 0) {
+                timestampString = context.getString(R.string.just_now);
+            }else {
+                timestampString = (age < 24) ? age + context.getString(R.string.h_ago) : ((int) Math.floor(age / 24f)) + context.getString(R.string.d_ago);
+            }
         }
 
         if(timeboundString != null && timestampString != null){
@@ -255,6 +257,7 @@ public class FeedAdapter extends CursorAdapter {
             int priority = getCursor().getInt(priority_colIndex);
             String location = getCursor().getString(location_colIndex);
             String messageId = getCursor().getString(messageId_colIndex);
+            String pseudonym = getCursor().getString(pseudonym_colIndex);
 
             getCursor().moveToPosition(cursorPosition);
 
@@ -273,7 +276,7 @@ public class FeedAdapter extends CursorAdapter {
                     callbacks.onNavigate(message,location);
                     break;
                 case R.id.feed_item_replies:
-                    callbacks.onReply(messageId);
+                    callbacks.onReply(messageId, pseudonym);
                     break;
             }
         }
