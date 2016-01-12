@@ -71,7 +71,7 @@ public class ContactAdapter extends CursorAdapter {
             viewHolder.mCheckBox.setChecked(cursor.getInt(checked_colIndex) == FriendStore.TRUE);
             viewHolder.mCheckBox.setFocusable(false);
         }
-        viewHolder.mIconView.setImageResource(addedViaPhone ? android.R.drawable.ic_menu_call : android.R.drawable.ic_menu_camera);
+        viewHolder.mIconView.setImageResource(addedViaPhone ? R.drawable.ic_phonebook_dark : R.drawable.ic_qr_dark);
         viewHolder.mNameView.setText(cursor.getString(name_colIndex));
 
         char currentIndex = cursor.getString(name_colIndex).toUpperCase().charAt(0);

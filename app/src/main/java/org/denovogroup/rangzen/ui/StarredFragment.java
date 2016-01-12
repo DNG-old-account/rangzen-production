@@ -60,7 +60,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
     private boolean selectAll = false;
 
     private ListView feedListView;
-    private ImageButton newPostButton;
+    private Button newPostButton;
 
     private ViewGroup newMessagesNotification;
     private TextView newMessagesNotification_text;
@@ -159,7 +159,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
         View v = inflater.inflate(R.layout.feed_fragment, container, false);
 
         feedListView = (ListView) v.findViewById(R.id.feed_listView);
-        newPostButton = (ImageButton) v.findViewById(R.id.new_post_button);
+        newPostButton = (Button) v.findViewById(R.id.new_post_button);
             newPostButton.setOnClickListener(this);
         newMessagesNotification = (ViewGroup) v.findViewById(R.id.new_message_notification);
         newMessagesNotification_text = (TextView) v.findViewById(R.id.new_message_notification_desc);
@@ -432,7 +432,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
 
         if(actionBar != null) {
             if (inSearchMode && !inSelectionMode) {
-                actionBar.setHomeAsUpIndicator(R.drawable.x_icon);
+                actionBar.setHomeAsUpIndicator(R.drawable.ic_close_dark);
             }
         }
 

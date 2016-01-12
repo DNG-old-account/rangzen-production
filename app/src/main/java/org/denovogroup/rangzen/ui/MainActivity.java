@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
 
     //setting key
     public static final String PREF_FILE = "settings";
+    public static final String WIFI_NAME = "wifiname"; //TODO use this
     public static final String IS_APP_ENABLED = "isEnabled";
 
     int selectedDrawerItem = R.id.drawer_menu_feed;
@@ -189,7 +190,6 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                     break;
                 case R.id.drawer_menu_reset:
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
-                            .setIcon(R.drawable.ic_dialog_alert_holo_light)
                             .setTitle(R.string.reset_dialog_title)
                             .setMessage(R.string.reset_app_message)
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -197,7 +197,6 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                                 public void onClick(DialogInterface dialog, int which) {
                                     dialog.dismiss();
                                     AlertDialog.Builder builder2 = new AlertDialog.Builder(MainActivity.this)
-                                            .setIcon(R.drawable.ic_dialog_alert_holo_light)
                                             .setTitle(R.string.confirm_reset_dialog_title)
                                             .setMessage(R.string.confirm_reset_app_message)
                                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {

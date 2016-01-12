@@ -252,14 +252,16 @@
     <string name="share_app_promo">Check out Murmur!</string>
     <string name="apk_url">http://www.iWishIHadAUrl.com/</string>
 
+    <string name="send_feedback">Send a feedback</string>
+
     <!-- help content -->
-    <string name="help_title1">help1</string>
-    <string name="help_content1">help1 content</string>
+    <string name="help_title1">How to use the Feed ?</string>
+    <string name="help_content1">The feed is the main screen in the app that includes all the messages and allows you to sort and search through them. Messages in the feed include at the top the nickname, and at the bottom connection score, location, endorsement and replies (note, not every message will include all these parameters, see more below).You can sort the messages in the feed by time, endorsements or connection score. To search through the feed enter a nickname, hashtag or keyword. You can also follow specific hashtags or nicknames by adding them in the Followed screen.</string>
 
-    <string name="help_title2">help2</string>
-    <string name="help_content2">help2 content</string>
+    <string name="help_title2">How to post a message?</string>
+    <string name="help_content2">Tap on the plus button to opens the New Post screen, enter the message and tap the arrow button at the top right.</string>
 
-    <string name="help_title3">help3</string>
-    <string name="help_content3">help3 content</string>
+    <string name="help_title3">How do I add my location to a new message?</string>
+    <string name="help_content3">If you wish to add your current location to a message then tap on the location icon in the New Post screen. Note, this requires Android\'s location services (GPS) to be on.</string>
 
 </resources>

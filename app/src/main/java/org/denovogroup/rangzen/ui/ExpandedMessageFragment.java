@@ -263,7 +263,7 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher {
             actionBar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources().getColor(inSearchMode ? android.R.color.white : R.color.app_purple)));
             actionBar.setTitle(inSearchMode ? R.string.empty_string : R.string.feed);
 
-            if(inSearchMode) actionBar.setHomeAsUpIndicator(R.drawable.x_icon);
+            if(inSearchMode) actionBar.setHomeAsUpIndicator(R.drawable.ic_close_dark);
         }
 
         if(menu != null){

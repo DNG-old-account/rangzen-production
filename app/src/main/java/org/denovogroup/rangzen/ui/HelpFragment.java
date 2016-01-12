@@ -1,6 +1,11 @@
 package org.denovogroup.rangzen.ui;
 
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -10,6 +15,10 @@ import android.widget.ExpandableListView;
 
 import org.denovogroup.rangzen.R;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,5 +72,51 @@ public class HelpFragment extends Fragment{
         headers.add(header3);
         data.put(header3, body3);
 
+    }
+
+    private void openEmailSendingForm(boolean includeLog){
+        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "rangzen_dev@denovogroup.org", null));
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback");
+        intent.putExtra(Intent.EXTRA_TEXT, "Dear Rangzen support representative");
+
+
+        if(includeLog) {
+            File log_filename = new File(Environment.getExternalStorageDirectory() + "/device_log.txt");
+            log_filename.delete();
+
+            //get device info
+            String userData = "";
+
+            try {
+                PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+                userData += "Application: Ranzgen v" + info.versionName + " (" + info.versionCode + ")\n";
+            } catch (PackageManager.NameNotFoundException e) {
+            }
+
+            userData += "OS version: " + android.os.Build.VERSION.SDK_INT + "\n";
+            userData += "Device: " + android.os.Build.DEVICE + "\n";
+            userData += "Model: " + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")\n";
+
+            try {
+                log_filename.createNewFile();
+                BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
+                writer.write(userData);
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                //get log from device
+                String cmd = "logcat -d -f" + log_filename.getAbsolutePath();
+                Runtime.getRuntime().exec(cmd);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
+        }
+
+        startActivity(Intent.createChooser(intent, "Send mail using..."));
     }
 }

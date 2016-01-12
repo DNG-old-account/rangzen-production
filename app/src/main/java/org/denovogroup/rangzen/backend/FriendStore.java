@@ -294,10 +294,10 @@ public class FriendStore extends SQLiteOpenHelper{
         }
 
         ContentValues values = new ContentValues();
-        values.put(COL_DISPLAY_NAME, name);
+        values.put(COL_DISPLAY_NAME, Utils.makeTextSafeForSQL(name));
         values.put(COL_PUBLIC_KEY, key);
         values.put(COL_ADDED_VIA, via);
-        values.put(COL_NUMBER, number);
+        values.put(COL_NUMBER, Utils.makeTextSafeForSQL(number));
 
         db.insert(TABLE, null, values);
         Log.d(TAG, "Friend Added to store");
@@ -388,7 +388,7 @@ public class FriendStore extends SQLiteOpenHelper{
         if(db == null) return null;
 
         if(query == null || query.length() == 0){
-            return db.rawQuery("SELECT * FROM "+TABLE+" ORDER BY "+COL_DISPLAY_NAME+" ASC;",null);
+            return db.rawQuery("SELECT * FROM "+TABLE+" ORDER BY "+COL_DISPLAY_NAME+" COLLATE NOCASE ASC;",null);
         } else {
             String likeQuery ="";
 
@@ -404,7 +404,7 @@ public class FriendStore extends SQLiteOpenHelper{
                 likeQuery += " "+COL_DISPLAY_NAME + " LIKE '%"+words[i]+"%' ";
             }
 
-            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE ("+likeQuery+") ORDER BY "+COL_DISPLAY_NAME+" ASC;",null);
+            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE ("+likeQuery+") ORDER BY "+COL_DISPLAY_NAME+" COLLATE NOCASE ASC;",null);
         }
     }
 

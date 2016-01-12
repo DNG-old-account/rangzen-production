@@ -43,7 +43,7 @@
             android:id="@+id/action_share_location"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/post_message_share_location_btn"
+            android:src="@drawable/post_message_tag_location"
             android:background="@android:color/transparent"/>
 
         <ImageButton
@@ -58,7 +58,7 @@
             android:id="@+id/action_restricted"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/post_message_restrict_button"/>
+            android:src="@drawable/post_message_restricted"/>
 
         <View android:layout_weight="1"
               android:layout_height="match_parent"

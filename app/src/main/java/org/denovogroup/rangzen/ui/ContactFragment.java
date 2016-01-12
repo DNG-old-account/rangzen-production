@@ -67,7 +67,7 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(R.string.drawer_menu_contact);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.drawer_menu_contact);
 
         leftText = (TextView) ((MainActivity) getActivity()).getToolbar().findViewById(R.id.leftText);
 

@@ -51,8 +51,7 @@ import android.os.IBinder;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.objects.RangzenMessage;
-import org.denovogroup.rangzen.uiold.Opener;
-import org.denovogroup.rangzen.uiold.PreferencesActivity;
+import org.denovogroup.rangzen.ui.MainActivity;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -224,10 +223,10 @@ public class RangzenService extends Service {
      */
     public void onDestroy() {
       mBackgroundExecution.cancel(true);
-        SharedPreferences pref = getSharedPreferences(PreferencesActivity.PREF_FILE, Context.MODE_PRIVATE);
-        if(pref.contains(PreferencesActivity.WIFI_NAME) && mWifiDirectSpeaker != null){
+        SharedPreferences pref = getSharedPreferences(MainActivity.PREF_FILE, Context.MODE_PRIVATE);
+        if(pref.contains(MainActivity.WIFI_NAME) && mWifiDirectSpeaker != null){
             Log.d(TAG, "Restoring wifi name");
-            mWifiDirectSpeaker.setWifiDirectUserFriendlyName(pref.getString(PreferencesActivity.WIFI_NAME, ""));
+            mWifiDirectSpeaker.setWifiDirectUserFriendlyName(pref.getString(MainActivity.WIFI_NAME, ""));
         }
 
         mWifiDirectSpeaker.dismissNoWifiNotification();
@@ -642,7 +641,7 @@ public class RangzenService extends Service {
      * be called when the app itself is either closed or in the background.
      */
     private void showUnreadMessagesNotification() {
-        Intent intent = new Intent(this, Opener.class);
+        Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this , 0, intent,PendingIntent.FLAG_CANCEL_CURRENT);
 
         Notification.Builder builder = new Notification.Builder(getApplicationContext());
@@ -681,10 +680,10 @@ public class RangzenService extends Service {
         String btAddress = mBluetoothSpeaker.getAddress();
         if(mWifiDirectSpeaker != null) {
 
-            SharedPreferences pref = getSharedPreferences(PreferencesActivity.PREF_FILE, Context.MODE_PRIVATE);
-            if(!pref.contains(PreferencesActivity.WIFI_NAME)){
+            SharedPreferences pref = getSharedPreferences(MainActivity.PREF_FILE, Context.MODE_PRIVATE);
+            if(!pref.contains(MainActivity.WIFI_NAME)){
                 String oldName = BluetoothAdapter.getDefaultAdapter().getName();
-                pref.edit().putString(PreferencesActivity.WIFI_NAME, oldName).commit();
+                pref.edit().putString(MainActivity.WIFI_NAME, oldName).commit();
             }
 
             if(Build.VERSION.SDK_INT >= 23){

@@ -18,7 +18,7 @@
         android:hint="@string/pseudonym_title"
         android:background="#fafafa"
         android:textColorHint="#c7c7c7"
-        android:drawableLeft="@drawable/ic_action_add_person"
+        android:drawableLeft="@drawable/ic_nickname"
         android:drawablePadding="20dp"
         android:padding="30dp"/>
 
@@ -36,7 +36,7 @@
             android:textColor="@android:color/black"
             android:text="@string/qr_title"
             android:textStyle="bold"
-            android:drawableLeft="@drawable/ic_action_add_person"
+            android:drawableLeft="@drawable/ic_qr_dark"
             android:drawablePadding="20dp"
             android:padding="30dp"/>
 
