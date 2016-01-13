@@ -47,7 +47,7 @@ import java.util.List;
  * when creating this fragment MESSAGE_ID_KEY must be passed as an argument with the messageId of
  * the parent message
  */
-public class ExpandedMessageFragment extends Fragment implements TextWatcher {
+public class ExpandedMessageFragment extends Fragment implements TextWatcher, FragmentBackHandler{
 
     public static final String MESSAGE_ID_KEY = "messageId";
 
@@ -347,5 +347,19 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher {
         if(getActivity() instanceof DrawerActivityHelper){
             ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(true);
         }
+    }
+
+    @Override
+    public boolean onBackPressed() {
+        if (inSearchMode) {
+            query = "";
+            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (searchView != null)
+                imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
+            inSearchMode = false;
+            setSearchView();
+            return true;
+        }
+        return false;
     }
 }

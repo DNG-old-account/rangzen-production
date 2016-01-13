@@ -49,7 +49,7 @@ import java.util.List;
  *
  * The fragment which display the message feed overview
  */
-public class StarredFragment extends Fragment implements View.OnClickListener, TextWatcher{
+public class StarredFragment extends Fragment implements View.OnClickListener, TextWatcher, FragmentBackHandler{
 
     public static final int REQ_CODE_MESSAGE = 100;
     public static final int REQ_CODE_SEARCH = 101;
@@ -666,5 +666,20 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
         super.onDestroy();
         if(searchView != null) searchView.removeTextChangedListener(this);
         ((AppCompatActivity)getActivity()).getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.app_purple)));
+    }
+
+    @Override
+    public boolean onBackPressed() {
+        if(inSelectionMode){
+            setListInDisplayMode();
+            return true;
+        } else if(inSearchMode){
+            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if(searchView != null) imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
+            inSearchMode = false;
+            setActionbar();
+            return true;
+        }
+        return false;
     }
 }

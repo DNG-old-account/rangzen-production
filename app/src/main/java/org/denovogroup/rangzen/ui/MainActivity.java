@@ -451,4 +451,14 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         String csvString = rawString.replaceAll("[\r\n\"]", " ");
         return csvString;
     }
+
+    @Override
+    public void onBackPressed() {
+        Fragment fragment = getSupportFragmentManager().findFragmentById(contentHolder.getId());
+        if(fragment instanceof FragmentBackHandler){
+            boolean shouldBreak = ((FragmentBackHandler) fragment).onBackPressed();
+            if(shouldBreak) return;
+        }
+        super.onBackPressed();
+    }
 }
