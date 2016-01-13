@@ -241,21 +241,16 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
+                                    resetApplication();
                                     dialog.dismiss();
-                                    AlertDialog.Builder builder2 = new AlertDialog.Builder(MainActivity.this)
+                                    /*AlertDialog.Builder builder2 = new AlertDialog.Builder(MainActivity.this)
                                             .setTitle(R.string.confirm_reset_dialog_title)
                                             .setMessage(R.string.confirm_reset_app_message)
                                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                                 @Override
                                                 public void onClick(DialogInterface dialog, int which) {
                                                     //reset app
-                                                    MessageStore.getInstance(MainActivity.this).purgeStore();
-                                                    FriendStore.getInstance(MainActivity.this).purgeStore();
-                                                    org.denovogroup.rangzen.backend.SecurityManager.getInstance().clearProfileData(MainActivity.this);
-
-                                                    Intent intent = new Intent(MainActivity.this, MainActivity.class);
-                                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                                    startActivity(intent);
+                                                    resetApplication();
                                                     dialog.dismiss();
                                                 }
                                             })
@@ -265,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                                                     dialog.dismiss();
                                                 }
                                             });
-                                    builder2.show();
+                                    builder2.show();*/
                                 }
                             })
                             .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -460,5 +455,15 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
             if(shouldBreak) return;
         }
         super.onBackPressed();
+    }
+
+    private void resetApplication(){
+        MessageStore.getInstance(MainActivity.this).purgeStore();
+        FriendStore.getInstance(MainActivity.this).purgeStore();
+        org.denovogroup.rangzen.backend.SecurityManager.getInstance().clearProfileData(MainActivity.this);
+
+        Intent intent = new Intent(MainActivity.this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 }

@@ -5,6 +5,7 @@
               android:layout_height="match_parent">
 
     <org.denovogroup.rangzen.ui.CustomSeekbar
+        style="@style/Seekbar"
         android:id="@+id/seeker"
         android:layout_width="0dp"
         android:layout_weight="1"

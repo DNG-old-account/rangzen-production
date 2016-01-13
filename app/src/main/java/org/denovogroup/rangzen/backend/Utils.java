@@ -199,6 +199,7 @@ public class Utils {
 
     /** escape forbidden sql characters and return the reformed version*/
     public static String makeTextSafeForSQL(String source){
+        if(source == null) return  null;
         String reformedText = source.replaceAll("'","''");
         return reformedText;
     }

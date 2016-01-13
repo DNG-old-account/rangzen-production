@@ -70,7 +70,7 @@ public class MessageStore extends SQLiteOpenHelper {
     private static final double DEFAULT_PRIORITY = 0;
 
     private static final String DATABASE_NAME = "MessageStore.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE = "Messages";
     public static final String COL_ROWID = "_id";
@@ -85,6 +85,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public static final String COL_READ = "read";
     public static final String COL_EXPIRE = "expire";
     public static final String COL_LATLONG = "location";
+    public static final String COL_BIGPARENT = "bigparent";
     public static final String COL_PARENT = "parent";
     public static final String COL_FAVIRITE = "favorited";
     public static final String COL_CHECKED = "checked";
@@ -122,6 +123,7 @@ public class MessageStore extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE + " ("
                 + COL_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + COL_MESSAGE_ID + " TEXT NOT NULL,"
+                + COL_BIGPARENT + " TEXT,"
                 + COL_PARENT + " TEXT,"
                 + COL_MESSAGE + " VARCHAR(" + MAX_MESSAGE_SIZE + ") NOT NULL,"
                 + COL_TIMESTAMP + " INTEGER NOT NULL,"
@@ -198,6 +200,7 @@ public class MessageStore extends SQLiteOpenHelper {
         int latlongColIndex = cursor.getColumnIndex(COL_LATLONG);
         int timeboundColIndex = cursor.getColumnIndex(COL_EXPIRE);
         int parentColIndex = cursor.getColumnIndex(COL_PARENT);
+        int bigparentColIndex = cursor.getColumnIndex(COL_BIGPARENT);
         int hopColIndex = cursor.getColumnIndex(COL_HOP);
 
         if (cursor.getCount() > 0) {
@@ -212,7 +215,8 @@ public class MessageStore extends SQLiteOpenHelper {
                         cursor.getString(latlongColIndex),
                         cursor.getLong(timeboundColIndex),
                         cursor.getString(parentColIndex),
-                        cursor.getInt(hopColIndex)
+                        cursor.getInt(hopColIndex),
+                        cursor.getString(bigparentColIndex)
                 ));
                 cursor.moveToNext();
             }
@@ -231,9 +235,9 @@ public class MessageStore extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null) {
             String query = "SELECT * FROM " + TABLE
-                    + " WHERE ("+ COL_PARENT+ " IS NULL OR "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+"))"
-                        + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
-                        + (!getReplies ? " AND " + COL_PARENT + " IS NULL" : "")
+                    + " WHERE "
+                        + (!getReplies ? "("+COL_BIGPARENT+ " IS NULL OR "+COL_BIGPARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+ "))" : "")
+                        + " "+(!getDeleted ? (getReplies ? " AND " : "") + COL_DELETED + "=" + FALSE : "")
                     + " " + sortOption
                     + (limit > 0 ? " LIMIT " + limit : "")
                     + ";";
@@ -292,9 +296,10 @@ public class MessageStore extends SQLiteOpenHelper {
                     likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
                 }
             }
-            String query = "SELECT * FROM " + TABLE + " WHERE ("+COL_PARENT+ " IS NULL OR "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND " + likeQuery +")"
+            String query = "SELECT * FROM " + TABLE +
+                    " WHERE " + likeQuery
+                    + (!getReplies ? "AND ("+COL_BIGPARENT+ " IS NULL OR "+COL_BIGPARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+ "))" : "")
                     + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
-                    + (!getReplies ? " AND " + COL_PARENT + "IS NULL" : "")
                     + " "+sortOption
                     + (limit > 0 ? " LIMIT " + limit : "")
                     + ";";
@@ -394,7 +399,7 @@ public class MessageStore extends SQLiteOpenHelper {
      *                     if set to false and value is outside of limit, an exception is thrown
      * @return Returns true if the message was added. If message already exists, update its values
      */
-    public boolean addMessage(Context context, String messageId, String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location, String parent, boolean isRead, int minContactsHop, int hop, String exchange){
+    public boolean addMessage(Context context, String messageId, String message, double trust, double priority, String pseudonym, long timestamp,boolean enforceLimit, long timebound, Location location, String parent, boolean isRead, int minContactsHop, int hop, String exchange, String bigparent){
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
@@ -414,6 +419,18 @@ public class MessageStore extends SQLiteOpenHelper {
                 }
             }
 
+            //update inserted message in case a better big parent can be found locally
+            Cursor cursr = db.rawQuery("SELECT "+COL_BIGPARENT+" FROM "+TABLE+" WHERE "+COL_MESSAGE_ID+"='"+bigparent+"' limit 1;",null);
+            if(cursr.getCount() > 0){
+                cursr.moveToFirst();
+                String tempBigparent = cursr.getString(cursr.getColumnIndex(COL_BIGPARENT));
+                if(tempBigparent != null) bigparent = tempBigparent;
+            }
+            cursr.close();
+
+            // update descendants with this message's big parent
+            db.execSQL("UPDATE "+TABLE+" SET "+COL_BIGPARENT+"='"+bigparent+"' WHERE "+COL_PARENT+"='"+messageId+"';");
+
             if(message.length() > MAX_MESSAGE_SIZE) message = message.substring(0, MAX_MESSAGE_SIZE);
 
             Calendar tempCal = Calendar.getInstance();
@@ -426,6 +443,8 @@ public class MessageStore extends SQLiteOpenHelper {
                         +COL_DELETED+"="+FALSE+","
                         + COL_LIKES +"="+priority+","
                         +COL_PSEUDONYM+"='"+pseudonym+"',"
+                        +COL_BIGPARENT+"='"+bigparent+"',"
+                        +COL_PARENT+"='"+parent+"',"
                         + COL_READ +"="+(isRead ? TRUE : FALSE)+","
                         + ((location != null) ? (COL_LATLONG+"='"+location.getLatitude()+"x"+location.getLongitude()+"',") : "")
                         +COL_TIMESTAMP+"="+reducedTimestamp.getTimeInMillis()+","
@@ -443,6 +462,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 content.put(COL_PSEUDONYM, pseudonym);
                 content.put(COL_EXPIRE, timebound);
                 content.put(COL_TIMESTAMP, reducedTimestamp.getTimeInMillis());
+                content.put(COL_BIGPARENT, bigparent);
                 content.put(COL_PARENT, parent);
                 content.put(COL_READ, isRead ? TRUE : FALSE);
                 if(exchange != null) content.put(COL_EXCHANGE, exchange);
@@ -823,14 +843,14 @@ public class MessageStore extends SQLiteOpenHelper {
     public Cursor getComments(String parentId){
         SQLiteDatabase db = getReadableDatabase();
         if(db != null){
-            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_PARENT+"='"+parentId+"' "+sortOption+";",null);
+            return db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND ("+COL_PARENT+"='"+parentId+"' OR "+COL_BIGPARENT+"='"+parentId+"') "+sortOption+";",null);
         }
         return null;
     }
 
     /** return comments of a certain message parent */
     public Cursor getCommentsByQuery(String parentId, String query){
-        return getMessagesByQuery("AND "+COL_PARENT+"='"+parentId+"' "+query);
+        return getMessagesByQuery("AND ("+COL_PARENT+"='"+parentId+"' OR "+COL_BIGPARENT+"='"+parentId+"') "+query);
     }
 
     /** return comments of a certain message parent containing the query in the message */

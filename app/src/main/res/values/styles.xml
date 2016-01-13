@@ -290,4 +290,8 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
+    <style name="Seekbar">
+        <item name="android:progressDrawable">@drawable/apptheme_scrubber_progress_horizontal_holo_light</item>
+    </style>
+
 </resources>

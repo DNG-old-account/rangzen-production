@@ -430,7 +430,7 @@ public class FriendStore extends SQLiteOpenHelper{
         SQLiteDatabase db = getWritableDatabase();
         if(db == null) return false;
 
-        db.execSQL("UPDATE "+TABLE+" SET "+COL_DISPLAY_NAME+"='"+Utils.makeTextSafeForSQL(name)+"',"+COL_NUMBER+"='"+number+"' WHERE "+COL_PUBLIC_KEY+"='"+key+"';");
+        db.execSQL("UPDATE "+TABLE+" SET "+COL_DISPLAY_NAME+"='"+Utils.makeTextSafeForSQL(name)+"',"+COL_NUMBER+"='"+Utils.makeTextSafeForSQL(number)+"' WHERE "+COL_PUBLIC_KEY+"='"+key+"';");
         return true;
     }
 

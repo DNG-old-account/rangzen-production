@@ -300,7 +300,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         String sqlQuery = SearchHelper.searchToSQL(query);
         return (sqlQuery != null) ?
                 MessageStore.getInstance(getActivity()).getMessagesByQuery(sqlQuery) :
-                MessageStore.getInstance(getActivity()).getMessagesContainingCursor(query, false, true, -1);
+                MessageStore.getInstance(getActivity()).getMessagesContainingCursor(query, false, false, -1);
     }
 
     private void swapCursor(){

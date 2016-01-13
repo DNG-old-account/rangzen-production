@@ -462,7 +462,7 @@ public class RangzenService extends Service {
             } else {
                 hasNew = true;
 
-                mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop, exchange.toString());
+                mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop, exchange.toString(), message.bigparent);
                 //mark this message as unread
                 mMessageStore.setRead(message.text, false);
             }
@@ -525,7 +525,7 @@ public class RangzenService extends Service {
                             mMessageStore.updateTrust(message.text, newTrust, true);
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop, exchange.toString());
+                            mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop, exchange.toString(), message.bigparent);
                             //mark this message as unread
                             mMessageStore.setRead(message.text, false);
                         }

@@ -44,10 +44,13 @@ public class CustomSeekbar extends SeekBar {
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
 
+
+
         Drawable thumb = getThumb();
         if (thumb != null) thumb.setColorFilter(isEnabled() ? tintColor : Color.GRAY, PorterDuff.Mode.SRC_ATOP);
         Drawable progDrawable = getProgressDrawable();
         if (progDrawable != null && progDrawable instanceof LayerDrawable) {
+
             Drawable progClip = ((LayerDrawable) progDrawable).findDrawableByLayerId(android.R.id.progress);
             if (progClip != null) progClip.setColorFilter(isEnabled() ? tintColor : Color.GRAY, PorterDuff.Mode.SRC_ATOP);
         }

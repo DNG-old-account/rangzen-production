@@ -326,7 +326,7 @@ public class PostActivity extends AppCompatActivity {
                 long idLong = System.nanoTime() * (1 + random.nextInt());
                 String messageId = Base64.encodeToString(Crypto.encodeString(String.valueOf(idLong)), Base64.NO_WRAP);
 
-                messageStore.addMessage(PostActivity.this, messageId, messageBody, trust, priority, pseudonym, timestamp, true, TimeUnit.HOURS.toMillis(timebound), myLocation, messageParent, true, restrictButton.isActivated() ? currentProfile.getMinContactsForHop() : 0, 0, null);
+                messageStore.addMessage(PostActivity.this, messageId, messageBody, trust, priority, pseudonym, timestamp, true, TimeUnit.HOURS.toMillis(timebound), myLocation, messageParent, true, restrictButton.isActivated() ? currentProfile.getMinContactsForHop() : 0, 0, null, messageParent);
                 Toast.makeText(PostActivity.this, "Message sent!",
                         Toast.LENGTH_SHORT).show();
                 ExchangeHistoryTracker.getInstance().cleanHistory(null);
