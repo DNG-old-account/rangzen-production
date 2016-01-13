@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -20,8 +21,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -55,9 +58,13 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
     DrawerLayout drawerLayout;
     ViewGroup drawerMenu;
     ViewGroup fixedDrawerMenu;
+    ViewGroup advancedDrawerMenu;
     ActionBarDrawerToggle drawerToggle;
     View contentHolder;
     Toolbar toolbar;
+    CheckBox advancedToggle;
+
+    boolean showAdvanced = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,6 +122,10 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
 
         drawerMenu = (ViewGroup) findViewById(R.id.drawer_menu);
         fixedDrawerMenu = (ViewGroup) findViewById(R.id.fixed_drawer_menu);
+        advancedDrawerMenu = (ViewGroup) findViewById(R.id.drawer_menu_advanced_list);
+        advancedToggle = (CheckBox) findViewById(R.id.drawer_menu_advanced);
+
+        advancedToggle.setChecked(showAdvanced);
 
         int childcount = drawerMenu.getChildCount();
         for(int i=0; i<childcount; i++){
@@ -126,6 +137,14 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         for(int i=0; i<childcount; i++){
             View v = fixedDrawerMenu.getChildAt(i);
             if(v instanceof TextView) v.setOnClickListener(drawerMenuClickListener);
+        }
+
+
+        int visibility = ((CheckBox) findViewById(R.id.drawer_menu_advanced)).isChecked() ? View.VISIBLE : View.GONE;
+        childcount = advancedDrawerMenu.getChildCount();
+        for(int i=0; i<childcount; i++){
+            View child = advancedDrawerMenu.getChildAt(i);
+            child.setVisibility(visibility);
         }
 
         SharedPreferences pref = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
@@ -157,7 +176,29 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                 case R.id.drawer_menu_export_feed:
                 case R.id.drawer_menu_offline_mode:
                 case R.id.drawer_menu_reset:
+
                     // dont change activated state
+                    break;
+                case R.id.drawer_menu_advanced:
+                    // dont change activated state
+                    showAdvanced = !showAdvanced;
+                    advancedToggle.setChecked(showAdvanced);
+                    int visibility = showAdvanced ? View.VISIBLE : View.GONE;
+                    int advancedChildcount = advancedDrawerMenu.getChildCount();
+                    for(int i=0; i<advancedChildcount; i++){
+                        View child = advancedDrawerMenu.getChildAt(i);
+                        child.setVisibility(visibility);
+                    }
+                    if(showAdvanced){
+                        final ScrollView scroller = (ScrollView) findViewById(R.id.drawer_menu_scroll);
+                        scroller.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                scroller.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+                                scroller.smoothScrollTo(0, scroller.getMeasuredHeight());
+                            }
+                        }, 400);
+                    }
                     break;
                 default:
                     int childcount = drawerMenu.getChildCount();
@@ -168,6 +209,11 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                     childcount = fixedDrawerMenu.getChildCount();
                     for(int i=0; i<childcount;i++){
                         View child = fixedDrawerMenu.getChildAt(i);
+                        child.setActivated(child == v);
+                    }
+                    childcount = advancedDrawerMenu.getChildCount();
+                    for(int i=0; i<childcount;i++){
+                        View child = advancedDrawerMenu.getChildAt(i);
                         child.setActivated(child == v);
                     }
                     break;

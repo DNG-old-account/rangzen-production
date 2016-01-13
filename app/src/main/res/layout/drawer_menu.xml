@@ -5,7 +5,9 @@
               android:layout_height="match_parent"
               android:orientation="vertical">
 
-    <ScrollView android:layout_width="match_parent"
+    <ScrollView
+        android:id="@+id/drawer_menu_scroll"
+        android:layout_width="match_parent"
                 android:layout_weight="1"
                 android:layout_height="0dp">
 
@@ -82,22 +84,6 @@
                 android:text="@string/drawer_menu_info"
                 android:drawableLeft="@drawable/drawer_menu_info_btn"/>
 
-            <TextView
-                style="@style/DrawerMenuItem"
-                android:id="@+id/drawer_menu_reset"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/drawer_menu_reset"
-                android:drawableLeft="@drawable/drawer_menu_reset_btn"/>
-
-            <TextView
-                style="@style/DrawerMenuItem"
-                android:id="@+id/drawer_menu_export_feed"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/drawer_menu_export"
-                android:drawableLeft="@drawable/drawer_menu_export_feed_btn"/>
-
             <View style="@style/DrawerMenuDivider"/>
 
             <TextView
@@ -107,6 +93,43 @@
                 android:layout_height="wrap_content"
                 android:text="@string/drawer_menu_share_app"
                 android:drawableLeft="@drawable/drawer_menu_share_app_btn"/>
+
+            <CheckBox
+                style="@style/DrawerMenuItem"
+                android:id="@+id/drawer_menu_advanced"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/drawer_menu_advanced"
+                android:drawableRight="@drawable/pulldown_icon"
+                android:button="@android:color/transparent"
+                android:paddingLeft="54dp"
+                android:background="@android:color/transparent"
+                android:checked="false"/>
+
+            <LinearLayout
+                android:id="@+id/drawer_menu_advanced_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:animateLayoutChanges="true"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/DrawerMenuItem"
+                    android:id="@+id/drawer_menu_reset"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/drawer_menu_reset"
+                    android:drawableLeft="@drawable/drawer_menu_reset_btn"/>
+
+                <TextView
+                    style="@style/DrawerMenuItem"
+                    android:id="@+id/drawer_menu_export_feed"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/drawer_menu_export"
+                    android:drawableLeft="@drawable/drawer_menu_export_feed_btn"/>
+
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
