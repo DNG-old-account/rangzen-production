@@ -95,7 +95,7 @@
                     android:text="@string/settings_mac_title"/>
 
                 <EditText
-                    style="@style/SettingsAction"
+                    style="@style/SettingsEditTextAction"
                     android:id="@+id/edit_mac"
                     android:layout_width="match_parent"
                     android:inputType="none"
@@ -234,7 +234,7 @@
                 </LinearLayout>
 
                 <EditText
-                    style="@style/SettingsAction"
+                    style="@style/SettingsEditTextAction"
                     android:id="@+id/edit_self_dest"
                     android:gravity="right"/>
 
@@ -269,7 +269,7 @@
                 </LinearLayout>
 
                 <EditText
-                    style="@style/SettingsAction"
+                    style="@style/SettingsEditTextAction"
                     android:id="@+id/edit_restricted"
                     android:gravity="right"/>
 
@@ -363,7 +363,7 @@
 
                 <EditText
                     android:layout_gravity="bottom"
-                    style="@style/SettingsAction"
+                    style="@style/SettingsEditTextAction"
                     android:id="@+id/edit_autodelete_trust"
                     android:gravity="right"/>
 
@@ -396,7 +396,7 @@
 
                 <EditText
                     android:layout_gravity="bottom"
-                    style="@style/SettingsAction"
+                    style="@style/SettingsEditTextAction"
                     android:id="@+id/edit_autodelete_age"
                     android:gravity="right"/>
 
@@ -496,7 +496,7 @@
                     android:text="@string/settings_max_messages_p_exchange"/>
 
                 <EditText
-                    style="@style/SettingsAction"
+                    style="@style/SettingsEditTextAction"
                     android:id="@+id/edit_max_messages_p_exchange"
                     android:gravity="right"/>
 
@@ -518,7 +518,7 @@
                     android:text="@string/settings_timeout_p_exchange"/>
 
                 <EditText
-                    style="@style/SettingsAction"
+                    style="@style/SettingsEditTextAction"
                     android:id="@+id/edit_timeout_p_exchange"
                     android:gravity="right"/>
 

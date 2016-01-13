@@ -135,6 +135,7 @@
         <item name="android:windowActionModeOverlay">true</item>
         <item name="windowActionModeOverlay">true</item>
         <item name="android:editTextStyle">@style/AppTheme.EditText</item>
+        <item name="android:radioButtonStyle">@style/AppTheme.RadioButton</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -246,6 +247,7 @@
 
     <style name="SettingsRadioButton" parent="@style/SettingsText">
         <item name="android:paddingLeft">20dp</item>
+        <item name="android:button">@drawable/radio_button</item>
     </style>
 
     <style name="SettingsAnnotation">
@@ -260,8 +262,21 @@
         <item name="android:inputType">number</item>
     </style>
 
+    <style name="SettingsEditTextAction">
+        <item name="android:layout_width">30dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:inputType">number</item>
+        <item name="android:maxLength">3</item>
+        <item name="android:layout_marginLeft">10dp</item>
+    </style>
+
     <style name="AppTheme.EditText" parent="Base.Widget.AppCompat.EditText">
         <item name="android:background">@drawable/edit_text_underline</item>
+    </style>
+
+    <style name="AppTheme.RadioButton" parent="Base.Widget.AppCompat.CompoundButton.RadioButton">
+        <item name="android:button">@drawable/radio_button</item>
     </style>
 
     <style name="Widget.Styled.ActionBar" parent="@style/Widget.AppCompat.Light.ActionBar">

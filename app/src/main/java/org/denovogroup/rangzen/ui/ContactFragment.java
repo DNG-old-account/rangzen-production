@@ -38,6 +38,7 @@ import com.google.zxing.integration.android.IntentResult;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
+import org.denovogroup.rangzen.backend.SecurityManager;
 
 /**
  * Created by Liran on 1/3/2016.
@@ -55,6 +56,8 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
     private boolean selectAll = false;
 
     private String query;
+
+    private String publicKey;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -171,10 +174,9 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
     public void onItemClick(final AdapterView<?> parent, View view, int position, long id) {
         final Cursor cursor = ((CursorAdapter) parent.getAdapter()).getCursor();
         cursor.moveToPosition(position);
+        publicKey = cursor.getString(cursor.getColumnIndex(FriendStore.COL_PUBLIC_KEY));
 
         if(((ContactAdapter) parent.getAdapter()).isSelectionMode()){
-            String publicKey = cursor.getString(cursor.getColumnIndex(FriendStore.COL_PUBLIC_KEY));
-
             boolean checkedState =  cursor.getInt(cursor.getColumnIndex(FriendStore.COL_CHECKED)) == FriendStore.TRUE;
 
             FriendStore.getInstance(getActivity()).setChecked(publicKey, !checkedState);
@@ -186,6 +188,7 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
             ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
 
         } else {
+
             boolean isFromPhone = cursor.getInt(cursor.getColumnIndex(FriendStore.COL_ADDED_VIA)) == FriendStore.ADDED_VIA_PHONE;
 
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity());
@@ -221,11 +224,12 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
 
                             String number = numberInput == null ? null : numberInput.getText().toString();
                             FriendStore.getInstance(getActivity()).editFriend(
-                                    cursor.getString(cursor.getColumnIndex(FriendStore.COL_PUBLIC_KEY)),
+                                    publicKey,
                                     name,
                                     number
                             );
 
+                            ((ContactAdapter) parent.getAdapter()).changeCursor(FriendStore.getInstance(getActivity()).getFriendsCursor(query));
                             ((ContactAdapter) parent.getAdapter()).notifyDataSetChanged();
                             alertdialog.dismiss();
                         }
@@ -250,32 +254,42 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
     }
 
     public void startAddFriend(){
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity())
-                .setTitle(R.string.add_friend_dialog_title)
-                .setMessage(R.string.add_friend_dialog_body)
-                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+        SecurityProfile profile = SecurityManager.getCurrentProfile(getActivity());
+        if(profile.isFriendsViaBook() ^ profile.isFriendsViaQR()){
+            if(profile.isFriendsViaBook()){
+                openPhonebook();
+            }{
+                openScanner();
+            }
+        } else {
+
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity())
+                    .setTitle(R.string.add_friend_dialog_title)
+                    .setMessage(R.string.add_friend_dialog_body)
+                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            if (org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(getActivity()).isFriendsViaQR()) {
+                dialogBuilder.setNeutralButton(R.string.add_friend_qrcode, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
+                        openScanner();
                     }
                 });
-        if(org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(getActivity()).isFriendsViaQR()){
-            dialogBuilder.setNeutralButton(R.string.add_friend_qrcode, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    openScanner();
-                }
-            });
+            }
+            if (org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(getActivity()).isFriendsViaBook()) {
+                dialogBuilder.setPositiveButton(R.string.add_friend_phonebook, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        openPhonebook();
+                    }
+                });
+            }
+            dialogBuilder.show();
         }
-        if(org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(getActivity()).isFriendsViaBook()){
-            dialogBuilder.setPositiveButton(R.string.add_friend_phonebook, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    openPhonebook();
-                }
-            });
-        }
-        dialogBuilder.show();
     }
 
     private void openScanner(){

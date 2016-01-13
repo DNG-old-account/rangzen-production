@@ -139,12 +139,12 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
             if(v instanceof TextView) v.setOnClickListener(drawerMenuClickListener);
         }
 
-
         int visibility = ((CheckBox) findViewById(R.id.drawer_menu_advanced)).isChecked() ? View.VISIBLE : View.GONE;
         childcount = advancedDrawerMenu.getChildCount();
         for(int i=0; i<childcount; i++){
             View child = advancedDrawerMenu.getChildAt(i);
             child.setVisibility(visibility);
+            if(child instanceof TextView) child.setOnClickListener(drawerMenuClickListener);
         }
 
         SharedPreferences pref = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
