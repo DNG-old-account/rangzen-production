@@ -104,6 +104,8 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher, Fr
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
+        ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(false);
+
         messageId = getArguments().getString(MESSAGE_ID_KEY);
 
         View view = inflater.inflate(R.layout.expanded_message_fragment, container,false);
@@ -330,6 +332,8 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher, Fr
                     inSearchMode = false;
                     setSearchView();
                     return true;
+                } else {
+                    getActivity().getSupportFragmentManager().popBackStack();
                 }
                 break;
             case R.id.search:
