@@ -11,6 +11,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ExpandableListView;
 
 import org.denovogroup.rangzen.R;
@@ -38,7 +39,7 @@ public class HelpFragment extends Fragment{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.help_fragment, container, false);
+        final View view = inflater.inflate(R.layout.help_fragment, container, false);
 
         listView = (ExpandableListView) view.findViewById(R.id.listView);
 
@@ -49,8 +50,9 @@ public class HelpFragment extends Fragment{
         view.findViewById(R.id.feedback_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getActivity(),FeedbackActivity.class);
-                startActivity(intent);
+                //Intent intent = new Intent(getActivity(),FeedbackActivity.class);
+                //startActivity(intent);
+                openEmailSendingForm(((CheckBox) getView().findViewById(R.id.includeLog)).isChecked());
             }
         });
 
@@ -80,5 +82,51 @@ public class HelpFragment extends Fragment{
         headers.add(header3);
         data.put(header3, body3);
 
+    }
+
+    private void openEmailSendingForm(boolean includeLog){
+        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", getString(R.string.feedback_email), null));
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback");
+        intent.putExtra(Intent.EXTRA_TEXT, "Dear Rangzen support representative");
+
+
+        if(includeLog) {
+            File log_filename = new File(Environment.getExternalStorageDirectory() + "/device_log.txt");
+            log_filename.delete();
+
+            //get device info
+            String userData = "";
+
+            try {
+                PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+                userData += "Application: Ranzgen v" + info.versionName + " (" + info.versionCode + ")\n";
+            } catch (PackageManager.NameNotFoundException e) {
+            }
+
+            userData += "OS version: " + android.os.Build.VERSION.SDK_INT + "\n";
+            userData += "Device: " + android.os.Build.DEVICE + "\n";
+            userData += "Model: " + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")\n";
+
+            try {
+                log_filename.createNewFile();
+                BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
+                writer.write(userData);
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                //get log from device
+                String cmd = "logcat -d -f" + log_filename.getAbsolutePath();
+                Runtime.getRuntime().exec(cmd);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
+        }
+
+        startActivity(Intent.createChooser(intent, "Send mail using..."));
     }
 }

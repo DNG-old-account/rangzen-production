@@ -2,6 +2,7 @@ package org.denovogroup.rangzen.ui;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -75,13 +76,7 @@ public class ContactAdapter extends CursorAdapter {
         viewHolder.mNameView.setText(cursor.getString(name_colIndex));
 
         char currentIndex = cursor.getString(name_colIndex).toUpperCase().charAt(0);
-        char prevIndex = '^';
         char nextIndex = '^';
-
-        if(cursor.moveToPrevious()){
-            prevIndex = cursor.getString(name_colIndex).toUpperCase().charAt(0);
-            cursor.moveToNext();
-        }
 
         if(cursor.moveToNext()){
             nextIndex = cursor.getString(name_colIndex).toUpperCase().charAt(0);
@@ -90,7 +85,7 @@ public class ContactAdapter extends CursorAdapter {
 
         if(viewHolder.mIndexView != null){
             viewHolder.mIndexView.setText(currentIndex+"");
-            viewHolder.mIndexView.setVisibility((currentIndex != prevIndex) ? View.VISIBLE : View.INVISIBLE);
+            viewHolder.mIndexView.setVisibility((currentIndex != nextIndex) ? View.VISIBLE : View.INVISIBLE);
         }
 
         viewHolder.mDivider.setVisibility(currentIndex != nextIndex ? View.VISIBLE : View.INVISIBLE);
