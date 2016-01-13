@@ -429,7 +429,7 @@ public class MessageStore extends SQLiteOpenHelper {
             cursr.close();
 
             // update descendants with this message's big parent
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_BIGPARENT+"='"+bigparent+"' WHERE "+COL_PARENT+"='"+messageId+"';");
+            if(bigparent != null) db.execSQL("UPDATE "+TABLE+" SET "+COL_BIGPARENT+"='"+bigparent+"' WHERE "+COL_PARENT+"='"+messageId+"';");
 
             if(message.length() > MAX_MESSAGE_SIZE) message = message.substring(0, MAX_MESSAGE_SIZE);
 
