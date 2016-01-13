@@ -192,7 +192,7 @@ public class FeedAdapter extends CursorAdapter {
             viewHolder.favorite.setOnClickListener(clickListener);
             viewHolder.navigate.setOnClickListener(clickListener);
             viewHolder.likes.setOnClickListener(clickListener);
-            viewHolder.replies.setOnClickListener(clickListener);
+            //viewHolder.replies.setOnClickListener(clickListener);
         }
     }
 

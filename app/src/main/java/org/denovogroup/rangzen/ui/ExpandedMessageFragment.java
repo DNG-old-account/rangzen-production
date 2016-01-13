@@ -54,6 +54,7 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher, Fr
     private static final int REQ_CODE_MESSAGE = 100;
 
     String messageId;
+    String sender;
 
     ListView parentMessage;
     ListView listView;
@@ -110,6 +111,11 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher, Fr
 
         View view = inflater.inflate(R.layout.expanded_message_fragment, container,false);
 
+        Cursor message = MessageStore.getInstance(getActivity()).getMessageById(messageId);
+        message.moveToFirst();
+        sender = message.getString(message.getColumnIndex(MessageStore.COL_PSEUDONYM));
+        message.close();
+
         parentMessage = (ListView) view.findViewById(R.id.expanded_item);
         parentMessage.setAdapter(new FeedAdapter(getActivity(), MessageStore.getInstance(getActivity()).getMessageById(messageId), false, feedAdapterCallbacks));
 
@@ -117,6 +123,16 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher, Fr
         listView.setAdapter(new FeedReplyAdapter(getActivity(), getCursor()));
 
         searchView = (EditText) ((MainActivity) getActivity()).getToolbar().findViewById(R.id.searchView);
+
+        view.findViewById(R.id.new_post_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), PostActivity.class);
+                intent.putExtra(PostActivity.MESSAGE_PARENT, messageId);
+                if(sender != null && sender.length() > 0) intent.putExtra(PostActivity.MESSAGE_BODY, "@"+sender+" ");
+                startActivityForResult(intent, REQ_CODE_MESSAGE);
+            }
+        });
 
         initSortSpinner();
 
@@ -157,7 +173,7 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher, Fr
         public void onReply(String parentId, String sender) {
             Intent intent = new Intent(getActivity(), PostActivity.class);
             intent.putExtra(PostActivity.MESSAGE_PARENT, parentId);
-            intent.putExtra(PostActivity.MESSAGE_BODY, "@"+sender+" ");
+            if(sender != null && sender.length() > 0) intent.putExtra(PostActivity.MESSAGE_BODY, "@"+sender+" ");
             startActivityForResult(intent, REQ_CODE_MESSAGE);
         }
 

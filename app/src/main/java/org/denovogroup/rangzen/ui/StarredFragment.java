@@ -384,9 +384,9 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                     c.moveToPosition(position);
                     String messageId = c.getString(c.getColumnIndex(MessageStore.COL_MESSAGE_ID));
 
-                    if (MessageStore.getInstance(getActivity()).getCommentCount(messageId) > 0) {
+                    //if (MessageStore.getInstance(getActivity()).getCommentCount(messageId) > 0) {
                         ((FeedFragment.FeedFragmentCallbacks) getActivity()).onFeedItemExpand(messageId);
-                    }
+                    //}
                 }
 
             }
