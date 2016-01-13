@@ -56,7 +56,7 @@ public class SecurityManager {
     /** Default trust threshold value if none is stored */
     public static final float DEFAULT_TRUST_THRESHOLD = 0.0f;
     /** Default pseudonym value if none is stored */
-    public static final String DEFAULT_PSEUDONYM = "John snow";
+    public static final String DEFAULT_PSEUDONYM = "";
 
     /** initiate the managers parameters such as the profiles list */
     private void init(){

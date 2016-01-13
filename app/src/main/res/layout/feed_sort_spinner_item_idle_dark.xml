@@ -3,13 +3,21 @@
               android:orientation="horizontal"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:paddingRight="3dp">
+              android:paddingRight="3dp"
+              android:gravity="bottom">
 
     <TextView
         android:id="@+id/item_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="#DD000000"
-        android:textSize="16sp"/>
+        android:gravity="bottom"
+        android:textSize="16sp"
+        android:layout_marginRight="6dp"/>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_pulldown_dark"/>
 
 </LinearLayout>
