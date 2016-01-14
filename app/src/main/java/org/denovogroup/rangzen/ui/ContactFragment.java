@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
@@ -163,7 +164,8 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
                         dialog.dismiss();
                     }
                 });
-                dialog.show();
+                AlertDialog alertdialog = dialog.create();
+                DialogStyler.styleAndShow(getActivity(), alertdialog);
                 break;
         }
 
@@ -236,7 +238,7 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
                     });
                 }
             });
-            alertdialog.show();
+            DialogStyler.styleAndShow(getActivity(), alertdialog);
         }
     }
 
@@ -288,7 +290,8 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
                     }
                 });
             }
-            dialogBuilder.show();
+            AlertDialog alertdialog = dialogBuilder.create();
+            DialogStyler.styleAndShow(getActivity(), alertdialog);
         }
     }
 
@@ -371,7 +374,7 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
                         });
                     }
                 });
-                alertdialog.show();
+                DialogStyler.styleAndShow(getActivity(), alertdialog);
             } else {
                 // This can happen if the URI is well-formed (rangzen://<stuff>)
                 // but the

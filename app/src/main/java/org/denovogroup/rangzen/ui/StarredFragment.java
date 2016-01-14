@@ -385,7 +385,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                     String messageId = c.getString(c.getColumnIndex(MessageStore.COL_MESSAGE_ID));
 
                     //if (MessageStore.getInstance(getActivity()).getCommentCount(messageId) > 0) {
-                        ((FeedFragment.FeedFragmentCallbacks) getActivity()).onFeedItemExpand(messageId);
+                    ((FeedFragment.FeedFragmentCallbacks) getActivity()).onFeedItemExpand(messageId);
                     //}
                 }
 
@@ -587,7 +587,10 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 break;
         }
 
-        if(dialog != null) dialog.show();
+        if(dialog != null){
+            AlertDialog alertdialog = dialog.show();
+            DialogStyler.styleAndShow(getActivity(), alertdialog);
+        }
         checkedMessages.close();
         return super.onOptionsItemSelected(item);
     }

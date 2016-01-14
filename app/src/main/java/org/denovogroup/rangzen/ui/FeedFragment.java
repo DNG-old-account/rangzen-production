@@ -388,7 +388,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                     String messageId = c.getString(c.getColumnIndex(MessageStore.COL_MESSAGE_ID));
 
                     //if (MessageStore.getInstance(getActivity()).getCommentCount(messageId) > 0) {
-                        ((FeedFragmentCallbacks) getActivity()).onFeedItemExpand(messageId);
+                    ((FeedFragmentCallbacks) getActivity()).onFeedItemExpand(messageId);
                     //}
                 }
 
@@ -590,7 +590,10 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                 break;
         }
 
-        if(dialog != null) dialog.show();
+        if(dialog != null){
+            AlertDialog alertdialog = dialog.create();
+            DialogStyler.styleAndShow(getActivity(), alertdialog);
+        }
         checkedMessages.close();
         return super.onOptionsItemSelected(item);
     }

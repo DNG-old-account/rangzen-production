@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -243,7 +244,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                                 public void onClick(DialogInterface dialog, int which) {
                                     resetApplication();
                                     dialog.dismiss();
-                                    /*AlertDialog.Builder builder2 = new AlertDialog.Builder(MainActivity.this)
+                                    /*AppDialog.Builder builder2 = new AppDialog.Builder(MainActivity.this)
                                             .setTitle(R.string.confirm_reset_dialog_title)
                                             .setMessage(R.string.confirm_reset_app_message)
                                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -270,7 +271,8 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                                 }
                             });
 
-                    builder.show();
+                    AlertDialog alertdialog = builder.create();
+                    DialogStyler.styleAndShow(MainActivity.this, alertdialog);
                     break;
                 case R.id.drawer_menu_settings:
                     frag = new SettingsFragment();
@@ -428,7 +430,8 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                 builder.setCancelable(false);
                 ProgressBar bar = new ProgressBar(MainActivity.this);
                 builder.setView(bar);
-                dialog = builder.show();
+                dialog = builder.create();
+                DialogStyler.styleAndShow(MainActivity.this, dialog);
             }
 
             @Override

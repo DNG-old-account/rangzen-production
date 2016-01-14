@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -215,7 +216,7 @@ public class PostActivity extends AppCompatActivity {
                     }
                 });
 
-                dialog.show();
+                DialogStyler.styleAndShow(PostActivity.this, dialog);
 
                 // Set title divider color
                 int titleDividerId = getResources().getIdentifier("titleDivider", "id", "android");

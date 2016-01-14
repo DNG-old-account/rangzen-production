@@ -166,5 +166,9 @@
 
     <string name="help_title3">How do I add my location to a new message?</string>
     <string name="help_content3">If you wish to add your current location to a message then tap on the location icon in the New Post screen. Note, this requires Android\'s location services (GPS) to be on.</string>
+    <string name="more_help">All F&amp;Q</string>
+    <string name="intro_3">Help Study Anonymous Messaging</string>
+    <string name="intro_2">Pass Other Rangzen Users and Share Messages</string>
+    <string name="skip_welcome">SKIP</string>
 
 </resources>

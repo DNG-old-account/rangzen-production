@@ -136,6 +136,7 @@
         <item name="windowActionModeOverlay">true</item>
         <item name="android:editTextStyle">@style/AppTheme.EditText</item>
         <item name="android:radioButtonStyle">@style/AppTheme.RadioButton</item>
+        <item name="android:alertDialogTheme">@style/Theme_Sphinx_Dialog_Alert</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -269,6 +270,7 @@
         <item name="android:inputType">number</item>
         <item name="android:maxLength">3</item>
         <item name="android:layout_marginLeft">10dp</item>
+        <item name="android:background">@android:color/transparent</item>
     </style>
 
     <style name="AppTheme.EditText" parent="Base.Widget.AppCompat.EditText">
@@ -277,6 +279,10 @@
 
     <style name="AppTheme.RadioButton" parent="Base.Widget.AppCompat.CompoundButton.RadioButton">
         <item name="android:button">@drawable/radio_button</item>
+    </style>
+
+    <style name="AppTheme.CheckBox" parent="Base.Widget.AppCompat.CompoundButton.CheckBox">
+        <item name="android:button">@drawable/checkbox</item>
     </style>
 
     <style name="Widget.Styled.ActionBar" parent="@style/Widget.AppCompat.Light.ActionBar">
@@ -292,6 +298,30 @@
 
     <style name="Seekbar">
         <item name="android:progressDrawable">@drawable/apptheme_scrubber_progress_horizontal_holo_light</item>
+    </style>
+
+    <!-- Dialog style-->
+
+    <style name="Theme_Sphinx_Dialog_Alert" parent="@style/Theme.AppCompat.Dialog.Alert">
+        <!-- title -->
+        <item name="android:windowTitleStyle">@style/TextAppearance.Sphinx.DialogWindowTitle</item>
+        <!-- message color -->
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <!-- message text style (apart from color) -->
+        <item name="android:textAppearanceMedium">@style/TextAppearance.Sphinx.Medium</item>
+        <!-- Used for the buttons -->
+        <item name="colorAccent">@color/app_yellow</item>
+    </style>
+
+    <style name="TextAppearance.Sphinx.DialogWindowTitle" parent="@android:style/TextAppearance.Holo.DialogWindowTitle">
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Sphinx.Medium" parent="@android:style/TextAppearance.Holo.Medium">
+        <item name="android:textStyle">italic</item>
+        <item name="android:textSize">14sp</item>
     </style>
 
 </resources>

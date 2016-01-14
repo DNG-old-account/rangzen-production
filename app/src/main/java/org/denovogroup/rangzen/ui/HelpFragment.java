@@ -8,11 +8,15 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.BaseExpandableListAdapter;
 import android.widget.CheckBox;
 import android.widget.ExpandableListView;
+import android.widget.HeaderViewListAdapter;
 
 import org.denovogroup.rangzen.R;
 
@@ -35,6 +39,8 @@ public class HelpFragment extends Fragment{
     List<String> headers;
     Map<String, List<String>> data;
 
+    boolean partial = true;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -43,23 +49,39 @@ public class HelpFragment extends Fragment{
 
         listView = (ExpandableListView) view.findViewById(R.id.listView);
 
-        prepareHelpContent();
-
-        listView.setAdapter(new HelpExpandableListAdapter(getActivity(), headers, data));
-
-        view.findViewById(R.id.feedback_button).setOnClickListener(new View.OnClickListener() {
+        ViewGroup footer = (ViewGroup) LayoutInflater.from(getActivity()).inflate(R.layout.help_list_footer, null, false);
+        footer.findViewById(R.id.feedback_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //Intent intent = new Intent(getActivity(),FeedbackActivity.class);
                 //startActivity(intent);
-                openEmailSendingForm(((CheckBox) getView().findViewById(R.id.includeLog)).isChecked());
+                openEmailSendingForm(true);
             }
         });
+
+        View more = footer.findViewById(R.id.more_button);
+        more.setVisibility(partial ? View.VISIBLE : View.GONE);
+        more.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                partial = false;
+                prepareHelpContent();
+                v.setVisibility(View.GONE);
+                listView.setAdapter(new HelpExpandableListAdapter(getActivity(), headers, data));
+            }
+        });
+
+        listView.addFooterView(footer);
+
+        prepareHelpContent();
+        listView.setAdapter(new HelpExpandableListAdapter(getActivity(), headers, data));
 
         return view;
     }
 
     private void prepareHelpContent() {
+
+        //make hot topics
 
         headers = new ArrayList<>();
         data = new HashMap<>();
@@ -75,6 +97,9 @@ public class HelpFragment extends Fragment{
         body2.add(getString(R.string.help_content2));
         headers.add(header2);
         data.put(header2, body2);
+
+        if(partial) return;
+        //make all other stuff
 
         String header3 = getString(R.string.help_title3);
         List<String> body3 = new ArrayList<>();
