@@ -237,7 +237,7 @@ public class MessageStore extends SQLiteOpenHelper {
             String query = "SELECT * FROM " + TABLE
                     + " WHERE "
                         + (!getReplies ? "("+COL_BIGPARENT+ " IS NULL OR "+COL_BIGPARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+ "))" : "")
-                        + " "+(!getDeleted ? (getReplies ? " AND " : "") + COL_DELETED + "=" + FALSE : "")
+                        + " "+(!getDeleted ? ((!getReplies ? " AND " : "") + COL_DELETED + "=" + FALSE) : "")
                     + " " + sortOption
                     + (limit > 0 ? " LIMIT " + limit : "")
                     + ";";
