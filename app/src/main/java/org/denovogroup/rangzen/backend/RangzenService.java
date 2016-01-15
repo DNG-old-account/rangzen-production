@@ -38,6 +38,9 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.ComponentName;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
@@ -644,9 +647,25 @@ public class RangzenService extends Service {
         builder.setContentIntent(pendingIntent);
         builder.setContentTitle(getString(R.string.unread_notification_title));
         builder.setContentText(MessageStore.getInstance(this).getUnreadCount() + " " + getString(R.string.unread_notification_content));
-        builder.setSmallIcon(R.drawable.ic_launcher);
+
+        // create large icon
+        Resources res = this.getResources();
+        BitmapDrawable largeIconDrawable;
+        if(Build.VERSION.SDK_INT >= 21){
+            largeIconDrawable = (BitmapDrawable) res.getDrawable(R.mipmap.ic_launcher, null);
+        } else {
+            largeIconDrawable = (BitmapDrawable) res.getDrawable(R.mipmap.ic_launcher);
+        }
+        Bitmap largeIcon = largeIconDrawable.getBitmap();
+
+        int height = (int) res.getDimension(android.R.dimen.notification_large_icon_height);
+        int width = (int) res.getDimension(android.R.dimen.notification_large_icon_width);
+        largeIcon = Bitmap.createScaledBitmap(largeIcon, width, height, false);
+
+        builder.setLargeIcon(largeIcon);
         builder.setAutoCancel(true);
         builder.setTicker(getText(R.string.unread_notification_content));
+        builder.setSmallIcon(R.mipmap.blank_pixel);
         builder.setDefaults(Notification.DEFAULT_SOUND);
 
         NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);

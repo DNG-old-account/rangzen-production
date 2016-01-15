@@ -38,6 +38,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
@@ -46,6 +49,7 @@ import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
 import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Build;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.provider.Settings;
@@ -236,7 +240,7 @@ public class WifiDirectSpeaker {
       // Wifi Direct mode is enabled
         dismissNoWifiNotification();
     } else if (state == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
-        showNoWifiNotification();
+        showNoWifiNotification(context);
       Log.d(TAG, "Wifi Direct disabled");
       // Wifi Direct mode is disabled
     } else if (state == DEFAULT_EXTRA_INT) {
@@ -494,7 +498,7 @@ public class WifiDirectSpeaker {
     /** create and display a notification prompting the user to the enable
      * state of the wifi service.
      */
-    private void showNoWifiNotification(){
+    private void showNoWifiNotification(Context context){
         if(mContext == null) return;
 
         int notificationId = R.string.dialog_no_wifi_message;
@@ -502,10 +506,25 @@ public class WifiDirectSpeaker {
         Intent notificationIntent = new Intent(new Intent(Settings.ACTION_WIFI_SETTINGS));;
         PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, notificationIntent, 0);
 
+        // create large icon
+        Resources res = context.getResources();
+        BitmapDrawable largeIconDrawable;
+        if(Build.VERSION.SDK_INT >= 21){
+            largeIconDrawable = (BitmapDrawable) res.getDrawable(R.mipmap.ic_launcher, null);
+        } else {
+            largeIconDrawable = (BitmapDrawable) res.getDrawable(R.mipmap.ic_launcher);
+        }
+        Bitmap largeIcon = largeIconDrawable.getBitmap();
+
+        int height = (int) res.getDimension(android.R.dimen.notification_large_icon_height);
+        int width = (int) res.getDimension(android.R.dimen.notification_large_icon_width);
+        largeIcon = Bitmap.createScaledBitmap(largeIcon, width, height, false);
+
         NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         Notification notification = new Notification.Builder(mContext).setContentTitle(mContext.getText(R.string.dialog_no_wifi_title))
                 .setContentText(mContext.getText(R.string.dialog_no_wifi_message))
-                .setSmallIcon(R.drawable.ic_launcher)
+                .setLargeIcon(largeIcon)
+                .setSmallIcon(R.mipmap.blank_pixel)
                 .setContentIntent(pendingIntent)
                 .build();
         mNotificationManager.notify(notificationId, notification);

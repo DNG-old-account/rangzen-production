@@ -39,6 +39,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.util.Log;
@@ -125,9 +129,9 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
     String currentStateString = getBTStateStringFromCode(currentState);
     String previousStateString = getBTStateStringFromCode(previousState);
     Log.d(TAG, String.format("BT state change. %s (%d) to %s (%d) ", previousStateString,
-                                                                     previousState,
-                                                                     currentStateString,
-                                                                     currentState));
+            previousState,
+            currentStateString,
+            currentState));
 
       switch(currentState){
           case BluetoothAdapter.STATE_TURNING_OFF:
@@ -154,10 +158,27 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // create large icon
+        Resources res = context.getResources();
+        BitmapDrawable largeIconDrawable;
+        if(Build.VERSION.SDK_INT >= 21){
+            largeIconDrawable = (BitmapDrawable) res.getDrawable(R.mipmap.ic_launcher, null);
+        } else {
+            largeIconDrawable = (BitmapDrawable) res.getDrawable(R.mipmap.ic_launcher);
+        }
+        Bitmap largeIcon = largeIconDrawable.getBitmap();
+
+        int height = (int) res.getDimension(android.R.dimen.notification_large_icon_height);
+        int width = (int) res.getDimension(android.R.dimen.notification_large_icon_width);
+        largeIcon = Bitmap.createScaledBitmap(largeIcon, width, height, false);
+
+
         Notification notification = new Notification.Builder(context).setContentTitle(context.getText(R.string.dialog_no_bluetooth_title))
                 .setContentText(context.getText(R.string.dialog_no_bluetooth_message))
-                .setSmallIcon(R.drawable.ic_launcher)
+                .setLargeIcon(largeIcon)
                 .setContentIntent(pendingIntent)
+                .setSmallIcon(R.mipmap.blank_pixel)
                 .build();
         mNotificationManager.notify(notificationId, notification);
     }

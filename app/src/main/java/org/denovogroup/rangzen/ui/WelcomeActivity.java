@@ -42,11 +42,6 @@ public class WelcomeActivity extends AppCompatActivity {
         pager = (ViewPager) findViewById(R.id.welcome_pager);
         pagerMarkers = (RadioGroup) findViewById(R.id.pager_ind);
 
-        String prefName = "initializes";
-        String prefProperty = "initializes";
-
-        SharedPreferences prefFile = getSharedPreferences(prefName, Context.MODE_PRIVATE);
-
         findViewById(R.id.skip).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -54,12 +49,18 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         });
 
+        /*String prefName = "initializes";
+        String prefProperty = "initializes";
+
+        SharedPreferences prefFile = getSharedPreferences(prefName, Context.MODE_PRIVATE);
+
         if(prefFile.contains(prefProperty)){
             goToMain();
         } else {
             prefFile.edit().putBoolean(prefProperty,true).commit();
             initPaging();
-        }
+        }*/
+        initPaging(); // commented logic was moved to splash activity so if we got this far we need to page
 
     }
 
