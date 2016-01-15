@@ -45,9 +45,9 @@ public class DisableableLinearLayout extends LinearLayout {
     public void setEnabled(boolean enabled){
         if(this.enabled != enabled) {
             if (enabled) {
-                restoreOriginalChildState();
+                //restoreOriginalChildState();
             } else {
-                storeOriginalChildState(this,enabled);
+                //storeOriginalChildState(this,enabled);
             }
             this.enabled = enabled;
             handleEnabledStateChange();
@@ -62,7 +62,7 @@ public class DisableableLinearLayout extends LinearLayout {
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
         if(!enabled) {
-            canvas.drawColor(Color.parseColor("#77FFFFFF"));
+            //canvas.drawColor(Color.parseColor("#77FFFFFF"));
         }
     }
 

@@ -78,7 +78,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         contactsBlock = view.findViewById(R.id.contacts_block);
         exchangeBlock = view.findViewById(R.id.exchange_block);
 
-        enableBlocks();
+        //enableBlocks();
 
         profilesGroup = (RadioGroup) view.findViewById(R.id.radiogroup_profiles);
         timestampSwitch = (Switch) view.findViewById(R.id.switch_timestamp);
@@ -235,7 +235,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
             SecurityManager.setCurrentProfile(getActivity(),currentProfile);
         }
 
-        enableBlocks();
+        //enableBlocks();
 
         setupView();
     }
@@ -349,7 +349,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
             setupView();
         }
 
-        fixCursorPosition((EditText) v);
+        if(v instanceof EditText) fixCursorPosition((EditText) v);
     }
 
     @Override
