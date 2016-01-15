@@ -8,8 +8,9 @@
     <org.denovogroup.rangzen.ui.CustomSeekbar
         style="@style/Seekbar"
         android:id="@+id/seeker"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"/>
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"/>
 
     <EditText
         android:id="@+id/seeker_text"
@@ -17,13 +18,14 @@
         android:layout_height="wrap_content"
         android:gravity="right"
         android:inputType="number"
-        android:layout_marginRight="5dp"/>
+        android:layout_marginRight="5dp"
+        android:background="@drawable/edit_text_underline_selected_only"/>
 
     <TextView
         android:id="@+id/unit_id"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="14sp"
-        android:textColor="#888888"/>
+        android:textColor="@color/light_gray"/>
 
 </LinearLayout>

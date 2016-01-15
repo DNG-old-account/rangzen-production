@@ -289,7 +289,7 @@ public class FriendStore extends SQLiteOpenHelper{
         if(db == null) return false;
 
         if(getFriendWithKey(key) != null){
-            Log.d(TAG,"Friend was already in the store, data not changed");
+            Log.d(TAG,"Contact was already in the store, data not changed");
             return false;
         }
 

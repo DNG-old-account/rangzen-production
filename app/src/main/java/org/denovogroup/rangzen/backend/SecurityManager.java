@@ -215,7 +215,7 @@ public class SecurityManager {
         SharedPreferences pref = context.getSharedPreferences(SETTINGS_FILE,Context.MODE_PRIVATE);
 
         if(!pref.contains(PSEUDONYM_KEY)){
-            setCurrentPseudonym(context, DEFAULT_PSEUDONYM+(System.nanoTime()/System.currentTimeMillis()));
+            setCurrentPseudonym(context, DEFAULT_PSEUDONYM/*+(System.nanoTime()/System.currentTimeMillis())*/);
         }
         return pref.getString(PSEUDONYM_KEY, DEFAULT_PSEUDONYM);
     }

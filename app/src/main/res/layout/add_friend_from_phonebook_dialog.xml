@@ -11,14 +11,17 @@
 
     <EditText
         android:id="@+id/name"
+        android:maxLength="25"
         style="@style/Configure_friend_field_input"/>
 
     <TextView
         android:text="@string/conf_friend_dialog_number"
+        android:maxLength="20"
         style="@style/Configure_friend_field_title"/>
 
     <EditText
         android:id="@+id/phone_number"
+        android:inputType="phone"
         style="@style/Configure_friend_field_input"/>
 
 </LinearLayout>

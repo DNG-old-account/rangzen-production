@@ -358,12 +358,12 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
                                 boolean wasAdded = fs.addFriendBytes(name, publicIDBytes, FriendStore.ADDED_VIA_QR, null);
 
                                 Log.i(TAG, "Now have " + fs.getAllFriends().size()
-                                        + " friends.");
+                                        + " contacts.");
                                 if (wasAdded) {
-                                    Toast.makeText(getActivity(), "Friend Added", Toast.LENGTH_SHORT)
+                                    Toast.makeText(getActivity(), R.string.contact_add_conf, Toast.LENGTH_SHORT)
                                             .show();
                                 } else {
-                                    Toast.makeText(getActivity(), "Already Friends", Toast.LENGTH_SHORT)
+                                    Toast.makeText(getActivity(), R.string.contact_exist, Toast.LENGTH_SHORT)
                                             .show();
 
                                 }
@@ -390,12 +390,15 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
         } else {
             if(requestCode == PICK_CONTACT && resultCode == Activity.RESULT_OK && intent.getData() != null){
                 Uri contactItemUri = intent.getData();
+                //get cursor to browse contacts
                 Cursor contactCursor = getActivity().getContentResolver().query(contactItemUri, null, null, null, null);
                 if(contactCursor != null && contactCursor.getCount() > 0){
                     contactCursor.moveToFirst();
                     String contactName = contactCursor.getString(contactCursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
                     if(contactCursor.getInt(contactCursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)) > 0){
                         String id = contactCursor.getString(contactCursor.getColumnIndex(ContactsContract.Contacts._ID));
+
+                        //get cursor t browse all numbers associated with said contact
                         Cursor phoneCursor = getActivity().getContentResolver().query(
                                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                                 null,
@@ -404,6 +407,7 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
 
                         if(phoneCursor != null){
                             phoneCursor.moveToFirst();
+                            int phonesCount = phoneCursor.getCount();
                             while(!phoneCursor.isAfterLast()){
                                 String unformattedNumber = phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
 
@@ -419,7 +423,16 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
                                 String noneNullValue = formattedNumber != null ? formattedNumber : unformattedNumber;
                                 byte[] encryptedNumber = Crypto.encodeString(noneNullValue);
 
-                                if(encryptedNumber != null) FriendStore.getInstance(getActivity()).addFriendBytes(contactName, encryptedNumber, FriendStore.ADDED_VIA_PHONE, noneNullValue);
+                                String adjustedName = contactName;
+                                if(phonesCount > 1){
+                                    if(contactName.length()+5 > 25){
+                                        adjustedName = adjustedName.substring(0,20)+" "+noneNullValue.substring(noneNullValue.length()-4);
+                                    } else {
+                                        adjustedName = adjustedName+" "+noneNullValue.substring(noneNullValue.length()-4);
+                                    }
+                                }
+
+                                if(encryptedNumber != null) FriendStore.getInstance(getActivity()).addFriendBytes(adjustedName, encryptedNumber, FriendStore.ADDED_VIA_PHONE, noneNullValue);
 
                                 phoneCursor.moveToNext();
                             }
@@ -429,7 +442,7 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
                         query = null;
                         listView.setAdapter(new ContactAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(null),false));
                     } else {
-                        Toast.makeText(getActivity(), "Selected item doesnt have a phone number", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), R.string.contact_add_fail, Toast.LENGTH_SHORT).show();
                     }
                 }
                 if(contactCursor != null) contactCursor.close();

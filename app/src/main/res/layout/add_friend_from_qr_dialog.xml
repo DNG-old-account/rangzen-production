@@ -7,6 +7,7 @@
 
     <TextView
         android:text="@string/conf_friend_dialog_name"
+        android:maxLength="25"
         style="@style/Configure_friend_field_title"/>
 
     <EditText

@@ -29,4 +29,6 @@
     <color name="toolbar_grey">#6c6c6c</color>
     <color name="foreground_material_dark">#303030</color>
 
+    <color name="light_gray">#888888</color>
+
 </resources>

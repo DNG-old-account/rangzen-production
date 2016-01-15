@@ -56,6 +56,8 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
 
     public static final int REQ_CODE_MESSAGE = 100;
     public static final int REQ_CODE_SEARCH = 101;
+    public static final String HASHTAG = "hashtag";
+
     private static final int MAX_NEW_MESSAGES_DISPLAY = 1000;
 
     private boolean inSearchMode = false;
@@ -169,6 +171,11 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
             newMessagesNotification_button.setOnClickListener(this);
 
         setListView();
+
+        Bundle args = getArguments();
+        if(args != null && args.containsKey(HASHTAG)){
+           searchHashTagFromClick(args.getString(HASHTAG));
+        }
 
         return v;
     }
@@ -687,5 +694,16 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
             return true;
         }
         return false;
+    }
+
+    /** Set the the Actionbar search view with the hashtag supplied and run the
+     * default search method.
+     *
+     * @param hashtag The hashtag to search for
+     */
+    private void searchHashTagFromClick(String hashtag){
+        query = hashtag;
+        inSearchMode = true;
+        setActionbar();
     }
 }

@@ -78,14 +78,18 @@
     </style>
 
     <style name="Configure_friend_field_title">
+        <item name="android:textColor">@color/drawer_menu_grey_icon</item>
+        <item name="android:textSize">17sp</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">5dp</item>
     </style>
 
     <style name="Configure_friend_field_input">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:singleLine">true</item>
+        <item name="android:layout_marginBottom">10dp</item>
     </style>
 
     <style name="Pager_title_strip">
@@ -270,7 +274,7 @@
         <item name="android:inputType">number</item>
         <item name="android:maxLength">3</item>
         <item name="android:layout_marginLeft">10dp</item>
-        <item name="android:background">@android:color/transparent</item>
+        <item name="android:background">@drawable/edit_text_underline_selected_only</item>
     </style>
 
     <style name="AppTheme.EditText" parent="Base.Widget.AppCompat.EditText">
@@ -317,6 +321,7 @@
         <item name="android:textColor">@android:color/black</item>
         <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:minWidth">250dp</item>
     </style>
 
     <style name="TextAppearance.Sphinx.Medium" parent="@android:style/TextAppearance.Holo.Medium">
@@ -324,4 +329,26 @@
         <item name="android:textSize">14sp</item>
     </style>
 
+    <style name="Seekbar.Metric.container">
+        <item name="android:layout_marginTop">-10dp</item>
+    </style>
+
+    <style name="Seekbar.Metric">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#adadad</item>
+
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+    </style>
+
+    <style name="Seekbar.Metric.left" parent="@style/Seekbar.Metric">
+        <item name="android:gravity">left|top</item>
+        <item name="android:layout_marginLeft">17dp</item>
+    </style>
+
+    <style name="Seekbar.Metric.right" parent="@style/Seekbar.Metric">
+        <item name="android:gravity">right|top</item>
+        <item name="android:layout_marginRight">17dp</item>
+    </style>
 </resources>

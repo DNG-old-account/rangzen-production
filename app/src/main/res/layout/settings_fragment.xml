@@ -360,10 +360,27 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"/>
 
+                    <LinearLayout
+                        style="@style/Seekbar.Metric.container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/Seekbar.Metric.left"
+                            android:text="0"/>
+
+                        <TextView
+                            style="@style/Seekbar.Metric.right"
+                            android:text="100"/>
+
+                    </LinearLayout>
+
                 </LinearLayout>
 
                 <EditText
-                    android:layout_gravity="bottom"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginTop="5dp"
                     style="@style/SettingsEditTextAction"
                     android:id="@+id/edit_autodelete_trust"
                     android:gravity="right"/>
@@ -394,10 +411,27 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"/>
 
+                    <LinearLayout
+                        style="@style/Seekbar.Metric.container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/Seekbar.Metric.left"
+                            android:text="0"/>
+
+                        <TextView
+                            style="@style/Seekbar.Metric.right"
+                            android:text="365"/>
+
+                    </LinearLayout>
+
                 </LinearLayout>
 
                 <EditText
-                    android:layout_gravity="bottom"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginTop="5dp"
                     style="@style/SettingsEditTextAction"
                     android:id="@+id/edit_autodelete_age"
                     android:gravity="right"/>

@@ -7,4 +7,6 @@
 
     <dimen name="settings_fragment_margin">15dp</dimen>
 
+    <dimen name="window_size">250dp</dimen>
+
 </resources>

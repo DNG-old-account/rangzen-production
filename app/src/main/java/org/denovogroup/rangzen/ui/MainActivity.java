@@ -8,6 +8,7 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -85,7 +86,19 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         contentHolder = findViewById(R.id.mainContent);
 
         if(savedInstanceState == null){
-            getSupportFragmentManager().beginTransaction().replace(contentHolder.getId(), new FeedFragment()).commit();
+            //get any hashtag passed data from previous click events
+            Uri data = getIntent().getData();
+            getIntent().setData(null);
+
+            Fragment frag = new FeedFragment();
+            Bundle args = new Bundle();
+            if(data != null) {
+                String hashtag = data.toString().substring(data.toString().indexOf("#"), data.toString().length() - 1);
+                args.putString(FeedFragment.HASHTAG, hashtag);
+            }
+            frag.setArguments(args);
+
+            getSupportFragmentManager().beginTransaction().replace(contentHolder.getId(), frag).commit();
 
             View selectedItem = drawerMenu.findViewById(selectedDrawerItem);
             if(selectedItem != null) selectedItem.setActivated(true);
@@ -94,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         if(Intent.ACTION_SEND.equals(getIntent().getAction()) && "text/plain".equals(getIntent().getType())){
             Intent intent = new Intent(this, PostActivity.class);
             intent.putExtra(PostActivity.MESSAGE_BODY, getIntent().getStringExtra(Intent.EXTRA_TEXT));
-            startActivityForResult(intent,FeedFragment.REQ_CODE_MESSAGE);
+            startActivityForResult(intent, FeedFragment.REQ_CODE_MESSAGE);
         }
 
         //start Rangzen service if necessary
@@ -373,7 +386,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                 int likesColIndex = cursor.getColumnIndex(MessageStore.COL_LIKES);
                 int pseudoColIndex = cursor.getColumnIndex(MessageStore.COL_PSEUDONYM);
 
-                File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+File.separator+"Rangzen exports");
+                File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+File.separator+getString(R.string.export_subdiractory));
                 if(!dir.exists()){
                     dir.mkdirs();
                 }

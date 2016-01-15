@@ -6,8 +6,6 @@
     <item name="decode_succeeded" type="id"/>
     <item name="quit" type="id"/>
 
-    <!-- This is a hack to get the name of the app to be "Rangzen".
-      @string:app_name was getting read from strings.xml from zxing instead of here. -->
     <string name="rangzen_app_name">@string/app_name</string>
 
     <string name="open">Navigation Drawer is Open</string>
@@ -83,7 +81,7 @@
 
     <string name="reset_app">Reset app</string>
     <string name="reset_dialog_title">Reset application</string>
-    <string name="reset_app_message">Are you sure you wish to reset Murmur?\nMessages, friends and preferences will erased.</string>
+    <string name="reset_app_message">Are you sure you wish to reset Murmur?\nMessages, contacts and preferences will erased.</string>
     <string name="confirm_reset_dialog_title">Confirm reset</string>
     <string name="confirm_reset_app_message">Click \'yes\' to reset Murmur.</string>
 
@@ -107,7 +105,7 @@
     <string name="add_friend_qrcode">QR-code</string>
     <string name="add_friend_phonebook">Phonebook</string>
 
-    <string name="conf_friend_dialog_title">Edit friend</string>
+    <string name="conf_friend_dialog_title">Edit contact</string>
     <string name="conf_friend_dialog_name">Nickname</string>
     <string name="conf_friend_dialog_number">Phone</string>
 
@@ -168,7 +166,11 @@
     <string name="help_content3">If you wish to add your current location to a message then tap on the location icon in the New Post screen. Note, this requires Android\'s location services (GPS) to be on.</string>
     <string name="more_help">All F&amp;Q</string>
     <string name="intro_3">Help Study Anonymous Messaging</string>
-    <string name="intro_2">Pass Other Rangzen Users and Share Messages</string>
+    <string name="intro_2">Pass Other Murmur Users and Share Messages</string>
     <string name="skip_welcome">SKIP</string>
+    <string name="export_subdiractory">Murmur exports</string>
+    <string name="contact_add_conf">Contact Added</string>
+    <string name="contact_exist">Already in contacts</string>
+    <string name="contact_add_fail">Selected contact doesn\'t have a phone number</string>
 
 </resources>
