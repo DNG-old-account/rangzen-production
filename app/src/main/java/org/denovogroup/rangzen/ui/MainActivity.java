@@ -374,9 +374,9 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
 
     private void exportFeed(){
 
-        AsyncTask<Void, Void, Boolean> exportTask = new AsyncTask<Void, Void, Boolean>() {
+        AsyncTask<Void, Void, Uri> exportTask = new AsyncTask<Void, Void, Uri>() {
             @Override
-            protected Boolean doInBackground(Void... params) {
+            protected Uri doInBackground(Void... params) {
                 Cursor cursor = MessageStore.getInstance(MainActivity.this).getMessagesCursor(false, false,1000);
                 cursor.moveToFirst();
 
@@ -425,11 +425,11 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                     cursor.close();
                     bos.flush();
                     bos.close();
-                    return true;
+                    return Uri.fromFile(file);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                return false;
+                return null;
             }
 
             AlertDialog dialog;
@@ -448,10 +448,17 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
             }
 
             @Override
-            protected void onPostExecute(Boolean aBoolean) {
-                super.onPostExecute(aBoolean);
+            protected void onPostExecute(Uri fileUri) {
+                super.onPostExecute(fileUri);
                 if(dialog != null) dialog.dismiss();
-                Toast.makeText(MainActivity.this, aBoolean ? getString(R.string.export_successful) : getString(R.string.export_failed), Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, fileUri != null ? getString(R.string.export_successful) : getString(R.string.export_failed), Toast.LENGTH_LONG).show();
+
+                //force file scanner to scan this file so it will show immediately in storage by pc
+                if(fileUri != null){
+                    final Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                    intent.setData(fileUri);
+                    getApplicationContext().sendBroadcast(intent);
+                }
             }
         };
 

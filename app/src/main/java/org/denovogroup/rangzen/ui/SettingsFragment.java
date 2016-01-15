@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -298,6 +299,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
                 if(valueAsInt > autodelMaxAge){
                     valueAsInt = autodelMaxAge;
                     autodelAgeEditText.setText(String.valueOf(valueAsInt));
+                    autodelAgeEditText.selectAll();
                 }
                 autodelAgeSeekbar.setProgress(valueAsInt);
                 currentProfile.setAutodeleteAge(valueAsInt);
@@ -306,6 +308,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
                 if(valueAsInt > autodelMaxTrust){
                     valueAsInt = autodelMaxAge;
                     autodelTrustEditText.setText(String.valueOf(valueAsInt));
+                    autodelAgeEditText.selectAll();
                 }
                 autodelAgeSeekbar.setProgress(valueAsInt);
                 currentProfile.setAutodeleteTrust(valueAsInt / 100f);
@@ -314,13 +317,18 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
                 currentProfile.setTimeboundPeriod(valueAsInt);
                 break;
             case R.id.edit_restricted:
+                if(valueAsInt > 50){
+                    valueAsInt = 50;
+                    restrictedEditText.setText(String.valueOf(valueAsInt));
+                    restrictedEditText.selectAll();
+                }
                 currentProfile.setMinContactsForHop(Math.max(1,valueAsInt));
                 break;
             /*case R.id.edit_max_messages:
                 currentProfile.setFeedSize(valueAsInt);
                 break;*/
             case R.id.edit_max_messages_p_exchange:
-                currentProfile.setMaxMessages(Math.max(1,valueAsInt));
+                currentProfile.setMaxMessages(Math.max(1, valueAsInt));
                 break;
             case R.id.edit_timeout_p_exchange:
                 currentProfile.setCooldown(valueAsInt);
@@ -340,6 +348,8 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
 
             setupView();
         }
+
+        fixCursorPosition((EditText) v);
     }
 
     @Override
@@ -353,5 +363,15 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         feedBlock.setEnabled(enable);
         contactsBlock.setEnabled(enable);
         exchangeBlock.setEnabled(enable);
+    }
+
+    private void fixCursorPosition(EditText editText){
+        if(editText.getText() == null) return;
+
+        boolean isSinglePoint = editText.getSelectionStart() == editText.getSelectionEnd();
+        boolean isAppearingAtEnd = editText.getSelectionStart() == 0;
+        if(isSinglePoint && isAppearingAtEnd){
+            editText.setSelection(editText.length());
+        }
     }
 }

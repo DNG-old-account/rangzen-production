@@ -203,9 +203,10 @@ public class PostActivity extends AppCompatActivity {
                                     if (value > seekBar.getMax()) {
                                         value = seekBar.getMax();
                                         seekBarTv.setText(String.valueOf(value));
+                                        seekBarTv.selectAll();
                                     }
                                 } catch (NumberFormatException e){
-                                    //do nothing
+                                    value = 0;
                                 }
                                 seekBar.setProgress(value);
                             }
