@@ -27,7 +27,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/profile_flexible"
-                android:layout_margin="@dimen/settings_fragment_margin"/>
+                android:layout_marginLeft="@dimen/settings_fragment_margin"
+                android:paddingTop="@dimen/settings_fragment_margin"
+                android:paddingBottom="@dimen/settings_fragment_margin"
+                android:paddingRight="@dimen/settings_fragment_margin"/>
 
             <View style="@style/SettingsDivider"/>
 
@@ -37,7 +40,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/profile_strict"
-                android:layout_margin="@dimen/settings_fragment_margin"/>
+                android:layout_marginLeft="@dimen/settings_fragment_margin"
+                android:paddingTop="@dimen/settings_fragment_margin"
+                android:paddingBottom="@dimen/settings_fragment_margin"
+                android:paddingRight="@dimen/settings_fragment_margin"/>
 
             <View style="@style/SettingsDivider"/>
 
@@ -47,19 +53,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/profile_custom"
-                android:layout_marginBottom="0dp"
-                android:layout_marginRight="@dimen/settings_fragment_margin"
-                android:layout_marginTop="@dimen/settings_fragment_margin"
-                android:layout_marginLeft="@dimen/settings_fragment_margin"/>
+                android:layout_marginLeft="@dimen/settings_fragment_margin"
+                android:paddingTop="@dimen/settings_fragment_margin"
+                android:paddingBottom="@dimen/settings_fragment_margin"
+                android:paddingRight="@dimen/settings_fragment_margin"/>
 
             <TextView
                 style="@style/SettingsAnnotation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/profile_custom_annotation"
-                android:layout_marginBottom="@dimen/settings_fragment_margin"
+                android:layout_marginBottom="5dp"
                 android:layout_marginRight="@dimen/settings_fragment_margin"
-                android:layout_marginTop="0dp"
+                android:layout_marginTop="-15dp"
                 android:layout_marginLeft="70dp"/>
 
             <View style="@style/SettingsDivider"/>
