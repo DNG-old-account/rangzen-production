@@ -260,7 +260,8 @@ public class ContactFragment extends Fragment implements AdapterView.OnItemClick
         if(profile.isFriendsViaBook() ^ profile.isFriendsViaQR()){
             if(profile.isFriendsViaBook()){
                 openPhonebook();
-            }{
+            } else {
+
                 openScanner();
             }
         } else {

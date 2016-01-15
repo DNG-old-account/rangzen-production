@@ -32,6 +32,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
+                android:singleLine="true"
                 android:visibility="gone"/>
 
             <Spinner

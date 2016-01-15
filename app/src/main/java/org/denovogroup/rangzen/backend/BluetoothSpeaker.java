@@ -112,11 +112,12 @@ public class BluetoothSpeaker {
        // states that apps should never turn on Bluetooth without explicit
        // user interaction. We should instead prompt the user with the
        // Android built-in intent for asking to turn on Bluetooth.
-      if (mBluetoothAdapter.enable()) {
+      /*if (mBluetoothAdapter.enable()) {
         Log.i(TAG, "Enabling Bluetooth.");
       } else {
         Log.e(TAG, "Attempt to enable Bluetooth returned false.");
-      }
+      }*/
+
 
     } 
     if (mBluetoothAdapter.isEnabled()) {
@@ -127,6 +128,8 @@ public class BluetoothSpeaker {
         Log.e(TAG, "Failed to create listening BT server socket. " + e);
         Log.e(TAG, "Can't receive incoming connections.");
       }
+    } else {
+        mBluetoothBroadcastReceiver.showNoBluetoothNotification(context);
     }
     Log.d(TAG, "Finished creating BluetoothSpeaker.");
   }

@@ -67,6 +67,18 @@ public class Utils {
         return (int)TimeUnit.MILLISECONDS.toHours(Math.abs(milli - todaymilli));
     }
 
+    public static int convertTimestampToRelativeHoursRound(long milli){
+
+        long todaymilli = Calendar.getInstance().getTimeInMillis();
+
+        int hours = (int)TimeUnit.MILLISECONDS.toHours(Math.abs(milli - todaymilli));
+        int min = (int)TimeUnit.MILLISECONDS.toMinutes(Math.abs(milli - todaymilli)) - (int)TimeUnit.HOURS.toMinutes(hours);
+
+        float hoursFloat = hours +(min/60f);
+
+        return Math.round(hoursFloat);
+    }
+
     /** Convert a timestamp in compact format (dd-MM-yyyy) into milliseconds
      * @param timestring a string in the format of dd-MM-yyyy
      * @return the amount of milliseconds representing the date in the string

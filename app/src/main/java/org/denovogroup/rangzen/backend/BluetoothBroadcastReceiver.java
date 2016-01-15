@@ -149,7 +149,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
     /** create and display a dialog prompting the user about the enabled
      * state of the bluetooth service.
      */
-    private void showNoBluetoothNotification(Context context){
+    public void showNoBluetoothNotification(Context context){
         if(context == null) return;
 
         int notificationId = R.string.dialog_no_bluetooth_message;
@@ -178,7 +178,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
                 .setContentText(context.getText(R.string.dialog_no_bluetooth_message))
                 .setLargeIcon(largeIcon)
                 .setContentIntent(pendingIntent)
-                .setSmallIcon(R.mipmap.blank_pixel)
+                .setSmallIcon(R.mipmap.ic_launcher_small)
                 .build();
         mNotificationManager.notify(notificationId, notification);
     }

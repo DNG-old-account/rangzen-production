@@ -261,13 +261,13 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
             case R.id.switch_add_via_phone:
                 currentProfile.setFriendsViaBook(isChecked);
                 if(!isChecked && !currentProfile.isFriendsViaQR()){
-                    ((Switch) getView().findViewById(R.id.switch_add_via_qr)).setChecked(true);
+                    currentProfile.setFriendsViaQR(true);
                 }
                 break;
             case R.id.switch_add_via_qr:
                 currentProfile.setFriendsViaQR(isChecked);
                 if(!isChecked && !currentProfile.isFriendsViaBook()){
-                    ((Switch) getView().findViewById(R.id.switch_add_via_phone)).setChecked(true);
+                    currentProfile.setFriendsViaBook(true);
                 }
                 break;
         }

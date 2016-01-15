@@ -140,7 +140,7 @@ public class FeedAdapter extends CursorAdapter {
         long timebound = cursor.getLong(timebound_colIndex);
         long timstamp = cursor.getLong(timestamp_colIndex);
 
-        String timeboundString = (timebound > 0) ?  context.getString(R.string.self_distruct_in)+" "+Utils.convertTimestampToRelativeHours(timstamp + timebound)+context.getString(R.string.hours_short) : null;
+        String timeboundString = (timebound > 0) ?  context.getString(R.string.self_distruct_in)+" "+Utils.convertTimestampToRelativeHoursRound(timstamp + timebound)+context.getString(R.string.hours_short) : null;
 
         int age = timstamp > 0 ? Utils.convertTimestampToRelativeHours(timstamp) : -1;
         String timestampString = null;

@@ -41,7 +41,9 @@ import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager.ActionListener;
@@ -188,6 +190,11 @@ public class WifiDirectSpeaker {
     intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
     intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
     context.registerReceiver(this, intentFilter);*/
+
+      WifiManager wifi = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
+      if (!wifi.isWifiEnabled()){
+          showNoWifiNotification(context);
+      }
 
     Log.d(TAG, "Finished creating WifiDirectSpeaker.");
       initialized = true;
@@ -524,7 +531,7 @@ public class WifiDirectSpeaker {
         Notification notification = new Notification.Builder(mContext).setContentTitle(mContext.getText(R.string.dialog_no_wifi_title))
                 .setContentText(mContext.getText(R.string.dialog_no_wifi_message))
                 .setLargeIcon(largeIcon)
-                .setSmallIcon(R.mipmap.blank_pixel)
+                .setSmallIcon(R.mipmap.ic_launcher_small)
                 .setContentIntent(pendingIntent)
                 .build();
         mNotificationManager.notify(notificationId, notification);

@@ -281,10 +281,16 @@ public class MessageStore extends SQLiteOpenHelper {
 
             String likeQuery ="";
 
-            if(message.length() == 0) likeQuery =  (COL_MESSAGE + " LIKE '%" + message + "%'");
+            String messageNoSpace = message.replaceAll("\\s","");
+
+            if(message.length() == 0 || messageNoSpace.length() == 0) likeQuery =  (COL_MESSAGE + " LIKE '%" + message + "%'");
 
             if(likeQuery.length() == 0){
                 message = message.replaceAll("[\n\"]", " ");
+
+                while(message.charAt(0) == ' '){
+                    message = message.substring(1);
+                }
 
                 String[] words = message.split("\\s");
 
@@ -295,7 +301,10 @@ public class MessageStore extends SQLiteOpenHelper {
 
                     likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
                 }
+
+                Log.w("liran", "searching with like:" + likeQuery);
             }
+
             String query = "SELECT * FROM " + TABLE +
                     " WHERE " + likeQuery
                     + (!getReplies ? "AND ("+COL_BIGPARENT+ " IS NULL OR "+COL_BIGPARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+ "))" : "")
@@ -338,7 +347,7 @@ public class MessageStore extends SQLiteOpenHelper {
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null){
-            String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + message + "'"
+            String query = "SELECT * FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + Utils.makeTextSafeForSQL(message) + "'"
                     +(!getDeleted ? " AND "+COL_DELETED+"="+FALSE : "")
                     +" LIMIT 1;";
             return db.rawQuery(query, null);
@@ -577,7 +586,7 @@ public class MessageStore extends SQLiteOpenHelper {
      * @return True if the message was in the store (and its priority was changed),
      * false otherwise.
      */
-    public boolean updateTrust(String message, double trust, boolean enforceLimit) {
+    public boolean updateMessage(String message, double trust, boolean enforceLimit/*, int likes*/) {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
             if(enforceLimit){
@@ -585,7 +594,10 @@ public class MessageStore extends SQLiteOpenHelper {
             } else {
                 checkTrust(trust);
             }
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_TRUST+"="+trust+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
+            db.execSQL("UPDATE "+TABLE+" SET "
+                            +COL_TRUST+"="+trust
+                            //+COL_LIKES+"="+likes+","
+                    +" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
             Log.d(TAG, "Message trust changed in the store.");
             return true;
@@ -602,7 +614,7 @@ public class MessageStore extends SQLiteOpenHelper {
      * @return True if the message was in the store (and its priority was changed),
      * false otherwise.
      */
-    public boolean updateTrust(String message, int priority) {
+    public boolean updateMessage(String message, int priority) {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
             db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");

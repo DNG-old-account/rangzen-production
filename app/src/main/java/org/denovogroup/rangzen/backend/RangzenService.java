@@ -461,7 +461,7 @@ public class RangzenService extends Service {
           try {
             if (mMessageStore.containsOrRemoved(message.text)){
                 //update existing message priority unless its marked as removed by user
-                mMessageStore.updateTrust(message.text, newTrust, true);
+                mMessageStore.updateMessage(message.text, newTrust, true);
             } else {
                 hasNew = true;
 
@@ -525,7 +525,7 @@ public class RangzenService extends Service {
                     try {
                         if (mMessageStore.containsOrRemoved(message.text)){
                             //update existing message priority unless its marked as removed by user
-                            mMessageStore.updateTrust(message.text, newTrust, true);
+                            mMessageStore.updateMessage(message.text, newTrust, true);
                         } else {
                             hasNew = true;
                             mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop, exchange.toString(), message.bigparent);
@@ -665,7 +665,7 @@ public class RangzenService extends Service {
         builder.setLargeIcon(largeIcon);
         builder.setAutoCancel(true);
         builder.setTicker(getText(R.string.unread_notification_content));
-        builder.setSmallIcon(R.mipmap.blank_pixel);
+        builder.setSmallIcon(R.mipmap.ic_launcher_small);
         builder.setDefaults(Notification.DEFAULT_SOUND);
 
         NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);

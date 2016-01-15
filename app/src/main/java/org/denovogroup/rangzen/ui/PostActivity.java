@@ -300,7 +300,7 @@ public class PostActivity extends AppCompatActivity {
                 SecurityProfile currentProfile = org.denovogroup.rangzen.backend.SecurityManager.getCurrentProfile(PostActivity.this);
                 String pseudonym = currentProfile.isPseudonyms() ?
                         SecurityManager.getCurrentPseudonym(PostActivity.this) : "";
-                long timestamp = currentProfile.isTimestamp() ?
+                long timestamp = (currentProfile.isTimestamp() || timebound > 0) ?
                         System.currentTimeMillis() : 0;
 
 
