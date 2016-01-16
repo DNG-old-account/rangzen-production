@@ -176,6 +176,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         Bundle args = getArguments();
         if(args != null && args.containsKey(HASHTAG)){
            searchHashTagFromClick(args.getString(HASHTAG));
+            args.remove(HASHTAG);
         }
 
         return v;
