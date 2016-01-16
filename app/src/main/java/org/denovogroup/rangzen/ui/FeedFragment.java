@@ -297,10 +297,14 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
 
         @Override
         public void onReply(String parentId, String sender) {
-            Intent intent = new Intent(getActivity(), PostActivity.class);
-            intent.putExtra(PostActivity.MESSAGE_PARENT, parentId);
-            intent.putExtra(PostActivity.MESSAGE_BODY, "@"+sender+" ");
-            startActivityForResult(intent, REQ_CODE_MESSAGE);
+            if (MessageStore.getInstance(getActivity()).getCommentCount(parentId) <= 0) {
+                Intent intent = new Intent(getActivity(), PostActivity.class);
+                intent.putExtra(PostActivity.MESSAGE_PARENT, parentId);
+                if(sender != null && sender.length() > 0) intent.putExtra(PostActivity.MESSAGE_BODY, "@"+sender+" ");
+                startActivityForResult(intent, REQ_CODE_MESSAGE);
+            } else if (getActivity() instanceof FeedFragmentCallbacks) {
+                ((FeedFragmentCallbacks) getActivity()).onFeedItemExpand(parentId);
+            }
         }
     };
 
@@ -326,7 +330,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         feedListView.setSelectionFromTop(firstVisiblePosition, offsetFromTop);
     }
 
-    private void setListView(){
+    private void setListView() {
         feedListView.setAdapter(new FeedAdapter(getActivity(), getCursor(), inSelectionMode, feedAdapterCallbacks));
         if(inSelectionMode) {
             setListInSelectionMode();
@@ -399,7 +403,6 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                     ((FeedFragmentCallbacks) getActivity()).onFeedItemExpand(messageId);
                     //}
                 }
-
             }
         });
         swapCursor();

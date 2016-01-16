@@ -131,7 +131,6 @@ public class FeedAdapter extends CursorAdapter {
         viewHolder = (ViewHolder) view.getTag();
 
         //set content
-        //set content
         if(currentProfile.isPseudonyms()){
             String pseudonym = cursor.getString(pseudonym_colIndex);
             viewHolder.pseudonym.setText(pseudonym != null && pseudonym.length() > 0 ? "@"+cursor.getString(pseudonym_colIndex) : "");
@@ -192,7 +191,7 @@ public class FeedAdapter extends CursorAdapter {
             viewHolder.favorite.setOnClickListener(clickListener);
             viewHolder.navigate.setOnClickListener(clickListener);
             viewHolder.likes.setOnClickListener(clickListener);
-            //viewHolder.replies.setOnClickListener(clickListener);
+            viewHolder.replies.setOnClickListener(clickListener);
         }
     }
 

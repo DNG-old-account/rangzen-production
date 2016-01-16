@@ -69,7 +69,7 @@
     <string name="delete_by_exchange">Delete messages from same exchange</string>
 
     <string name="days_short">d</string>
-    <string name="just_now">just now</string>
+    <string name="just_now">last hour</string>
     <string name="today">today</string>
     <string name="h_ago">hr ago</string>
     <string name="d_ago">d ago</string>
@@ -164,7 +164,7 @@
 
     <string name="help_title3">How do I add my location to a new message?</string>
     <string name="help_content3">If you wish to add your current location to a message then tap on the location icon in the New Post screen. Note, this requires Android\'s location services (GPS) to be on.</string>
-    <string name="more_help">All F&amp;Q</string>
+    <string name="more_help"><u>More FAQ</u></string>
     <string name="intro_3">Help Study Anonymous Messaging</string>
     <string name="intro_2">Pass Other Murmur Users and Share Messages</string>
     <string name="skip_welcome">SKIP</string>
@@ -172,5 +172,6 @@
     <string name="contact_add_conf">Contact Added</string>
     <string name="contact_exist">Already in contacts</string>
     <string name="contact_add_fail">Selected contact doesn\'t have a phone number</string>
+    <string name="comments">Comment</string>
 
 </resources>

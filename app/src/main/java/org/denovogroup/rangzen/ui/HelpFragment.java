@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,6 +47,8 @@ public class HelpFragment extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         final View view = inflater.inflate(R.layout.help_fragment, container, false);
+
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.drawer_menu_help);
 
         listView = (ExpandableListView) view.findViewById(R.id.listView);
 

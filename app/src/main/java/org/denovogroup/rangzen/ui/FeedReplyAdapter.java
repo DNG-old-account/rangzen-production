@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,7 @@ public class FeedReplyAdapter extends CursorAdapter {
 
     private ViewHolder viewHolder;
     SecurityProfile securityProfile;
+    ViewGroup parent;
 
     String[] colors = new String[]{
             "#ef9a9a",
@@ -50,6 +52,7 @@ public class FeedReplyAdapter extends CursorAdapter {
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        this.parent = parent;
         View convertView = LayoutInflater.from(context).inflate(R.layout.feed_item_reply, parent, false);
 
         viewHolder = new ViewHolder();
@@ -69,19 +72,28 @@ public class FeedReplyAdapter extends CursorAdapter {
         viewHolder = (ViewHolder) view.getTag();
 
         int position = cursor.getPosition();
+        int poolSize = colors.length;
+        int offset = (int) Math.floor(position/poolSize);
 
-        for(int i = colors.length; i > 0; i--){
-            //Log.d("liran","p:"+position+" i:"+i+" m:"+(position % i));
-            if(position % i == 0){
-                viewHolder.deadSpace.getLayoutParams().width = viewHolder.colorTab.getLayoutParams().width *  (i-1);
-                viewHolder.deadSpace.invalidate();
-                viewHolder.colorTab.setBackground(new ColorDrawable(Color.parseColor(colors[i - 1])));
-                break;
+        if(position == 0){
+            viewHolder.deadSpace.getLayoutParams().width = 0;
+            viewHolder.deadSpace.invalidate();
+            viewHolder.colorTab.setBackground(new ColorDrawable(Color.parseColor(colors[0])));
+        } else {
+            for (int i = poolSize; i > 0; i--) {
+                if ((position - offset * poolSize) % i == 0) {
+                    int innerOffset = offset > 0 ? -1 : 0;
+                    viewHolder.deadSpace.getLayoutParams().width = viewHolder.colorTab.getLayoutParams().width * (i+innerOffset);
+                    viewHolder.deadSpace.invalidate();
+                    viewHolder.colorTab.setBackground(new ColorDrawable(Color.parseColor(colors[i+innerOffset])));
+                    break;
+                }
             }
         }
 
         viewHolder.message.setText(cursor.getString(message_colIndex));
-        viewHolder.pseudonym.setText(securityProfile.isPseudonyms() ? "@"+cursor.getString(pseudonym_colIndex) : "");
+        String pseudonymString = securityProfile.isPseudonyms() ? cursor.getString(pseudonym_colIndex) : "";
+        viewHolder.pseudonym.setText(pseudonymString.length() > 0 ? "@" + pseudonymString : "");
 
         //get timestamp in proper format
         long timstamp = cursor.getLong(timestamp_colIndex);

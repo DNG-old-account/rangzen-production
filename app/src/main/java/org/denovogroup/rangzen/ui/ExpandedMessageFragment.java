@@ -107,6 +107,7 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher, Fr
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(false);
+        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(R.string.comments);
 
         messageId = getArguments().getString(MESSAGE_ID_KEY);
 
@@ -281,7 +282,7 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher, Fr
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if(actionBar != null) {
             actionBar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources().getColor(inSearchMode ? android.R.color.white : R.color.app_purple)));
-            actionBar.setTitle(inSearchMode ? R.string.empty_string : R.string.feed);
+            actionBar.setTitle(inSearchMode ? R.string.empty_string : R.string.comments);
 
             if(inSearchMode) actionBar.setHomeAsUpIndicator(R.drawable.ic_close_dark);
         }
