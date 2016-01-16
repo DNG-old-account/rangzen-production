@@ -385,6 +385,8 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                 int trustColIndex = cursor.getColumnIndex(MessageStore.COL_TRUST);
                 int likesColIndex = cursor.getColumnIndex(MessageStore.COL_LIKES);
                 int pseudoColIndex = cursor.getColumnIndex(MessageStore.COL_PSEUDONYM);
+                int restrictedColIndex = cursor.getColumnIndex(MessageStore.COL_MIN_CONTACTS_FOR_HOP);
+                int locationColIndex = cursor.getColumnIndex(MessageStore.COL_LATLONG);
 
                 File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+File.separator+getString(R.string.export_subdiractory));
                 if(!dir.exists()){
@@ -406,6 +408,8 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                             + "\""+MessageStore.COL_TRUST+"\","
                             + "\""+MessageStore.COL_LIKES+"\","
                             + (profile.isPseudonyms() ? "\""+MessageStore.COL_PSEUDONYM +"\"," : "")
+                            + (profile.isShareLocation() ? "\""+MessageStore.COL_LATLONG +"\"," : "")
+                            + "\""+MessageStore.COL_MIN_CONTACTS_FOR_HOP+"\","
                             + "\"" + MessageStore.COL_MESSAGE+"\"";
 
                     bos.write(colTitlesLine);
@@ -417,6 +421,8 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                                 + "\""+(cursor.getFloat(trustColIndex)*100)+"\","
                                 + "\""+(cursor.getInt(likesColIndex))+"\","
                                 + (profile.isPseudonyms() ? "\""+(cursor.getString(pseudoColIndex)) +"\"," : "")
+                                + (profile.isShareLocation() ? "\""+(cursor.getString(locationColIndex)) +"\"," : "")
+                                + "\""+(cursor.getInt(restrictedColIndex) > 0)+"\","
                                 + "\"" + formatMessageForCSV(cursor.getString(messageColIndex))+"\"";
                         bos.write(line);
                         bos.write(newLine); //due to a bug in windows notepad text will be displayed as a long string instead of multiline, this is a note-pad specific problem

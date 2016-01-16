@@ -70,27 +70,27 @@ public class MessageStore extends SQLiteOpenHelper {
     private static final double DEFAULT_PRIORITY = 0;
 
     private static final String DATABASE_NAME = "MessageStore.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 1;
 
     private static final String TABLE = "Messages";
     public static final String COL_ROWID = "_id";
     public static final String COL_MESSAGE_ID = "messageId";
-    public static final String COL_MESSAGE = "message";
-    public static final String COL_TRUST = "trust";
-    public static final String COL_LIKES = "likes";
-    public static final String COL_LIKED = "liked";
-    public static final String COL_PSEUDONYM = "pseudonym";
+    public static final String COL_MESSAGE = "Message";
+    public static final String COL_TRUST = "Connection_score";
+    public static final String COL_LIKES = "Endorsements";
+    public static final String COL_LIKED = "Endorsed";
+    public static final String COL_PSEUDONYM = "Nickname";
     public static final String COL_TIMESTAMP = "timestamp";
     private static final String COL_DELETED = "deleted";
     public static final String COL_READ = "read";
     public static final String COL_EXPIRE = "expire";
-    public static final String COL_LATLONG = "location";
+    public static final String COL_LATLONG = "Location";
     public static final String COL_BIGPARENT = "bigparent";
     public static final String COL_PARENT = "parent";
     public static final String COL_FAVIRITE = "favorited";
     public static final String COL_CHECKED = "checked";
     public static final String COL_EXCHANGE = "exchange";
-    public static final String COL_MIN_CONTACTS_FOR_HOP = "min_contacts_hop";
+    public static final String COL_MIN_CONTACTS_FOR_HOP = "Restricted";
     public static final String COL_HOP = "hop";
 
     private static final String[] defaultSort = new String[]{COL_DELETED,COL_READ};
