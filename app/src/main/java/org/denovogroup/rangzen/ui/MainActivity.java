@@ -237,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
 
             switch (v.getId()){
                 case R.id.drawer_menu_contact:
-                    frag = new ContactFragment();
+                    frag = new ContactsFragment();
                     break;
                 case R.id.drawer_menu_export_feed:
                     exportFeed();
@@ -348,7 +348,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         Log.i(TAG, "Got activity result");
         super.onActivityResult(requestCode, resultCode, data);
         Fragment fragment = getSupportFragmentManager().findFragmentById(contentHolder.getId());
-        if(fragment != null && fragment instanceof ContactFragment){
+        if(fragment != null && fragment instanceof ContactsFragment){
             fragment.onActivityResult(requestCode,resultCode,data);
         }
     }

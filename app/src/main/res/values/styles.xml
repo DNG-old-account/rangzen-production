@@ -141,6 +141,8 @@
         <item name="android:editTextStyle">@style/AppTheme.EditText</item>
         <item name="android:radioButtonStyle">@style/AppTheme.RadioButton</item>
         <item name="android:alertDialogTheme">@style/Theme_Sphinx_Dialog_Alert</item>
+        <item name="android:titleTextStyle">@style/TitleTextStyle</item>
+        <item name="android:checkboxStyle">@style/AppTheme.CheckBox</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -149,6 +151,7 @@
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
         <item name="android:windowActionModeOverlay">true</item>
         <item name="windowActionModeOverlay">true</item>
+        <item name="android:titleTextStyle">@style/TitleTextStyle</item>
     </style>
 
     <style name="AppTheme.ActionBar" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -299,6 +302,7 @@
 
     <style name="TitleTextStyle" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
         <item name="android:textColor">@android:color/white</item>
+        <item name="android:ellipsize">none</item>
     </style>
 
     <style name="Seekbar">
