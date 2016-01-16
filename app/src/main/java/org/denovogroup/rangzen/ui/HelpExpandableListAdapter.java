@@ -1,6 +1,7 @@
 package org.denovogroup.rangzen.ui;
 
 import android.content.Context;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -81,7 +82,7 @@ public class HelpExpandableListAdapter extends BaseExpandableListAdapter {
         if(convertView == null){
             convertView = LayoutInflater.from(context).inflate(R.layout.help_body, parent, false);
         }
-        ((TextView) convertView.findViewById(R.id.help_body)).setText((String) getChild(groupPosition, childPosition));
+        ((TextView) convertView.findViewById(R.id.help_body)).setText(Html.fromHtml((String)getChild(groupPosition, childPosition)));
 
         convertView.findViewById(R.id.shadow).setVisibility(isLastChild ? View.VISIBLE : View.GONE);
 

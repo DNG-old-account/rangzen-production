@@ -155,15 +155,6 @@
     <string name="include_log_prompt">Include device log</string>
     <string name="feedback_send">SEND FEEDBACK</string>
 
-    <!-- help content -->
-    <string name="help_title1">How to use the Feed ?</string>
-    <string name="help_content1">The feed is the main screen in the app that includes all the messages and allows you to sort and search through them. Messages in the feed include at the top the nickname, and at the bottom connection score, location, endorsement and replies (note, not every message will include all these parameters, see more below).You can sort the messages in the feed by time, endorsements or connection score. To search through the feed enter a nickname, hashtag or keyword. You can also follow specific hashtags or nicknames by adding them in the Followed screen.</string>
-
-    <string name="help_title2">How to post a message?</string>
-    <string name="help_content2">Tap on the plus button to opens the New Post screen, enter the message and tap the arrow button at the top right.</string>
-
-    <string name="help_title3">How do I add my location to a new message?</string>
-    <string name="help_content3">If you wish to add your current location to a message then tap on the location icon in the New Post screen. Note, this requires Android\'s location services (GPS) to be on.</string>
     <string name="more_help"><u>More FAQ</u></string>
     <string name="intro_3">Help Study Anonymous Messaging</string>
     <string name="intro_2">Pass Other Murmur Users and Share Messages</string>
@@ -173,5 +164,57 @@
     <string name="contact_exist">Already in contacts</string>
     <string name="contact_add_fail">Selected contact doesn\'t have a phone number</string>
     <string name="comments">Comment</string>
+
+    <!-- help content -->
+    <string name="help_title1">How to use the Feed ?</string>
+    <string name="help_content1">The feed is the main screen in the app that includes all the messages and allows you to sort and search through them. Messages in the feed include at the top the nickname, and at the bottom connection score, location, endorsement and replies (note, not every message will include all these parameters, see more below).You can sort the messages in the feed by time, endorsements or connection score. To search through the feed enter a nickname, hashtag or keyword. You can also follow specific hashtags or nicknames by adding them in the Followed screen.</string>
+
+    <string name="help_title2">How to post a message?</string>
+    <string name="help_content2">Tap on the plus button to opens the New Post screen, enter the message and tap the arrow button at the top right. </string>
+
+    <string name="help_title3">How do I add my location to a new message?</string>
+    <string name="help_content3">If you wish to add your current location to a message then tap on the location icon in the New Post screen. Note, this requires Android\'s location services (GPS) to be on.</string>
+
+    <string name="help_title4">What is a restricted message and how do I send one?</string>
+    <string name="help_content4">A restricted message will be exchanged only with peers who have at least a certain number of mutual contacts with you. You can configure the minimum number of mutual contacts in the Settings screen under Restricted Messages. To send a restricted message simply tap on the restricted icon in the New Post screen.</string>
+
+    <string name="help_title5">What is a self-destruct message and how do I send one?</string>
+    <string name="help_content5">A self-destruct message will be exchanged only between you and any user you connect to directly. It will not get forwarded from those users to other users. You can configure the duration in hours the message will be available in the Settings screen under Self-destruct duration. Once the duration configured for the message has elapsed each app will delete automatically that message from its feed, for instance if the self-destruct is set for 2 hours then each user that receives the message will have 2 hours from the time received to view the message until it is deleted. Note, this option does not guarantee that the message is not copied or forwarded to other users - it simply automatically deletes the message from the recipient and limits its forwarding to other users. To send a self-destruct message simply tap on the self-destruct icon in the New Post screen.</string>
+
+    <string name="help_title6">How do I configure a nickname?</string>
+    <string name="help_content6">To configure a nickname go to Profile screen in the left navigation menu, enter your nickname and tap the check icon on top right.</string>
+
+    <string name="help_title7">How do messages spread in Murmur?</string>
+    <string name="help_content7">Messages in Murmur spread openly between all users. Whenever two users connect, they exchange all the messages they have between them. Messages are sent in plain-text (i.e. are not encrypted) and are broadcasted to the entire Murmur network. Because messages are spread from one device to another using Bluetooth, there could be significant delay between the time a message was sent and the time it was received by all or most of the users on the network. The delay depends on the density of the users and how frequently they are in proximity to each other. To expedite the time it takes for messages to spread in the network, users can coordinate message exchanges (e.g. decide on a certain time and location to meet). Further, users can apply further restrictions such as setting a message as self-destruct or restricted, or limiting the number of messages in each exchange.</string>
+
+    <string name="help_title8">How do I add contacts in Murmur?</string>
+    <string name="help_content8">To add contacts go to Contacts screen from left navigation menu and select the method you would like to add contacts - QR Code or Address Book based (note these options depend on what is configured in Settings screen). If QR Code is selected a scanner screen is opened, have your contact open their Profile screen, scan their QR code and enter a nickname for that contact.  If Address Book is selected then select the contact(s) you wish to add from the Address Book.</string>
+
+    <string name="help_title9">How do I set up Murmur?</string>
+    <string name="help_content9"><![CDATA[Go to the Settings screen from left navigation menu and select either one of the preconfigured profiles or choose a custom one by changing specific settings (we recommend this only to advanced users).<br><br>There are two preconfigured settings:<br><br>&#8226; <b>More features / less security</b> - provides more functionality including nicknames, timestamps, location tagging, etc in exchange for less security - namely, less anonymity and less protections against spam.<br>&#8226; <b>More security / less features</b> - provide less functionality in exchange for more security - namely, more anonymity and more protections against spam.<br><br>The settings are divided to categories:<br><br>General<br><br>&#8226; <b>Timestamps</b> - if enabled, posted messages receive a timestamp (resolution of days) and the feed displays the timestamp of messages received (if available). If disabled, then no timestamp is added to posted messages and the feed does not display any timestamp (nor are timestamps retained in the app’s database).<br>&#8226; <b>Connection score</b> - if enabled, a connection score is calculated per message as part of any message exchange and presented accordingly in the feed.<br>&#8226; <b>Location tagging</b> - if enabled, user can add their location to a posted message.<br>&#8226; <b>Nicknames</b> - if enabled, posted messages will automated have a nickname added to them. The nickname is set up in the Profile screen.<br><br>Feed<br><br>&#8226; <b>Auto-delete messages</b> - allows you to set a criteria for automatically deleting messages: 1) connection score - deletes messages with score below the set threshold 2) older than - deletes messages that have been received more than the preset threshold before. Messages that do not meet either of the criteria will be automatically deleted.<br><br>Contacts<br><br>&#8226; <b>Add contacts via address book</b> - if enabled you can add contacts directly from address book<br>&#8226; <b>Add contacts via QR code</b> - if enabled you can add contacts using QR codes which requires physical proximity to a contact.<br><br>Exchanges<br><br>&#8226; <b>Maximum messages per exchange</b> - limits the number of messages in a given exchange with another user<br>&#8226; <b>Timeout between exchanges</b> - defines a timeout in seconds between any two exchanges.<br>]]></string>
+
+    <string name="help_title10">What is a connection score?</string>
+    <string name="help_content10">a calculated score between 1 and 100 (the higher the better) that roughly represents how many mutual connections the message author and you share</string>
+
+    <string name="help_title11">How do I endorse a message?</string>
+    <string name="help_content11">Tap the endorse icon to endorse a message you like. The number next to the icon shows the cumulative number of endorsements a message has received.</string>
+
+    <string name="help_title12">How do I save a message?</string>
+    <string name="help_content12">Tap the star icon to save a message for easy access later on through the Starred menu</string>
+
+    <string name="help_title13">How do I reply to a message?</string>
+    <string name="help_content13">Tap on a message you wish to reply on. At the Comment screen click the reply button on the bottom right corner of the screen</string>
+
+    <string name="help_title14">What does the Reset button do?</string>
+    <string name="help_content14">The reset button completely erase all of your messages and remove any contact you have.</string>
+
+    <string name="help_title15">How do I export messages from Murmur?</string>
+    <string name="help_content15">From the side menu tap on \'Advanced\', then Tap on Export feed to downloads. Your current feed will be saved in CSV format in your downloads folder.</string>
+
+    <string name="help_title16">What does Offline mode mean?</string>
+    <string name="help_content16">During offline mode Murmur will not interact with other devices in any way, messages will not be sent or received and your device will not be discoverable by other copies of Murmur</string>
+
+    <string name="help_title17">How do I share the app with other users?</string>
+    <string name="help_content17">From the side menu tap on \'Share Murmur with someone\' then select an app to share with</string>
 
 </resources>

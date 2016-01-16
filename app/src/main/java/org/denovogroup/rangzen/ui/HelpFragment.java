@@ -110,6 +110,89 @@ public class HelpFragment extends Fragment{
         headers.add(header3);
         data.put(header3, body3);
 
+        String header4 = getString(R.string.help_title4);
+        List<String> body4 = new ArrayList<>();
+        body4.add(getString(R.string.help_content4));
+        headers.add(header4);
+        data.put(header4, body4);
+
+        String header5 = getString(R.string.help_title5);
+        List<String> body5 = new ArrayList<>();
+        body5.add(getString(R.string.help_content5));
+        headers.add(header5);
+        data.put(header5, body5);
+
+        String header6 = getString(R.string.help_title6);
+        List<String> body6 = new ArrayList<>();
+        body6.add(getString(R.string.help_content6));
+        headers.add(header6);
+        data.put(header6, body6);
+
+        String header7 = getString(R.string.help_title7);
+        List<String> body7 = new ArrayList<>();
+        body7.add(getString(R.string.help_content7));
+        headers.add(header7);
+        data.put(header7, body7);
+
+        String header8 = getString(R.string.help_title8);
+        List<String> body8 = new ArrayList<>();
+        body8.add(getString(R.string.help_content8));
+        headers.add(header8);
+        data.put(header8, body8);
+
+        String header9 = getString(R.string.help_title9);
+        List<String> body9 = new ArrayList<>();
+        body9.add(getString(R.string.help_content9));
+        headers.add(header9);
+        data.put(header9, body9);
+
+        String header10 = getString(R.string.help_title10);
+        List<String> body10 = new ArrayList<>();
+        body10.add(getString(R.string.help_content10));
+        headers.add(header10);
+        data.put(header10, body10);
+
+        String header11 = getString(R.string.help_title11);
+        List<String> body11 = new ArrayList<>();
+        body11.add(getString(R.string.help_content11));
+        headers.add(header11);
+        data.put(header11, body11);
+
+        String header12 = getString(R.string.help_title12);
+        List<String> body12 = new ArrayList<>();
+        body12.add(getString(R.string.help_content12));
+        headers.add(header12);
+        data.put(header12, body12);
+
+        String header13 = getString(R.string.help_title13);
+        List<String> body13 = new ArrayList<>();
+        body13.add(getString(R.string.help_content13));
+        headers.add(header13);
+        data.put(header13, body13);
+
+        String header14 = getString(R.string.help_title14);
+        List<String> body14 = new ArrayList<>();
+        body14.add(getString(R.string.help_content14));
+        headers.add(header14);
+        data.put(header14, body14);
+
+        String header15 = getString(R.string.help_title15);
+        List<String> body15 = new ArrayList<>();
+        body15.add(getString(R.string.help_content15));
+        headers.add(header15);
+        data.put(header15, body15);
+
+        String header16 = getString(R.string.help_title16);
+        List<String> body16 = new ArrayList<>();
+        body16.add(getString(R.string.help_content16));
+        headers.add(header16);
+        data.put(header16, body16);
+
+        String header17 = getString(R.string.help_title17);
+        List<String> body17 = new ArrayList<>();
+        body17.add(getString(R.string.help_content17));
+        headers.add(header17);
+        data.put(header17, body17);
     }
 
     private void openEmailSendingForm(boolean includeLog){
