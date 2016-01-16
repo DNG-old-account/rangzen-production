@@ -79,17 +79,17 @@
 
     <style name="Configure_friend_field_title">
         <item name="android:textColor">@color/drawer_menu_grey_icon</item>
-        <item name="android:textSize">17sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginBottom">5dp</item>
+        <item name="android:layout_marginTop">10dp</item>
     </style>
 
     <style name="Configure_friend_field_input">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:singleLine">true</item>
-        <item name="android:layout_marginBottom">10dp</item>
     </style>
 
     <style name="Pager_title_strip">
@@ -349,11 +349,11 @@
 
     <style name="Seekbar.Metric.left" parent="@style/Seekbar.Metric">
         <item name="android:gravity">left|top</item>
-        <item name="android:layout_marginLeft">17dp</item>
+        <item name="android:layout_marginLeft">15dp</item>
     </style>
 
     <style name="Seekbar.Metric.right" parent="@style/Seekbar.Metric">
         <item name="android:gravity">right|top</item>
-        <item name="android:layout_marginRight">17dp</item>
+        <item name="android:layout_marginRight">15dp</item>
     </style>
 </resources>
