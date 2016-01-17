@@ -64,16 +64,16 @@
     <string name="retweet">Retweet</string>
     <string name="share">Share</string>
     <string name="delete">Delete</string>
-    <string name="delete_from_sender">Delete messages with same sender(s)</string>
-    <string name="delete_by_connection">Delete messages with same or lower connection</string>
-    <string name="delete_by_exchange">Delete messages from same exchange</string>
+    <string name="delete_from_sender">Same sender</string><!--Delete messages with same sender(s)-->
+    <string name="delete_by_connection">Same or lower connection</string><!--Delete messages with same or lower connection-->
+    <string name="delete_by_exchange">Same exchange</string><!--Delete messages from same exchange-->
 
     <string name="days_short">d</string>
     <string name="just_now">last hour</string>
     <string name="today">today</string>
     <string name="h_ago">hr ago</string>
     <string name="d_ago">d ago</string>
-    <string name="self_distruct_in">self-destruct in</string>
+    <string name="self_distruct_in">self-destructs in</string>
 
     <string name="delete_dialog_title">Delete items</string>
     <string name="delete_dialog_message1">Are you sure you wish to delete</string>
@@ -121,8 +121,8 @@
 
     <string name="settings_general_title">General</string>
     <string name="settings_network_title">Network</string>
-    <string name="settings_timestamp">Timestamp</string>
-    <string name="settings_trust">Connection scrores</string>
+    <string name="settings_timestamp">Timestamps</string>
+    <string name="settings_trust">Connection scores</string>
     <string name="settings_location_tagging">Location tagging</string>
     <string name="settings_pseudonym">Nicknames</string>
     <string name="settings_self_dest">Self-destruct duration</string>
@@ -163,7 +163,7 @@
     <string name="contact_add_conf">Contact Added</string>
     <string name="contact_exist">Already in contacts</string>
     <string name="contact_add_fail">Selected contact doesn\'t have a phone number</string>
-    <string name="comments">Comment</string>
+    <string name="comments">Replies</string>
 
     <string name="qr_scanner_message">Scan a Murmur QR code</string>
 

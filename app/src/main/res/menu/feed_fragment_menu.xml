@@ -25,14 +25,17 @@
 
         <item android:id="@+id/action_delete_from_sender"
               android:title="@string/delete_from_sender"
+              android:icon="@drawable/ic_trash_dark_full"
               compat:showAsAction="never"/>
 
         <item android:id="@+id/action_delete_by_connection"
               android:title="@string/delete_by_connection"
+              android:icon="@drawable/ic_trash_dark_full"
               compat:showAsAction="never"/>
 
         <item android:id="@+id/action_delete_by_exchange"
               android:title="@string/delete_by_exchange"
+              android:icon="@drawable/ic_trash_dark_full"
               compat:showAsAction="never"/>
     </group>
 </menu>

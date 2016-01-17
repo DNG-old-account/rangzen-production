@@ -422,7 +422,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if(actionBar != null) {
             actionBar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources().getColor(inSelectionMode ? R.color.toolbar_grey : inSearchMode ? android.R.color.white : R.color.app_yellow)));
-            actionBar.setTitle(inSelectionMode ? R.string.empty_string : (inSearchMode ? R.string.empty_string : R.string.feed));
+            actionBar.setTitle(inSelectionMode ? R.string.empty_string : (inSearchMode ? R.string.empty_string : R.string.starred));
         }
         if(menu != null) {
             menu.setGroupVisible(R.id.checked_only_actions, inSelectionMode);

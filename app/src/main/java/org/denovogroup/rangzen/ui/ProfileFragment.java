@@ -68,6 +68,7 @@ public class ProfileFragment extends Fragment implements ActionMode.Callback{
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
                     actionMode = ((AppCompatActivity) getActivity()).startSupportActionMode(ProfileFragment.this);
+                    actionMode.setCustomView(LayoutInflater.from(getActivity()).inflate(R.layout.actionmode_title, null, false));
                 } else {
                     pseudonym.setText(SecurityManager.getCurrentPseudonym(getActivity()));
                     if (actionMode != null) actionMode.finish();

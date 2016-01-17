@@ -61,7 +61,7 @@
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"
+            android:theme="@style/AppTheme.PostActivity"
             android:windowSoftInputMode="adjustResize"
             android:parentActivityName=".ui.MainActivity" >
             <!-- Parent activity meta-data to support 4.0 and lower -->

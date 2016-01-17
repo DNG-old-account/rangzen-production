@@ -2,10 +2,13 @@ package org.denovogroup.rangzen.ui;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.SharedPreferences;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -66,6 +69,9 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.drawer_menu_settings);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.app_dark_purple)));
 
         View view = inflater.inflate(R.layout.settings_fragment, container,false);
 
@@ -373,5 +379,17 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         if(isSinglePoint && isAppearingAtEnd){
             editText.setSelection(editText.length());
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        Drawable actionbarBg;
+        if(Build.VERSION.SDK_INT >= 21){
+            actionbarBg = getResources().getDrawable(R.drawable.actionbar_default_bg, null);
+        } else {
+            actionbarBg = getResources().getDrawable(R.drawable.actionbar_default_bg);
+        }
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setBackgroundDrawable(actionbarBg);
+        super.onDestroyView();
     }
 }

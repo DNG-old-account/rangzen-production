@@ -42,7 +42,8 @@
             android:id="@+id/feed_item_connection"
             android:drawableLeft="@drawable/feed_connection_icon"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="0dp"/>
 
         <View
             android:layout_width="0dp"

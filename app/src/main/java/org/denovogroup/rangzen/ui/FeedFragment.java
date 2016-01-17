@@ -259,6 +259,13 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         super.onCreateOptionsMenu(menu, inflater);
     }
 
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+
+
+    }
+
     /** callback handler from clicks on buttons inside the feed list view */
     FeedAdapter.FeedAdapterCallbacks feedAdapterCallbacks = new FeedAdapter.FeedAdapterCallbacks() {
         @Override

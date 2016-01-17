@@ -9,6 +9,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -26,6 +27,8 @@ import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.readystatesoftware.systembartint.SystemBarTintManager;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
@@ -104,7 +107,15 @@ public class PostActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_dark);
         getSupportActionBar().setTitle(R.string.new_post);
-        toolbar.setTitleTextColor(getResources().getColor(R.color.drawer_menu_text_grey));
+
+        if(Build.VERSION.SDK_INT >= 19) {
+            toolbar.setPadding(0, getStatusBarHeight(), 0, 0);
+
+            SystemBarTintManager tintManager = new SystemBarTintManager(this);
+            tintManager.setStatusBarTintEnabled(true);
+            tintManager.setNavigationBarTintEnabled(true);
+            tintManager.setTintColor(getResources().getColor(R.color.statusbar_tint));
+        }
 
         if(getIntent().hasExtra(MESSAGE_PARENT)){
             messageParent = getIntent().getStringExtra(MESSAGE_PARENT);
@@ -407,5 +418,14 @@ public class PostActivity extends AppCompatActivity {
         }
 
         textView.setText(Html.fromHtml(hashtaggedMessage));
+    }
+
+    public int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
     }
 }
