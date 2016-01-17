@@ -95,7 +95,7 @@
 
     <string name="export_successful">Feed exported to your downloads folder</string>
     <string name="export_failed">Oops, cannot export</string>
-    <string name="pseudonym_title">Pseudonym</string>
+    <string name="pseudonym_title">Nickname</string>
     <string name="qr_title">QR Code</string>
 
     <string name="add">Add</string>

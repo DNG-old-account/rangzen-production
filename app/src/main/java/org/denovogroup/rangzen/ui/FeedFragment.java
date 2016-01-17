@@ -420,6 +420,15 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         if(menu != null) {
             menu.setGroupVisible(R.id.checked_only_actions, inSelectionMode);
             menu.findItem(R.id.search).setVisible(!inSearchMode && !inSelectionMode);
+
+            int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
+
+            menu.findItem(R.id.action_delete).setEnabled(checkedCount > 0);
+            menu.findItem(R.id.action_delete_by_connection).setEnabled(checkedCount == 1);
+            menu.findItem(R.id.action_delete_by_exchange).setEnabled(checkedCount == 1);
+            menu.findItem(R.id.action_delete_from_sender).setEnabled(checkedCount == 1);
+            menu.findItem(R.id.action_retweet).setEnabled(checkedCount == 1);
+            menu.findItem(R.id.action_share).setEnabled(checkedCount == 1);
         }
 
         if(searchView != null){
