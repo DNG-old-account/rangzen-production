@@ -8,6 +8,7 @@
     <color name="grey">#FFFEFF</color>
 
 
+    <color name="app_dark_purple">#30164d</color>
     <color name="app_purple">#6734ba</color>
     <color name="app_yellow">#ff6f43</color>
     <color name="app_bg">#e5e5e5</color>
@@ -30,5 +31,7 @@
     <color name="foreground_material_dark">#303030</color>
 
     <color name="light_gray">#888888</color>
+
+    <color name="statusbar_tint">#64000000</color>
 
 </resources>

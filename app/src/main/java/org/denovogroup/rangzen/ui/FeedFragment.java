@@ -11,7 +11,9 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
@@ -443,7 +445,19 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     private void setActionbar(){
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if(actionBar != null) {
-            actionBar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources().getColor(inSelectionMode ? R.color.toolbar_grey : inSearchMode ? android.R.color.white : R.color.app_purple)));
+            Drawable actionbarBg;
+            if(inSelectionMode){
+                actionbarBg = new ColorDrawable(getActivity().getResources().getColor(R.color.toolbar_grey));
+            } else if(inSearchMode) {
+                actionbarBg = new ColorDrawable(getActivity().getResources().getColor(android.R.color.white));
+            } else {
+                if(Build.VERSION.SDK_INT >= 21){
+                    actionbarBg = getResources().getDrawable(R.drawable.actionbar_default_bg, null);
+                } else {
+                    actionbarBg = getResources().getDrawable(R.drawable.actionbar_default_bg);
+                }
+            }
+            actionBar.setBackgroundDrawable(actionbarBg);
             actionBar.setTitle(inSelectionMode ? R.string.empty_string : (inSearchMode ? R.string.empty_string : R.string.feed));
         }
         if(menu != null) {

@@ -34,4 +34,5 @@ dependencies {
     compile 'com.madgag.spongycastle:core:1.51.0.0'
     compile 'com.madgag.spongycastle:pkix:1.51.0.0'
     compile 'com.madgag.spongycastle:prov:1.51.0.0'
+    compile 'com.readystatesoftware.systembartint:systembartint:1.0.3'
 }

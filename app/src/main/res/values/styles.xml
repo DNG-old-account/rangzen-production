@@ -128,10 +128,7 @@
 
 
 
-
-
-
-    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="AppThemeBase" parent="Theme.AppCompat.NoActionBar">
         <item name="colorAccent">@color/app_yellow</item>
         <item name="android:colorBackground">@android:color/white</item>
         <item name="android:colorForeground">@color/foreground_material_dark</item>
@@ -144,6 +141,11 @@
         <item name="android:titleTextStyle">@style/TitleTextStyle</item>
         <item name="android:checkboxStyle">@style/AppTheme.CheckBox</item>
         <item name="android:itemTextAppearance">@style/myCustomMenuTextApearance</item>
+    </style>
+
+
+    <style name="AppTheme" parent="AppThemeBase">
+
     </style>
 
     <style name="myCustomMenuTextApearance" parent="@android:style/TextAppearance.Widget.IconMenu.Item">

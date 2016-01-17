@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -31,6 +32,8 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.readystatesoftware.systembartint.SystemBarTintManager;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
@@ -76,11 +79,22 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
 
         toolbar = (Toolbar) findViewById(R.id.appToolbar);
         setSupportActionBar(toolbar);
+
+        if(Build.VERSION.SDK_INT >= 19) {
+            toolbar.setPadding(0, getStatusBarHeight(), 0, 0);
+
+            SystemBarTintManager tintManager = new SystemBarTintManager(this);
+            tintManager.setStatusBarTintEnabled(true);
+            tintManager.setNavigationBarTintEnabled(true);
+            tintManager.setTintColor(getResources().getColor(R.color.statusbar_tint));
+        }
+
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         toolbar.setTitleTextColor(Color.WHITE);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+
         initDrawerMenu();
 
         contentHolder = findViewById(R.id.mainContent);
@@ -140,6 +154,10 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         advancedToggle = (CheckBox) findViewById(R.id.drawer_menu_advanced);
 
         advancedToggle.setChecked(showAdvanced);
+
+        if(Build.VERSION.SDK_INT >= 19) {
+            drawerMenu.setPadding(drawerMenu.getPaddingLeft(), (drawerMenu.getPaddingTop()+getStatusBarHeight()), drawerMenu.getPaddingRight(), drawerMenu.getPaddingBottom());
+        }
 
         int childcount = drawerMenu.getChildCount();
         for(int i=0; i<childcount; i++){
@@ -494,5 +512,14 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         Intent intent = new Intent(MainActivity.this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
+    }
+
+    public int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
     }
 }
