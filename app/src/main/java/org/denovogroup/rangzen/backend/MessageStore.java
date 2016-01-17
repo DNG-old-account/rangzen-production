@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Storage for Rangzen messages that uses StorageBase underneath. If
@@ -771,11 +772,13 @@ public class MessageStore extends SQLiteOpenHelper {
 
         Calendar reducedAge = Utils.reduceCalendar(Calendar.getInstance());
 
-        long ageThreshold = reducedAge.getTimeInMillis() - currentProfile.getAutodeleteAge() * 1000L * 60L *60L * 24L;
+        long ageThreshold = reducedAge.getTimeInMillis() - TimeUnit.DAYS.toMillis(currentProfile.getAutodeleteAge());
 
-        db.execSQL("DELETE FROM "+TABLE+" WHERE "+COL_TRUST+"<="+currentProfile.getAutodeleteTrust()
-                +" OR ("+COL_TIMESTAMP+"> 0 AND "+COL_TIMESTAMP+"<"+ageThreshold+")"
-                +" OR ("+COL_EXPIRE+"> 0 AND "+COL_TIMESTAMP+">0 AND ("+COL_EXPIRE  +"+"+COL_TIMESTAMP+") <"+System.currentTimeMillis()+");"//TODO test this
+        db.execSQL("DELETE FROM "+TABLE+" WHERE "
+                + COL_TRUST+"<="+currentProfile.getAutodeleteTrust() //delete untrusted
+                + " OR ("+COL_TIMESTAMP+"> 0 AND "+COL_TIMESTAMP+"<"+ageThreshold+")" //delete old
+                + " OR ("+COL_EXPIRE+"> 0 AND "+COL_TIMESTAMP+">0 AND ("+COL_EXPIRE  +"+"+COL_TIMESTAMP+") <"+System.currentTimeMillis() //delete expired (self-destruct)
+                +");"
         );
     }
 

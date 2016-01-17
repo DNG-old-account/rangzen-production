@@ -162,19 +162,19 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         }
 
         SharedPreferences pref = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
-        ((Switch)drawerMenu.findViewById(R.id.drawer_menu_offline_mode)).setChecked(pref.getBoolean(IS_APP_ENABLED, true));
+        ((Switch)drawerMenu.findViewById(R.id.drawer_menu_offline_mode)).setChecked(!pref.getBoolean(IS_APP_ENABLED, true));
 
         ((Switch)drawerMenu.findViewById(R.id.drawer_menu_offline_mode)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 SharedPreferences pref = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
-                pref.edit().putBoolean(IS_APP_ENABLED, isChecked).commit();
+                pref.edit().putBoolean(IS_APP_ENABLED, !isChecked).commit();
 
                 Intent serviceIntent = new Intent(MainActivity.this, RangzenService.class);
                 if (isChecked) {
-                    startService(serviceIntent);
-                } else {
                     stopService(serviceIntent);
+                } else {
+                    startService(serviceIntent);
                 }
             }
         });
