@@ -521,7 +521,12 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
             leftText.setOnClickListener(inSelectionMode ? new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    MessageStore.getInstance(getActivity()).checkAllMessages(!selectAll);
+                    String sqlQuery = SearchHelper.searchToSQL(query);
+                    if (sqlQuery != null) {
+                        MessageStore.getInstance(getActivity()).checkAllQueriedMessages(!selectAll, sqlQuery);
+                    } else {
+                        MessageStore.getInstance(getActivity()).checkAllMessagesContaining(!selectAll, query);
+                    }
                     selectAll = !selectAll;
                     swapCursor();
 

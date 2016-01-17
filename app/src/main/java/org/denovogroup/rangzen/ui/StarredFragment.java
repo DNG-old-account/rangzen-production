@@ -501,7 +501,16 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
             leftText.setOnClickListener(inSelectionMode ? new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    MessageStore.getInstance(getActivity()).checkAllMessages(!selectAll);
+
+                    String baseCondition = "AND "+MessageStore.COL_FAVIRITE+"="+MessageStore.TRUE;
+                    String sqlQuery = SearchHelper.searchToSQL(query);
+                    if (sqlQuery != null){
+                        sqlQuery += baseCondition;
+                    } else {
+                        sqlQuery = baseCondition;
+                    }
+
+                    MessageStore.getInstance(getActivity()).checkAllQueriedMessages(!selectAll, sqlQuery);
                     selectAll = !selectAll;
                     swapCursor();
 

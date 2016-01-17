@@ -701,6 +701,62 @@ public class MessageStore extends SQLiteOpenHelper {
         return false;
     }
 
+    /** set the checked state of the all messages as true or false */
+    public boolean checkAllQueriedMessages(boolean check, String query){
+        if(query == null || query.length() == 0){
+            return checkAllMessages(check);
+        }
+
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE+" "+query+";");
+            return true;
+        }
+        return false;
+    }
+
+    /** set the checked state of the all messages as true or false */
+    public boolean checkAllMessagesContaining(boolean check, String message){
+        if(message == null || message.length() == 0){
+            return checkAllMessages(check);
+        }
+        message = Utils.makeTextSafeForSQL(message);
+
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null){
+
+            String likeQuery ="";
+
+            String messageNoSpace = message.replaceAll("\\s","");
+
+            if(message.length() == 0 || messageNoSpace.length() == 0) likeQuery =  (COL_MESSAGE + " LIKE '%" + message + "%'");
+
+            if(likeQuery.length() == 0){
+                message = message.replaceAll("[\n\"]", " ");
+
+                while(message.charAt(0) == ' '){
+                    message = message.substring(1);
+                }
+
+                String[] words = message.split("\\s");
+
+                for(int i=0; i<words.length; i++){
+                    if(i > 0){
+                        likeQuery +=" OR ";
+                    }
+
+                    likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
+                }
+
+                Log.w("liran", "checking with like:" + likeQuery);
+            }
+
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE+" AND ("+likeQuery+");");
+            return true;
+        }
+        return false;
+    }
+
     /** return a cursor pointing at all the messages in the store with checked state set to true */
     public Cursor getCheckedMessages(){
         SQLiteDatabase db = getWritableDatabase();
