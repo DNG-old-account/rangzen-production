@@ -4,7 +4,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.ColorDrawable;
 import android.text.Html;
+import android.text.Spannable;
 import android.text.method.LinkMovementMethod;
+import android.text.style.URLSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -222,13 +224,26 @@ public class FeedAdapter extends CursorAdapter {
             }
         }
 
-        textView.setText(Html.fromHtml(hashtaggedMessage));
+        Spannable spannable = (Spannable) Html.fromHtml(hashtaggedMessage);
+        textView.setText(selectionMode ? spannable : removeUnderlines(spannable));
 
         if(!selectionMode) {
             textView.setLinkTextColor(linkColor);
             textView.setLinksClickable(true);
             textView.setMovementMethod(LinkMovementMethod.getInstance());
         }
+    }
+
+    public static Spannable removeUnderlines(Spannable p_Text) {
+        URLSpan[] spans = p_Text.getSpans(0, p_Text.length(), URLSpan.class);
+        for (URLSpan span : spans) {
+            int start = p_Text.getSpanStart(span);
+            int end = p_Text.getSpanEnd(span);
+            p_Text.removeSpan(span);
+            span = new URLSpanNoUnderline(span.getURL());
+            p_Text.setSpan(span, start, end, 0);
+        }
+        return p_Text;
     }
 
     View.OnClickListener clickListener = new View.OnClickListener() {
