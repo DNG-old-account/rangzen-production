@@ -143,6 +143,11 @@
         <item name="android:alertDialogTheme">@style/Theme_Sphinx_Dialog_Alert</item>
         <item name="android:titleTextStyle">@style/TitleTextStyle</item>
         <item name="android:checkboxStyle">@style/AppTheme.CheckBox</item>
+        <item name="android:itemTextAppearance">@style/myCustomMenuTextApearance</item>
+    </style>
+
+    <style name="myCustomMenuTextApearance" parent="@android:style/TextAppearance.Widget.IconMenu.Item">
+        <item name="android:textColor">@color/overflow_menu_text</item>
     </style>
 
     <style name="AppTheme.NoActionBar">

@@ -350,18 +350,40 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 MessageStore.getInstance(getActivity()).checkMessage(message, !isChecked);
                 swapCursor();
 
-                int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
+                Cursor checkedCursor = MessageStore.getInstance(getActivity()).getCheckedMessages();
+                int checkedCount = checkedCursor.getCount();
 
                 ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
 
-                if (menu != null) {
-                    menu.findItem(R.id.action_delete).setEnabled(checkedCount > 0);
-                    menu.findItem(R.id.action_delete_by_connection).setEnabled(checkedCount == 1);
-                    menu.findItem(R.id.action_delete_by_exchange).setEnabled(checkedCount == 1);
-                    menu.findItem(R.id.action_delete_from_sender).setEnabled(checkedCount == 1);
-                    menu.findItem(R.id.action_retweet).setEnabled(checkedCount == 1);
-                    menu.findItem(R.id.action_share).setEnabled(checkedCount == 1);
+                boolean canDeleteTrust = false;
+                boolean canDeleteLikes = false;
+                boolean canDeleteSender = false;
+                boolean canDeleteExchange = false;
+
+                if(checkedCount == 1){
+                    checkedCursor.moveToFirst();
+                    String sender = checkedCursor.getString(checkedCursor.getColumnIndex(MessageStore.COL_PSEUDONYM));
+
+                    if(sender != null) canDeleteSender = MessageStore.getInstance(getActivity()).getMessagesBySenderCount(sender) > 0;
+
+                    String exchange = checkedCursor.getString(checkedCursor.getColumnIndex(MessageStore.COL_EXCHANGE));
+
+                    if(exchange != null) canDeleteExchange = MessageStore.getInstance(getActivity()).getMessagesByExchangeCount(exchange) > 0;
+
+                    float trust = checkedCursor.getFloat(checkedCursor.getColumnIndex(MessageStore.COL_TRUST));
+
+                    canDeleteTrust = MessageStore.getInstance(getActivity()).getMessagesByTrustCount(trust) > 0;
+
+                    int likes = checkedCursor.getInt(checkedCursor.getColumnIndex(MessageStore.COL_LIKES));
+
+                    canDeleteLikes = MessageStore.getInstance(getActivity()).getMessagesByLikeCount(likes) > 0;
                 }
+
+                checkedCursor.close();
+
+                menu.findItem(R.id.action_delete_by_connection).setEnabled(checkedCount == 1 && canDeleteTrust);
+                menu.findItem(R.id.action_delete_by_exchange).setEnabled(checkedCount == 1 && canDeleteExchange);
+                menu.findItem(R.id.action_delete_from_sender).setEnabled(checkedCount == 1 && canDeleteSender);
             }
         });
         setActionbar();
@@ -406,12 +428,39 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
             menu.setGroupVisible(R.id.checked_only_actions, inSelectionMode);
             menu.findItem(R.id.search).setVisible(!inSearchMode && !inSelectionMode);
 
-            int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
+            Cursor checkedCursor = MessageStore.getInstance(getActivity()).getCheckedMessages();
+            int checkedCount = checkedCursor.getCount();
 
             menu.findItem(R.id.action_delete).setEnabled(checkedCount > 0);
-            menu.findItem(R.id.action_delete_by_connection).setEnabled(checkedCount == 1);
-            menu.findItem(R.id.action_delete_by_exchange).setEnabled(checkedCount == 1);
-            menu.findItem(R.id.action_delete_from_sender).setEnabled(checkedCount == 1);
+            boolean canDeleteTrust = false;
+            boolean canDeleteLikes = false;
+            boolean canDeleteSender = false;
+            boolean canDeleteExchange = false;
+
+            if(checkedCount == 1){
+                checkedCursor.moveToFirst();
+                String sender = checkedCursor.getString(checkedCursor.getColumnIndex(MessageStore.COL_PSEUDONYM));
+
+                if(sender != null) canDeleteSender = MessageStore.getInstance(getActivity()).getMessagesBySenderCount(sender) > 0;
+
+                String exchange = checkedCursor.getString(checkedCursor.getColumnIndex(MessageStore.COL_EXCHANGE));
+
+                if(exchange != null) canDeleteExchange = MessageStore.getInstance(getActivity()).getMessagesByExchangeCount(exchange) > 0;
+
+                float trust = checkedCursor.getFloat(checkedCursor.getColumnIndex(MessageStore.COL_TRUST));
+
+                canDeleteTrust = MessageStore.getInstance(getActivity()).getMessagesByTrustCount(trust) > 0;
+
+                int likes = checkedCursor.getInt(checkedCursor.getColumnIndex(MessageStore.COL_LIKES));
+
+                canDeleteLikes = MessageStore.getInstance(getActivity()).getMessagesByLikeCount(likes) > 0;
+            }
+
+            checkedCursor.close();
+
+            menu.findItem(R.id.action_delete_by_connection).setEnabled(checkedCount == 1 && canDeleteTrust);
+            menu.findItem(R.id.action_delete_by_exchange).setEnabled(checkedCount == 1 && canDeleteExchange);
+            menu.findItem(R.id.action_delete_from_sender).setEnabled(checkedCount == 1 && canDeleteSender);
             menu.findItem(R.id.action_retweet).setEnabled(checkedCount == 1);
             menu.findItem(R.id.action_share).setEnabled(checkedCount == 1);
         }
@@ -534,7 +583,8 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 final float trust = checkedMessages.getFloat(checkedMessages.getColumnIndex(MessageStore.COL_TRUST));
                 dialog = new AlertDialog.Builder(getActivity());
                 dialog.setTitle(R.string.delete_dialog_title);
-                dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
+                dialog.setMessage(getString(R.string.delete_dialog_message1) + " "
+                        + MessageStore.getInstance(getActivity()).getMessagesByTrustCount(trust) + " " + getString(R.string.delete_dialog_message2));
                 dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -556,7 +606,8 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 final String exchange = checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_EXCHANGE));
                 dialog = new AlertDialog.Builder(getActivity());
                 dialog.setTitle(R.string.delete_dialog_title);
-                dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
+                dialog.setMessage(getString(R.string.delete_dialog_message1) + " "
+                        + MessageStore.getInstance(getActivity()).getMessagesByExchangeCount(exchange) + " " + getString(R.string.delete_dialog_message2));
                 dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -576,7 +627,8 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 final String senderName = checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_PSEUDONYM));
                 dialog = new AlertDialog.Builder(getActivity());
                 dialog.setTitle(R.string.delete_dialog_title);
-                dialog.setMessage(getString(R.string.delete_dialog_message1) + " " + checkedMessages.getCount() + " " + getString(R.string.delete_dialog_message2));
+                dialog.setMessage(getString(R.string.delete_dialog_message1) + " "
+                        + MessageStore.getInstance(getActivity()).getMessagesBySenderCount(senderName) + " " + getString(R.string.delete_dialog_message2));
                 dialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

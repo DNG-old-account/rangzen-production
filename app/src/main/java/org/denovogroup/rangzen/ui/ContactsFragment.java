@@ -309,7 +309,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
         if(menu != null) {
             menu.findItem(R.id.search).setVisible(!inSearchMode && !inSelectionMode);
             menu.findItem(R.id.action_delete).setVisible(inSelectionMode);
-            
+
             menu.findItem(R.id.action_delete).setEnabled(FriendStore.getInstance(getActivity()).getCheckedCount() > 0);
             menu.findItem(R.id.add_friend).setVisible(!inSelectionMode && !inSearchMode);
         }

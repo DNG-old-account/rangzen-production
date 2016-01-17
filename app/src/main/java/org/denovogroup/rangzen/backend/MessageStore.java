@@ -805,25 +805,69 @@ public class MessageStore extends SQLiteOpenHelper {
         }
     }
 
+    public int getMessagesByLikeCount(int likes){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null) {
+            Cursor cursor = db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_LIKES + "<=" + likes + ";" ,null);
+            int count = cursor.getCount();
+            cursor.close();
+            return count;
+        }
+        return 0;
+    }
+
     public void deleteByTrust(float trust){
         SQLiteDatabase db = getWritableDatabase();
         if (db != null) {
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_DELETED+"="+TRUE+ " WHERE " + COL_TRUST + "<=" + trust + ";");
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_DELETED + "=" + TRUE + " WHERE " + COL_TRUST + "<=" + trust + ";");
         }
+    }
+
+    public int getMessagesByTrustCount(float trust){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null) {
+            Cursor cursor = db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_TRUST + "<=" + trust + ";" ,null);
+            int count = cursor.getCount();
+            cursor.close();
+            return count;
+        }
+        return 0;
     }
 
     public void deleteBySender(String sender){
         SQLiteDatabase db = getWritableDatabase();
         if (db != null && sender != null && sender.length() > 0) {
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_DELETED+"="+TRUE+ " WHERE " + COL_PSEUDONYM + "='" + sender + "';");
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_DELETED + "=" + TRUE + " WHERE " + COL_PSEUDONYM + "='" + sender + "';");
         }
+    }
+
+    public int getMessagesBySenderCount(String sender){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null && sender != null && sender.length() > 0) {
+            Cursor cursor = db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_PSEUDONYM + "='" + sender + "';" ,null);
+            int count = cursor.getCount();
+            cursor.close();
+            return count;
+        }
+        return 0;
     }
 
     public void deleteByExchange(String exchange){
         SQLiteDatabase db = getWritableDatabase();
         if (db != null && exchange != null && exchange.length() > 0) {
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_DELETED+"="+TRUE+ " WHERE " + COL_EXCHANGE + "='" + exchange + "';");
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_DELETED + "=" + TRUE + " WHERE " + COL_EXCHANGE + "='" + exchange + "';");
         }
+    }
+
+    public int getMessagesByExchangeCount(String exchange){
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null) {
+            Cursor cursor = db.rawQuery("SELECT * FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+" AND "+COL_EXCHANGE + "='" + exchange + "';" ,null);
+            int count = cursor.getCount();
+            cursor.close();
+            return count;
+        }
+        return 0;
     }
 
     public void purgeStore(){
