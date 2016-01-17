@@ -30,6 +30,7 @@
         android:layout_gravity="right|bottom"
         android:layout_marginBottom="15dp"
         android:layout_marginRight="15dp"
+        android:paddingBottom="2dp"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:src="@drawable/ic_reply_light"
