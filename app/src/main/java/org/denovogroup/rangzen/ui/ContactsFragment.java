@@ -61,7 +61,7 @@ import java.util.List;
  */
 public class ContactsFragment extends Fragment implements View.OnClickListener, TextWatcher, FragmentBackHandler{
 
-    private static final String TAG = "ContactFragment";
+    private static final String TAG = "ContactsFragment";
     private static final int PICK_CONTACT = 100;
 
     private boolean inSearchMode = false;
@@ -442,8 +442,11 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
             final FriendStore fs = FriendStore.getInstance(getActivity());
             String code = intentResult.getContents();
             // Convert the code into a public Rangzen ID.
+            if(code != null && !code.contains(getString(R.string.qr_code_prefix))){
+                Toast.makeText(getActivity(), R.string.qr_badqr_error,Toast.LENGTH_SHORT).show();
+                return;
+            }
             final byte[] publicIDBytes = intentResult.getRawBytes();
-            Log.i(TAG, "received intent with code " + code);
 
             // Try to add the friend to the FriendStore, if they're not null.
             if (publicIDBytes != null) {
@@ -636,7 +639,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
     private void openScanner(){
         IntentIntegrator integrator = new IntentIntegrator(getActivity());
         integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
-        integrator.setPrompt("Scan a barcode");
+        integrator.setPrompt(getString(R.string.qr_scanner_message));
         integrator.setBeepEnabled(false);
         integrator.initiateScan();
     }

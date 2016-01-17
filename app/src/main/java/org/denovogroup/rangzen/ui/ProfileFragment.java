@@ -105,7 +105,7 @@ public class ProfileFragment extends Fragment implements ActionMode.Callback{
 
         try {
             FriendStore store = FriendStore.getInstance(getActivity());
-            BitMatrix matrix = writer.encode(store.getPublicDeviceIDString(getActivity(), StorageBase.ENCRYPTION_DEFAULT), BarcodeFormat.QR_CODE, qrSizeInDp, qrSizeInDp);
+            BitMatrix matrix = writer.encode(getString(R.string.qr_code_prefix)+store.getPublicDeviceIDString(getActivity(), StorageBase.ENCRYPTION_DEFAULT), BarcodeFormat.QR_CODE, qrSizeInDp, qrSizeInDp);
             int width = matrix.getWidth();
             int height = matrix.getHeight();
             int[] pixels = new int[width * height];

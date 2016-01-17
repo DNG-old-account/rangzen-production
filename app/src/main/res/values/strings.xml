@@ -165,6 +165,8 @@
     <string name="contact_add_fail">Selected contact doesn\'t have a phone number</string>
     <string name="comments">Comment</string>
 
+    <string name="qr_scanner_message">Scan a Murmur QR code</string>
+
     <!-- help content -->
     <string name="help_title1">How to use the Feed ?</string>
     <string name="help_content1">The feed is the main screen in the app that includes all the messages and allows you to sort and search through them. Messages in the feed include at the top the nickname, and at the bottom connection score, location, endorsement and replies (note, not every message will include all these parameters, see more below).You can sort the messages in the feed by time, endorsements or connection score. To search through the feed enter a nickname, hashtag or keyword. You can also follow specific hashtags or nicknames by adding them in the Followed screen.</string>
@@ -216,5 +218,7 @@
 
     <string name="help_title17">How do I share the app with other users?</string>
     <string name="help_content17">From the side menu tap on \'Share Murmur with someone\' then select an app to share with</string>
+    <string name="qr_code_prefix">Murmur:</string>
+    <string name="qr_badqr_error">Not a Murmur QR code</string>
 
 </resources>
