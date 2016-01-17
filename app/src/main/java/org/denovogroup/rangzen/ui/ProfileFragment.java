@@ -145,10 +145,9 @@ public class ProfileFragment extends Fragment implements ActionMode.Callback{
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
         switch (item.getItemId()){
             case R.id.approve:
-                if(pseudonym.getText().length() > 0) {
-                    SecurityManager.setCurrentPseudonym(getActivity(), pseudonym.getText().toString());
-                    mode.finish();
-                }
+                String nickname = (pseudonym.getText().length() > 0) ?  pseudonym.getText().toString() : "";
+                SecurityManager.setCurrentPseudonym(getActivity(), nickname);
+                mode.finish();
                 break;
         }
         return false;

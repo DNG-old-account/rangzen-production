@@ -3,6 +3,6 @@
       xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:id="@+id/approve"
           android:title="@android:string/ok"
-          android:icon="@android:drawable/ic_menu_save"
+          android:icon="@drawable/ic_check_dark"
           app:showAsAction="always"/>
 </menu>
