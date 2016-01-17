@@ -316,6 +316,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
 
         if(searchView != null){
             searchView.setVisibility(inSearchMode && !inSelectionMode ? View.VISIBLE : View.GONE);
+            searchView.removeTextChangedListener(this);
             searchView.setText(query);
             if(inSearchMode){
                 searchView.addTextChangedListener(this);
@@ -335,7 +336,12 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
         ((DrawerActivityHelper) getActivity()).getDrawerToggle().syncState();
 
         if(actionBar != null) {
-            if (inSearchMode && !inSelectionMode) {
+            if(inSelectionMode && inSearchMode){
+                ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(true);
+                ((DrawerActivityHelper) getActivity()).getDrawerToggle().syncState();
+                ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(false);
+                ((DrawerActivityHelper) getActivity()).getDrawerToggle().syncState();
+            } else if (inSearchMode && !inSelectionMode) {
                 actionBar.setHomeAsUpIndicator(R.drawable.ic_close_dark);
             }
         }
@@ -355,14 +361,9 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
                     swapCursor();
 
                     int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
-                    ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
+                    ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
                 }
             } : null);
-        }
-        if(getActivity() instanceof DrawerActivityHelper){
-            ActionBarDrawerToggle toggle = ((DrawerActivityHelper) getActivity()).getDrawerToggle();
-            toggle.setDrawerIndicatorEnabled(!inSelectionMode && !inSearchMode);
-            //toggle.syncState();
         }
     }
 
@@ -374,7 +375,9 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
 
         switch (item.getItemId()){
             case android.R.id.home:
-                if(inSearchMode){
+                if(inSelectionMode) {
+                    setListInDisplayMode();
+                } else if(inSearchMode){
                     InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                     if(searchView != null) imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
                     inSearchMode = false;

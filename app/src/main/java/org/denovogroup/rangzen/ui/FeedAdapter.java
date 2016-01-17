@@ -283,6 +283,12 @@ public class FeedAdapter extends CursorAdapter {
 
     public void setSelectionMode(boolean selectionModeOn){
         selectionMode = selectionModeOn;
+        if(listView != null) {
+            int childCount = listView.getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                listView.getChildAt(i).invalidate();
+            }
+        }
     }
 
     /**

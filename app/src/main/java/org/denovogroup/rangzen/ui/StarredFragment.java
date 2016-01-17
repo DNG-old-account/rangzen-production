@@ -467,8 +467,9 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
 
         if(searchView != null){
             searchView.setVisibility(inSearchMode && !inSelectionMode ? View.VISIBLE : View.GONE);
+            searchView.removeTextChangedListener(this);
             searchView.setText(query);
-            if(inSearchMode){
+            if(inSearchMode && !inSelectionMode){
                 searchView.addTextChangedListener(this);
                 searchView.requestFocus();
                 InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -486,7 +487,12 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
         ((DrawerActivityHelper) getActivity()).getDrawerToggle().syncState();
 
         if(actionBar != null) {
-            if (inSearchMode && !inSelectionMode) {
+            if(inSelectionMode && inSearchMode){
+                ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(true);
+                ((DrawerActivityHelper) getActivity()).getDrawerToggle().syncState();
+                ((DrawerActivityHelper) getActivity()).getDrawerToggle().setDrawerIndicatorEnabled(false);
+                ((DrawerActivityHelper) getActivity()).getDrawerToggle().syncState();
+            } else if (inSearchMode && !inSelectionMode) {
                 actionBar.setHomeAsUpIndicator(R.drawable.ic_close_dark);
             }
         }
@@ -519,11 +525,6 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 }
             } : null);
         }
-        if(getActivity() instanceof DrawerActivityHelper){
-            ActionBarDrawerToggle toggle = ((DrawerActivityHelper) getActivity()).getDrawerToggle();
-            toggle.setDrawerIndicatorEnabled(!inSelectionMode && !inSearchMode);
-            //toggle.syncState();
-        }
     }
 
     @Override
@@ -535,7 +536,9 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
 
         switch (item.getItemId()){
             case android.R.id.home:
-                if(inSearchMode){
+                if(inSelectionMode){
+                    setListInDisplayMode();
+                } else if(inSearchMode){
                     InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                     if(searchView != null) imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
                     inSearchMode = false;
