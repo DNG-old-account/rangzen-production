@@ -697,8 +697,10 @@ public class RangzenService extends Service {
 
             SharedPreferences pref = getSharedPreferences(MainActivity.PREF_FILE, Context.MODE_PRIVATE);
             if(!pref.contains(MainActivity.WIFI_NAME)){
-                String oldName = BluetoothAdapter.getDefaultAdapter().getName();
-                pref.edit().putString(MainActivity.WIFI_NAME, oldName).commit();
+                if(BluetoothAdapter.getDefaultAdapter() != null) {
+                    String oldName = BluetoothAdapter.getDefaultAdapter().getName();
+                    pref.edit().putString(MainActivity.WIFI_NAME, oldName).commit();
+                }
             }
 
             if(Build.VERSION.SDK_INT >= 23){
@@ -706,7 +708,7 @@ public class RangzenService extends Service {
             }
 
             mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
-            if (btAddress.equals(DUMMY_MAC_ADDRESS) || btAddress.equals("")) {
+            if (btAddress != null && (btAddress.equals(DUMMY_MAC_ADDRESS) || btAddress.equals(""))) {
                 Log.w(TAG, "Bluetooth speaker provided a dummy/blank bluetooth" +
                         " MAC address (" + btAddress + ") scheduling device name change.");
                 Handler handler = new Handler();

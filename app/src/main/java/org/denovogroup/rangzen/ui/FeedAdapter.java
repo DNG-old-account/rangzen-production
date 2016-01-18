@@ -7,6 +7,7 @@ import android.text.Html;
 import android.text.Spannable;
 import android.text.method.LinkMovementMethod;
 import android.text.style.URLSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -226,6 +227,12 @@ public class FeedAdapter extends CursorAdapter {
                 hashtaggedMessage = textBefore+"<font color="+hexColor+">"+hashtag+"</font>"+textAfter;
             } else {
                 hashtaggedMessage = textBefore+"<a href=\"org.denovogroup.rangzen://hashtag/"+hashtag+"/\">"+hashtag+"</a>"+textAfter;
+            }
+        }
+        if(!selectionMode){
+            //fix <a href> extended to the end of the line making entire following text clickable
+            if(hashtaggedMessage.indexOf("</a>") == hashtaggedMessage.length()-4){
+                hashtaggedMessage += " ";
             }
         }
 

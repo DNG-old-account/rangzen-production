@@ -1,11 +1,10 @@
 package org.denovogroup.rangzen.ui;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.support.v7.app.AlertDialog;
 import android.view.View;
-import android.widget.LinearLayout;
 
 /**
  * Created by Liran on 1/14/2016.

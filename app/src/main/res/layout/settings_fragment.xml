@@ -142,7 +142,7 @@
                    android:layout_weight="1"
                    android:text="@string/settings_timestamp"/>
 
-                <Switch
+                <android.support.v7.widget.SwitchCompat
                     style="@style/SettingsAction"
                     android:id="@+id/switch_timestamp"/>
 
@@ -163,7 +163,7 @@
                     android:layout_weight="1"
                     android:text="@string/settings_trust"/>
 
-                <Switch
+                <android.support.v7.widget.SwitchCompat
                     style="@style/SettingsAction"
                     android:id="@+id/switch_trust"/>
 
@@ -184,7 +184,7 @@
                     android:layout_weight="1"
                     android:text="@string/settings_location_tagging"/>
 
-                <Switch
+                <android.support.v7.widget.SwitchCompat
                     style="@style/SettingsAction"
                     android:id="@+id/switch_location_tagging"/>
 
@@ -205,7 +205,7 @@
                     android:layout_weight="1"
                     android:text="@string/settings_pseudonym"/>
 
-                <Switch
+                <android.support.v7.widget.SwitchCompat
                     style="@style/SettingsAction"
                     android:id="@+id/switch_pseudonym"/>
 
@@ -336,7 +336,7 @@
                     android:layout_weight="1"
                     android:text="@string/settings_autodelete"/>
 
-                <Switch
+                <android.support.v7.widget.SwitchCompat
                     style="@style/SettingsAction"
                     android:id="@+id/switch_auto_delete"/>
 
@@ -477,7 +477,7 @@
                     android:layout_weight="1"
                     android:text="@string/settings_add_via_phonebook"/>
 
-                <Switch
+                <android.support.v7.widget.SwitchCompat
                     style="@style/SettingsAction"
                     android:id="@+id/switch_add_via_phone"/>
 
@@ -498,7 +498,7 @@
                     android:layout_weight="1"
                     android:text="@string/settings_add_via_qr"/>
 
-                <Switch
+                <android.support.v7.widget.SwitchCompat
                     style="@style/SettingsAction"
                     android:id="@+id/switch_add_via_qr"/>
 

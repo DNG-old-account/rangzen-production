@@ -49,7 +49,7 @@
                     android:text="@string/drawer_menu_offline_mode"
                     android:drawableLeft="@drawable/drawer_menu_offline_mode_btn"/>
 
-                <Switch
+                <android.support.v7.widget.SwitchCompat
                     android:id="@+id/drawer_menu_offline_mode"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>

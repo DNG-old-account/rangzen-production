@@ -1,7 +1,6 @@
 package org.denovogroup.rangzen.ui;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -18,6 +17,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
@@ -426,7 +426,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         MessageStore.getInstance(getActivity()).checkAllMessages(false);
                 ((FeedAdapter) feedListView.getAdapter()).setSelectionMode(false);
         feedListView.setOnItemLongClickListener(longClickListener);
-        feedListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        feedListView.setOnItemClickListener(null/*new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //go to expanded view
@@ -441,7 +441,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                     //}
                 }
             }
-        });
+        }*/);
         swapCursor();
         setActionbar();
         newPostButton.setVisibility(View.VISIBLE);

@@ -98,12 +98,11 @@ public class BluetoothSpeaker {
     this.mContext = context;
     this.mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     this.mBluetoothBroadcastReceiver = new BluetoothBroadcastReceiver(context);
-    this.mThisDeviceUUID = getUUIDFromMACAddress(mBluetoothAdapter.getAddress());
-    Log.i(TAG, "This device's UUID is " + mThisDeviceUUID.toString());
 
     if (mBluetoothAdapter == null) {
       // TODO (lerner): Tell the server that this device doesn't do Bluetooth.
       // TODO (lerner): Opt this device out of data collection?
+        mBluetoothBroadcastReceiver.showNoBluetoothNotification(context);
       Log.e(TAG, "Device doesn't support Bluetooth.");
       return;
     } else if (!mBluetoothAdapter.isEnabled()) {
@@ -117,9 +116,11 @@ public class BluetoothSpeaker {
       } else {
         Log.e(TAG, "Attempt to enable Bluetooth returned false.");
       }*/
+    }
 
+      this.mThisDeviceUUID = getUUIDFromMACAddress(mBluetoothAdapter.getAddress());
+      Log.i(TAG, "This device's UUID is " + mThisDeviceUUID.toString());
 
-    } 
     if (mBluetoothAdapter.isEnabled()) {
       try { 
         createListeningSocket();

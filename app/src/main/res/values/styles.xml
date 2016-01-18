@@ -138,6 +138,7 @@
         <item name="android:editTextStyle">@style/AppTheme.EditText</item>
         <item name="android:radioButtonStyle">@style/AppTheme.RadioButton</item>
         <item name="android:alertDialogTheme">@style/Theme_Sphinx_Dialog_Alert</item>
+        <item name="alertDialogTheme">@style/Theme_Sphinx_Dialog_Alert</item>
         <item name="android:titleTextStyle">@style/TitleTextStyle</item>
         <item name="android:checkboxStyle">@style/AppTheme.CheckBox</item>
         <item name="android:itemTextAppearance">@style/myCustomMenuTextApearance</item>
@@ -339,7 +340,8 @@
 
     <!-- Dialog style-->
 
-    <style name="Theme_Sphinx_Dialog_Alert" parent="@style/Theme.AppCompat.Dialog.Alert">
+    <style name="Theme_Sphinx_Dialog_Alert" parent="@style/Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:background">@android:color/white</item>
         <!-- title -->
         <item name="android:windowTitleStyle">@style/TextAppearance.Sphinx.DialogWindowTitle</item>
         <!-- message color -->

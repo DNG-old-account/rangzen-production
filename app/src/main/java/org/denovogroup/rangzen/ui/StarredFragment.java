@@ -1,7 +1,6 @@
 package org.denovogroup.rangzen.ui;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -16,6 +15,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.text.Editable;
@@ -397,7 +397,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
         MessageStore.getInstance(getActivity()).checkAllMessages(false);
                 ((FeedAdapter) feedListView.getAdapter()).setSelectionMode(false);
         feedListView.setOnItemLongClickListener(longClickListener);
-        feedListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        feedListView.setOnItemClickListener(null/*new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //go to expanded view
@@ -413,7 +413,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 }
 
             }
-        });
+        }*/);
         swapCursor();
         setActionbar();
         newPostButton.setVisibility(View.VISIBLE);

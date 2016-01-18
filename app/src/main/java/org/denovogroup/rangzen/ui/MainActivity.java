@@ -1,23 +1,22 @@
 package org.denovogroup.rangzen.ui;
 
-import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -30,7 +29,6 @@ import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -182,9 +180,9 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         }
 
         SharedPreferences pref = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
-        ((Switch)drawerMenu.findViewById(R.id.drawer_menu_offline_mode)).setChecked(!pref.getBoolean(IS_APP_ENABLED, true));
+        ((SwitchCompat)drawerMenu.findViewById(R.id.drawer_menu_offline_mode)).setChecked(!pref.getBoolean(IS_APP_ENABLED, true));
 
-        ((Switch)drawerMenu.findViewById(R.id.drawer_menu_offline_mode)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        ((SwitchCompat)drawerMenu.findViewById(R.id.drawer_menu_offline_mode)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 SharedPreferences pref = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
