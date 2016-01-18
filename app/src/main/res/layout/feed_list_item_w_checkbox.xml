@@ -53,12 +53,21 @@
             android:id="@+id/feed_item_connection"
             android:drawableLeft="@drawable/feed_connection_icon"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="0dp"/>
 
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_weight="1"/>
+
+        <TextView
+            style="@style/FeedListItem_Extra"
+            android:id="@+id/feed_item_restricted"
+            android:drawableLeft="@drawable/ic_restricted_dark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""/>
 
         <TextView
             style="@style/FeedListItem_Extra"

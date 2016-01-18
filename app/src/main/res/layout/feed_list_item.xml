@@ -52,6 +52,14 @@
 
         <TextView
             style="@style/FeedListItem_Extra"
+            android:id="@+id/feed_item_restricted"
+            android:drawableLeft="@drawable/ic_restricted_dark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""/>
+
+        <TextView
+            style="@style/FeedListItem_Extra"
             android:id="@+id/feed_item_navigate"
             android:drawableLeft="@drawable/feed_item_navigate"
             android:layout_width="wrap_content"

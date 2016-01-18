@@ -42,6 +42,7 @@ public class FeedAdapter extends CursorAdapter {
     private int messageId_colIndex;
     private int favorite_colIndex;
     private int checked_colIndex;
+    private int restricted_colIndex;
 
     private boolean selectionMode;
 
@@ -101,6 +102,7 @@ public class FeedAdapter extends CursorAdapter {
         messageId_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_MESSAGE_ID);
         favorite_colIndex = cursor.getColumnIndexOrThrow(MessageStore.COL_FAVIRITE);
         checked_colIndex =  cursor.getColumnIndexOrThrow(MessageStore.COL_CHECKED);
+        restricted_colIndex =  cursor.getColumnIndexOrThrow(MessageStore.COL_MIN_CONTACTS_FOR_HOP);
     }
 
     @Override
@@ -121,6 +123,7 @@ public class FeedAdapter extends CursorAdapter {
         viewHolder.likes = (TextView) convertView.findViewById(R.id.feed_item_likes);
         viewHolder.favorite = (TextView) convertView.findViewById(R.id.feed_item_favorite);
         viewHolder.replies = (TextView) convertView.findViewById(R.id.feed_item_replies);
+        viewHolder.restricted = (TextView) convertView.findViewById(R.id.feed_item_restricted);
 
         viewHolder.checkbox = (CheckBox) convertView.findViewById(R.id.feed_item_checkbox);
         convertView.setTag(viewHolder);
@@ -182,6 +185,8 @@ public class FeedAdapter extends CursorAdapter {
         viewHolder.replies.setText(String.valueOf(MessageStore.getInstance(context).getCommentCount(cursor.getString(messageId_colIndex))));
 
         viewHolder.favorite.setActivated(cursor.getInt(favorite_colIndex) == MessageStore.TRUE);
+
+        viewHolder.restricted.setVisibility(cursor.getInt(restricted_colIndex) > 0 ? View.VISIBLE : View.INVISIBLE);
 
         //set callbacks to all views that require a callback
         if(selectionMode) {
@@ -321,6 +326,7 @@ public class FeedAdapter extends CursorAdapter {
         private TextView likes;
         private TextView replies;
         private TextView favorite;
+        private TextView restricted;
         private CheckBox checkbox;
     }
 }
