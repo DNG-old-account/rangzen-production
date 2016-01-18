@@ -318,6 +318,57 @@ public class MessageStore extends SQLiteOpenHelper {
         return null;
     }
 
+    /** Return a cursor pointing to messages sorted according to current sort order and deleted state
+     * @param getDeleted whether or not results should include deleted items
+     * @param getReplies whether or not results should include items which are replies on other message
+     * @param limit Maximum number of items to return or -1 for unlimited
+     * @return Cursor of Message items based on database items matching conditions
+     */
+    public Cursor getFavoriteMessagesContainingCursor(String message, boolean getDeleted, boolean getReplies, int limit){
+        if(message == null) message = "";
+        message = Utils.makeTextSafeForSQL(message);
+
+        SQLiteDatabase db = getWritableDatabase();
+        if(db != null) {
+
+            String likeQuery ="";
+
+            String messageNoSpace = message.replaceAll("\\s","");
+
+            if(message.length() == 0 || messageNoSpace.length() == 0) likeQuery =  (COL_MESSAGE + " LIKE '%" + message + "%'");
+
+            if(likeQuery.length() == 0){
+                message = message.replaceAll("[\n\"]", " ");
+
+                while(message.charAt(0) == ' '){
+                    message = message.substring(1);
+                }
+
+                String[] words = message.split("\\s");
+
+                for(int i=0; i<words.length; i++){
+                    if(i > 0){
+                        likeQuery +=" OR ";
+                    }
+
+                    likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
+                }
+
+                Log.w("liran", "searching with like:" + likeQuery);
+            }
+
+            String query = "SELECT * FROM " + TABLE +
+                    " WHERE "+COL_FAVIRITE+"="+TRUE+" AND ("+ likeQuery+")"
+                    + (!getReplies ? "AND ("+COL_BIGPARENT+ " IS NULL OR "+COL_BIGPARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+ "))" : "")
+                    + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
+                    + " "+sortOption
+                    + (limit > 0 ? " LIMIT " + limit : "")
+                    + ";";
+            return db.rawQuery(query, null);
+        }
+        return null;
+    }
+
     /** Return an array of messages sorted by according their priority and deleted state
      * @param getDeleted whether or not results should include deleted items
      * @param limit Maximum number of items to return or -1 for unlimited

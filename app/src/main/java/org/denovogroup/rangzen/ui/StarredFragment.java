@@ -303,7 +303,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
         String sqlQuery = SearchHelper.searchToSQL(query);
         return (sqlQuery != null) ?
                 MessageStore.getInstance(getActivity()).getMessagesByQuery(sqlQuery+baseCondition) :
-                MessageStore.getInstance(getActivity()).getMessagesByQuery(baseCondition);
+                MessageStore.getInstance(getActivity()).getFavoriteMessagesContainingCursor(query, false, false, -1);
     }
 
     private void swapCursor(){
