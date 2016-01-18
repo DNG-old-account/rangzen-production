@@ -21,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CalendarView;
 import android.widget.EditText;
@@ -109,7 +110,7 @@ public class PostActivity extends AppCompatActivity {
         getSupportActionBar().setTitle(R.string.new_post);
 
         if(Build.VERSION.SDK_INT >= 19) {
-            toolbar.setPadding(0, getStatusBarHeight(), 0, 0);
+            //toolbar.setPadding(0, getStatusBarHeight(), 0, 0);
 
             SystemBarTintManager tintManager = new SystemBarTintManager(this);
             tintManager.setStatusBarTintEnabled(true);

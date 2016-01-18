@@ -160,6 +160,7 @@
     </style>
 
     <style name="AppTheme.PostActivity" parent="AppTheme">
+        <item name="android:windowFullscreen">false</item>
         <item name="android:textColorPrimary">#6D6D6D</item>
     </style>
 
