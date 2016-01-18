@@ -41,6 +41,7 @@ import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.ExchangeHistoryTracker;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.SearchHelper;
+import org.denovogroup.rangzen.backend.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +82,10 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
         query = s.toString();
-        feedListView.setAdapter(new FeedAdapter(getActivity(), getCursor(), false, feedAdapterCallbacks));
+        FeedAdapter adapter = new FeedAdapter(getActivity(), getCursor(), false, feedAdapterCallbacks);
+        if(SearchHelper.searchToSQL(query) == null) {
+            adapter.setHighlight(Utils.getKeywords(query));
+        }
     }
 
     @Override
@@ -311,6 +315,9 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
 
         CursorAdapter newAdapter = ((CursorAdapter) feedListView.getAdapter());
         newAdapter.swapCursor(getCursor());
+        if(SearchHelper.searchToSQL(query) == null) {
+            ((FeedAdapter) newAdapter).setHighlight(Utils.getKeywords(query));
+        }
         feedListView.setAdapter(newAdapter);
 
         feedListView.setSelectionFromTop(firstVisiblePosition, offsetFromTop);
@@ -361,15 +368,17 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                 boolean canDeleteSender = false;
                 boolean canDeleteExchange = false;
 
-                if(checkedCount == 1){
+                if (checkedCount == 1) {
                     checkedCursor.moveToFirst();
                     String sender = checkedCursor.getString(checkedCursor.getColumnIndex(MessageStore.COL_PSEUDONYM));
 
-                    if(sender != null) canDeleteSender = MessageStore.getInstance(getActivity()).getMessagesBySenderCount(sender) > 0;
+                    if (sender != null)
+                        canDeleteSender = MessageStore.getInstance(getActivity()).getMessagesBySenderCount(sender) > 0;
 
                     String exchange = checkedCursor.getString(checkedCursor.getColumnIndex(MessageStore.COL_EXCHANGE));
 
-                    if(exchange != null) canDeleteExchange = MessageStore.getInstance(getActivity()).getMessagesByExchangeCount(exchange) > 0;
+                    if (exchange != null)
+                        canDeleteExchange = MessageStore.getInstance(getActivity()).getMessagesByExchangeCount(exchange) > 0;
 
                     float trust = checkedCursor.getFloat(checkedCursor.getColumnIndex(MessageStore.COL_TRUST));
 

@@ -215,4 +215,24 @@ public class Utils {
         String reformedText = source.replaceAll("'","''");
         return reformedText;
     }
+
+    /** breaks a string into single words, ignoring spaces */
+    public static String[] getKeywords(String string){
+        //check if not just blanks
+        if(string == null || string.replaceAll("\\s","").length() == 0) return null;
+
+        //remove line breaks
+        String digest = string.replaceAll("[\n\"]", " ");
+
+        //remove spaces at the start of the string
+        while(digest.charAt(0) == ' '){
+            digest = digest.substring(1);
+        }
+
+        String[] words = digest.split("\\s");
+
+        if(words.length > 0) return words;
+
+        return null;
+    }
 }

@@ -2,10 +2,12 @@ package org.denovogroup.rangzen.ui;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.method.LinkMovementMethod;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -57,7 +59,7 @@ public class FeedAdapter extends CursorAdapter {
     int normalBgColor;
     int checkedBgColor;
 
-    String highlight;
+    private String[] highlight;
 
     public interface FeedAdapterCallbacks{
         void onUpvote(String message, int oldPriority);
@@ -79,7 +81,7 @@ public class FeedAdapter extends CursorAdapter {
         this(context, cursor, selectionMode, null);
     }
 
-    public void setHighlight(String highlight) {
+    public void setHighlight(String[] highlight) {
         this.highlight = highlight;
     }
 
@@ -237,6 +239,26 @@ public class FeedAdapter extends CursorAdapter {
         }
 
         Spannable spannable = (Spannable) Html.fromHtml(hashtaggedMessage);
+
+        if(highlight != null) {
+            for (String str : highlight) {
+                if (source.contains(str)) {
+                    int startoffset = 0;
+                    String digest = source;
+
+                    while (digest.contains(str)) {
+                        int digestStart = digest.indexOf(str);
+                        int start = startoffset + digestStart;
+                        int end = start + str.length();
+                        spannable.setSpan(new BackgroundColorSpan(Color.parseColor("#FFFF02"))
+                                , start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        digest = digest.substring(digestStart + str.length());
+                        startoffset = end;
+                    }
+                }
+            }
+        }
+
         textView.setText(selectionMode ? spannable : removeUnderlines(spannable));
 
         if(!selectionMode) {

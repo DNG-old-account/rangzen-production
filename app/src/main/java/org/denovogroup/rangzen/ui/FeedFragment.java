@@ -44,6 +44,7 @@ import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.ExchangeHistoryTracker;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.SearchHelper;
+import org.denovogroup.rangzen.backend.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +87,12 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
         query = s.toString();
-        feedListView.setAdapter(new FeedAdapter(getActivity(), getCursor(), false, feedAdapterCallbacks));
+        FeedAdapter adapter = new FeedAdapter(getActivity(), getCursor(), false, feedAdapterCallbacks);
+        if(SearchHelper.searchToSQL(query) == null) {
+            adapter.setHighlight(Utils.getKeywords(query));
+        }
+        feedListView.setAdapter(adapter);
+
     }
 
     @Override
@@ -333,6 +339,9 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
 
         CursorAdapter newAdapter = ((CursorAdapter) feedListView.getAdapter());
         newAdapter.swapCursor(getCursor());
+        if(SearchHelper.searchToSQL(query) == null) {
+            ((FeedAdapter) newAdapter).setHighlight(Utils.getKeywords(query));
+        }
         feedListView.setAdapter(newAdapter);
 
         feedListView.setSelectionFromTop(firstVisiblePosition, offsetFromTop);
