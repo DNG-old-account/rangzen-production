@@ -34,6 +34,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.util.Log;
 
 import java.io.IOException;
@@ -408,5 +409,9 @@ public class BluetoothSpeaker {
 
     public void dismissNoBluetoothNotification(){
         mBluetoothBroadcastReceiver.dismissNoBluetoothNotification(mContext);
+    }
+
+    public void unregisterReceiver(Context context){
+        context.unregisterReceiver(mBluetoothBroadcastReceiver);
     }
 }

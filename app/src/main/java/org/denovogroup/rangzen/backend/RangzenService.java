@@ -233,6 +233,7 @@ public class RangzenService extends Service {
         }
 
         mWifiDirectSpeaker.dismissNoWifiNotification();
+        mBluetoothSpeaker.unregisterReceiver(this);
         mBluetoothSpeaker.dismissNoBluetoothNotification();
     }
 

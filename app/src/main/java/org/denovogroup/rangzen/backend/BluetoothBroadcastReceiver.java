@@ -308,5 +308,4 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
       return "INVALID";
     }
   }
-    
 }
