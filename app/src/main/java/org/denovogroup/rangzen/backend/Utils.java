@@ -76,6 +76,7 @@ public class Utils {
 
         float hoursFloat = hours +(min/60f);
 
+        Log.d("liran", ""+hoursFloat +" "+hours+":"+min);
         return Math.round(hoursFloat);
     }
 
@@ -116,6 +117,11 @@ public class Utils {
      * @return the reduced calendar
      */
     public static Calendar reduceCalendarMin(Calendar calendar){
+
+        int roundedHours = Math.round(calendar.get(Calendar.MINUTE)/60f);
+
+        calendar.add(Calendar.HOUR, roundedHours);
+
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MINUTE, 0);
