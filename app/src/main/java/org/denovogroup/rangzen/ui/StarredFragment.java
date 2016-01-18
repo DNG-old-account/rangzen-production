@@ -272,8 +272,8 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
 
         @Override
         public void onNavigate(String message, String latxLon) {
-            double lat = Double.parseDouble(latxLon.substring(0, latxLon.indexOf("x")));
-            double lon = Double.parseDouble(latxLon.substring(latxLon.indexOf("x") + 1));
+            double lat = Double.parseDouble(latxLon.substring(0, latxLon.indexOf(" ")));
+            double lon = Double.parseDouble(latxLon.substring(latxLon.indexOf(" ") + 1));
 
             Uri gmmIntentUri = Uri.parse("geo:"+lat+","+lon);
             Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);

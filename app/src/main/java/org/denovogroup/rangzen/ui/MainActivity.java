@@ -441,7 +441,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                                 + "\""+(cursor.getFloat(trustColIndex)*100)+"\","
                                 + "\""+(cursor.getInt(likesColIndex))+"\","
                                 + (profile.isPseudonyms() ? "\""+(cursor.getString(pseudoColIndex)) +"\"," : "")
-                                + (profile.isShareLocation() ? "\""+(cursor.getString(locationColIndex)) +"\"," : "")
+                                + (profile.isShareLocation() ? "\""+(cursor.getString(locationColIndex) != null ? cursor.getString(locationColIndex) : "") +"\"," : "")
                                 + "\""+(cursor.getInt(restrictedColIndex) > 0)+"\","
                                 + "\"" + formatMessageForCSV(cursor.getString(messageColIndex))+"\"";
                         bos.write(line);

@@ -71,7 +71,7 @@ public class MessageStore extends SQLiteOpenHelper {
     private static final double DEFAULT_PRIORITY = 0;
 
     private static final String DATABASE_NAME = "MessageStore.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE = "Messages";
     public static final String COL_ROWID = "_id";
@@ -81,7 +81,7 @@ public class MessageStore extends SQLiteOpenHelper {
     public static final String COL_LIKES = "Endorsements";
     public static final String COL_LIKED = "Endorsed";
     public static final String COL_PSEUDONYM = "Nickname";
-    public static final String COL_TIMESTAMP = "timestamp";
+    public static final String COL_TIMESTAMP = "Timestamp";
     private static final String COL_DELETED = "deleted";
     public static final String COL_READ = "read";
     public static final String COL_EXPIRE = "expire";
@@ -456,7 +456,7 @@ public class MessageStore extends SQLiteOpenHelper {
                         +COL_BIGPARENT+"='"+bigparent+"',"
                         +COL_PARENT+"='"+parent+"',"
                         + COL_READ +"="+(isRead ? TRUE : FALSE)+","
-                        + ((location != null) ? (COL_LATLONG+"='"+location.getLatitude()+"x"+location.getLongitude()+"',") : "")
+                        + ((location != null) ? (COL_LATLONG+"='"+location.getLatitude()+" "+location.getLongitude()+"',") : "")
                         +COL_TIMESTAMP+"="+reducedTimestamp.getTimeInMillis()+","
                         + ((exchange != null) ? (COL_EXCHANGE+"="+exchange+",") : "")
                         +COL_EXPIRE+"="+timebound
