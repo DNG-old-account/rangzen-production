@@ -46,8 +46,8 @@
     <string name="drawer_menu_toggle_open">Open</string>
     <string name="drawer_menu_toggle_close">Close</string>
 
-    <string name="new_messages_notification_desc">New messages</string>
-    <string name="new_messages_notification_btn">VIEW NEW</string>
+    <string name="new_messages_notification_desc">new messages</string>
+    <string name="new_messages_notification_btn">View New</string>
 
     <string name="feed">Feed</string>
     <string name="empty_string"></string>
@@ -140,7 +140,7 @@
     <string name="settings_exchange_title">Exchanges</string>
     <string name="settings_max_messages_p_exchange">Maximum messages per exchange</string>
     <string name="settings_timeout_p_exchange">Timeout between exchanges(s)</string>
-    <string name="exchanges">exchanges</string>
+    <string name="exchanges">new exchanges</string>
     <string name="settings_mac_title">Bluetooth MAC address</string>
     <string name="post_hint">Type your message</string>
 

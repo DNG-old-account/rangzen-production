@@ -38,6 +38,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.backend.ExchangeHistoryTracker;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.SearchHelper;
 
@@ -673,7 +674,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
         long unreadCount = MessageStore.getInstance(getActivity()).getUnreadCount();
         if(newMessagesNotification != null){
             if(unreadCount > 0) {
-                String countString = (unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? unreadCount +" "+getString(R.string.new_messages_notification_desc) : "+"+MAX_NEW_MESSAGES_DISPLAY;
+                String countString = ((unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? unreadCount +" "+getString(R.string.new_messages_notification_desc) : "+"+MAX_NEW_MESSAGES_DISPLAY) +"\n("+ ExchangeHistoryTracker.getInstance().getExchangeHistory()+" "+getString(R.string.exchanges)+")";
 
                 ((TextView)newMessagesNotification.findViewById(R.id.new_message_notification_desc)).setText(countString);
                 newMessagesNotification.setVisibility(View.VISIBLE);

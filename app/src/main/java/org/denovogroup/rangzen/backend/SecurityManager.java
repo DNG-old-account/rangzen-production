@@ -79,7 +79,7 @@ public class SecurityManager {
                 .setUseTrust(false)
                 .setRandomExchange(false)
                 .setTimeboundPeriod(1)
-                .setMinContactsForHop(0)
+                .setMinContactsForHop(3)
         );
         profiles.add(new SecurityProfile(2)
                 .setName(R.id.radio_profile_strict)

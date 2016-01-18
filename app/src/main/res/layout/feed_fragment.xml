@@ -33,37 +33,7 @@
             android:gravity="center"
             android:background="@drawable/ui_buttoncircle"/>
 
-        <LinearLayout
-            android:id="@+id/new_message_notification"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#DD333333"
-            android:paddingBottom="10dp"
-            android:paddingTop="10dp"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp">
-
-            <TextView
-                android:id="@+id/new_message_notification_desc"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textColor="@android:color/white"
-                android:text="15 New messages"
-                />
-
-            <Button
-                android:id="@+id/new_message_notification_btn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="19sp"
-                android:textColor="#ffecb3"
-                android:text="@string/new_messages_notification_btn"
-                android:background="@android:color/transparent"/>
-
-        </LinearLayout>
+        <include layout="@layout/new_message_snackbar"/>
 
     </LinearLayout>
 

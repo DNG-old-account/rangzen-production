@@ -709,7 +709,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         long unreadCount = MessageStore.getInstance(getActivity()).getUnreadCount();
         if(newMessagesNotification != null){
             if(unreadCount > 0) {
-                String countString = ((unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? unreadCount +" "+getString(R.string.new_messages_notification_desc) : "+"+MAX_NEW_MESSAGES_DISPLAY) +", "+ ExchangeHistoryTracker.getInstance().getExchangeHistory()+" "+getString(R.string.exchanges);
+                String countString = ((unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? unreadCount +" "+getString(R.string.new_messages_notification_desc) : "+"+MAX_NEW_MESSAGES_DISPLAY) +"\n("+ ExchangeHistoryTracker.getInstance().getExchangeHistory()+" "+getString(R.string.exchanges)+")";
 
                 ((TextView)newMessagesNotification.findViewById(R.id.new_message_notification_desc)).setText(countString);
                 newMessagesNotification.setVisibility(View.VISIBLE);
