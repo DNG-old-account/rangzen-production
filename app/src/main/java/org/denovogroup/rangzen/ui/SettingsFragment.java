@@ -198,14 +198,18 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         switch (seekBar.getId()){
             case R.id.seekbar_autodelete_trust:
                 if(fromUser){
-                    autodelTrustEditText.setText(String.valueOf(progress));
                     currentProfile.setAutodeleteTrust(progress/100f);
+                    autodelTrustEditText.removeTextChangedListener(this);
+                    autodelTrustEditText.setText(String.valueOf(progress));
+                    autodelTrustEditText.addTextChangedListener(this);
                 }
                 break;
             case R.id.seekbar_autodelete_age:
                 if(fromUser) {
-                    autodelAgeEditText.setText(String.valueOf(progress));
                     currentProfile.setAutodeleteAge(progress);
+                    autodelAgeEditText.removeTextChangedListener(this);
+                    autodelAgeEditText.setText(String.valueOf(progress));
+                    autodelAgeEditText.addTextChangedListener(this);
                 }
                 break;
         }

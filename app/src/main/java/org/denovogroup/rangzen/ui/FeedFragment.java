@@ -608,6 +608,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
             case R.id.action_retweet:
                 Intent intent = new Intent(getActivity(), PostActivity.class);
                 intent.putExtra(PostActivity.MESSAGE_BODY, checkedMessages.getString(checkedMessages.getColumnIndex(MessageStore.COL_MESSAGE)));
+                setListInDisplayMode();
                 getActivity().startActivityForResult(intent, REQ_CODE_MESSAGE);
                 break;
             case R.id.action_share:

@@ -390,6 +390,8 @@ public class FriendStore extends SQLiteOpenHelper{
         if(query == null || query.length() == 0){
             return db.rawQuery("SELECT * FROM "+TABLE+" ORDER BY "+COL_DISPLAY_NAME+" COLLATE NOCASE ASC;",null);
         } else {
+            query = Utils.makeTextSafeForSQL(query);
+
             String likeQuery ="";
 
             query = query.replaceAll("[\n\"]", " ");

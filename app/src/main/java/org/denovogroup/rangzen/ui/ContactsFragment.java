@@ -376,11 +376,11 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
             leftText.setOnClickListener(inSelectionMode ? new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    MessageStore.getInstance(getActivity()).checkAllMessages(!selectAll);
+                    FriendStore.getInstance(getActivity()).setCheckedAll(!selectAll);
                     selectAll = !selectAll;
                     swapCursor();
 
-                    int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
+                    int checkedCount = (int) FriendStore.getInstance(getActivity()).getCheckedCount();
                     ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
                 }
             } : null);
