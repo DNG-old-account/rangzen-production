@@ -4,6 +4,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.method.LinkMovementMethod;
+import android.text.style.BackgroundColorSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +17,8 @@ import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
+
+import java.util.List;
 
 /**
  * Created by Liran on 12/30/2015.
@@ -26,6 +32,8 @@ public class FeedReplyAdapter extends CursorAdapter {
     private ViewHolder viewHolder;
     SecurityProfile securityProfile;
     ViewGroup parent;
+
+    private String[] highlight;
 
     String[] colors = new String[]{
             "#ef9a9a",
@@ -48,6 +56,10 @@ public class FeedReplyAdapter extends CursorAdapter {
         message_colIndex = cursor.getColumnIndex(MessageStore.COL_MESSAGE);
         pseudonym_colIndex = cursor.getColumnIndex(MessageStore.COL_PSEUDONYM);
         timestamp_colIndex = cursor.getColumnIndex(MessageStore.COL_TIMESTAMP);
+    }
+
+    public void setHighlight(String[] highlight) {
+        this.highlight = highlight;
     }
 
     @Override
@@ -91,7 +103,7 @@ public class FeedReplyAdapter extends CursorAdapter {
             }
         }
 
-        viewHolder.message.setText(cursor.getString(message_colIndex));
+        setHashtagLinks(viewHolder.message, cursor.getString(message_colIndex));
         String pseudonymString = securityProfile.isPseudonyms() ? cursor.getString(pseudonym_colIndex) : "";
         viewHolder.pseudonym.setText(pseudonymString.length() > 0 ? "@" + pseudonymString : "");
 
@@ -116,5 +128,59 @@ public class FeedReplyAdapter extends CursorAdapter {
         TextView pseudonym;
         TextView time;
         TextView message;
+    }
+
+    private void setHashtagLinks(TextView textView, String source){
+
+        String hashtaggedMessage = source;
+
+        //String hexColor = String.format("#%06X", (0xFFFFFF & linkColor));
+
+        /*List<String> hashtags = Utils.getHashtags(source);
+        for(String hashtag : hashtags){
+            String textBefore = hashtaggedMessage.substring(0,hashtaggedMessage.indexOf(hashtag));
+            String textAfter = hashtaggedMessage.substring(hashtaggedMessage.indexOf(hashtag)+hashtag.length());
+            if(selectionMode){
+                hashtaggedMessage = textBefore+"<font color="+hexColor+">"+hashtag+"</font>"+textAfter;
+            } else {
+                hashtaggedMessage = textBefore+"<a href=\"org.denovogroup.rangzen://hashtag/"+hashtag+"/\">"+hashtag+"</a>"+textAfter;
+            }*
+        }
+        if(!selectionMode){
+            //fix <a href> extended to the end of the line making entire following text clickable
+            if(hashtaggedMessage.indexOf("</a>") == hashtaggedMessage.length()-4){
+                hashtaggedMessage += " ";
+            }
+        }*/
+
+        Spannable spannable = (Spannable) Html.fromHtml(hashtaggedMessage);
+
+        if(highlight != null) {
+            for (String str : highlight) {
+                if (source.toLowerCase().contains(str.toLowerCase())) {
+                    int startoffset = 0;
+                    String digest = source.toLowerCase();
+
+                    while (digest.contains(str.toLowerCase())) {
+                        int digestStart = digest.indexOf(str.toLowerCase());
+                        int start = startoffset + digestStart;
+                        int end = start + str.length();
+                        spannable.setSpan(new BackgroundColorSpan(Color.parseColor("#FFFF02"))
+                                , start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        digest = digest.substring(digestStart + str.length());
+                        startoffset = end;
+                    }
+                }
+            }
+        }
+
+        textView.setText(spannable);
+        /*textView.setText(selectionMode ? spannable : removeUnderlines(spannable));
+
+        if(!selectionMode) {
+            textView.setLinkTextColor(linkColor);
+            textView.setLinksClickable(true);
+            textView.setMovementMethod(LinkMovementMethod.getInstance());
+        }*/
     }
 }

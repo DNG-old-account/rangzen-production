@@ -88,7 +88,11 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
         query = s.toString();
-        contactListView.setAdapter(new ContactAdapter(getActivity(), getCursor(), inSelectionMode));
+        ContactAdapter adapter = new ContactAdapter(getActivity(), getCursor(), inSelectionMode);
+        if(SearchHelper.searchToSQL(query) == null) {
+            adapter.setHighlight(Utils.getKeywords(query));
+        }
+        contactListView.setAdapter(adapter);
     }
 
     @Override
@@ -183,6 +187,9 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
 
         CursorAdapter newAdapter = ((CursorAdapter) contactListView.getAdapter());
         newAdapter.swapCursor(getCursor());
+        if(SearchHelper.searchToSQL(query) == null) {
+            ((ContactAdapter) newAdapter).setHighlight(Utils.getKeywords(query));
+        }
         contactListView.setAdapter(newAdapter);
 
         contactListView.setSelectionFromTop(firstVisiblePosition, offsetFromTop);

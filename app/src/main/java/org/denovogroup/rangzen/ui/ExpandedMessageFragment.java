@@ -36,6 +36,7 @@ import android.widget.Spinner;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.MessageStore;
 import org.denovogroup.rangzen.backend.SearchHelper;
+import org.denovogroup.rangzen.backend.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -215,6 +216,9 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher, Fr
 
         CursorAdapter newAdapter = ((CursorAdapter) listView.getAdapter());
         newAdapter.swapCursor(getCursor());
+        if(SearchHelper.searchToSQL(query) == null) {
+            ((FeedReplyAdapter) newAdapter).setHighlight(Utils.getKeywords(query));
+        }
         listView.setAdapter(newAdapter);
 
         listView.setSelectionFromTop(firstVisiblePosition, offsetFromTop);
@@ -332,7 +336,11 @@ public class ExpandedMessageFragment extends Fragment implements TextWatcher, Fr
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
         query = s.toString();
-        swapCursor();
+        FeedReplyAdapter adapter = new FeedReplyAdapter(getActivity(), getCursor());
+        if(SearchHelper.searchToSQL(query) == null) {
+            adapter.setHighlight(Utils.getKeywords(query));
+        }
+        listView.setAdapter(adapter);
     }
 
     @Override

@@ -86,6 +86,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
         if(SearchHelper.searchToSQL(query) == null) {
             adapter.setHighlight(Utils.getKeywords(query));
         }
+        feedListView.setAdapter(adapter);
     }
 
     @Override

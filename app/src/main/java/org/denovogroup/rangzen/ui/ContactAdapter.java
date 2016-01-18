@@ -2,6 +2,10 @@ package org.denovogroup.rangzen.ui;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.style.BackgroundColorSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +36,8 @@ public class ContactAdapter extends CursorAdapter {
      */
     ViewHolder viewHolder;
 
+    private String[] highlight;
+
     public ContactAdapter(Context context, Cursor c, boolean inSelectionMode) {
         super(context, c, false);
         selectionMode = inSelectionMode;
@@ -44,6 +50,10 @@ public class ContactAdapter extends CursorAdapter {
         number_colIndex = cursor.getColumnIndexOrThrow(FriendStore.COL_NUMBER);
         addedVia_colIndex = cursor.getColumnIndexOrThrow(FriendStore.COL_ADDED_VIA);
         checked_colIndex = cursor.getColumnIndexOrThrow(FriendStore.COL_CHECKED);
+    }
+
+    public void setHighlight(String[] highlight) {
+        this.highlight = highlight;
     }
 
     @Override
@@ -73,7 +83,8 @@ public class ContactAdapter extends CursorAdapter {
             viewHolder.mCheckBox.setFocusable(false);
         }
         viewHolder.mIconView.setImageResource(addedViaPhone ? R.drawable.ic_phonebook_dark : R.drawable.ic_qr_dark);
-        viewHolder.mNameView.setText(cursor.getString(name_colIndex));
+
+        setHashtagLinks(viewHolder.mNameView, cursor.getString(name_colIndex));
 
         char currentIndex = cursor.getString(name_colIndex).toUpperCase().charAt(0);
         char prevIndex = '^';
@@ -95,6 +106,60 @@ public class ContactAdapter extends CursorAdapter {
         }
 
         viewHolder.mDivider.setVisibility(currentIndex != nextIndex ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    private void setHashtagLinks(TextView textView, String source){
+
+        String hashtaggedMessage = source;
+
+        //String hexColor = String.format("#%06X", (0xFFFFFF & linkColor));
+
+        /*List<String> hashtags = Utils.getHashtags(source);
+        for(String hashtag : hashtags){
+            String textBefore = hashtaggedMessage.substring(0,hashtaggedMessage.indexOf(hashtag));
+            String textAfter = hashtaggedMessage.substring(hashtaggedMessage.indexOf(hashtag)+hashtag.length());
+            if(selectionMode){
+                hashtaggedMessage = textBefore+"<font color="+hexColor+">"+hashtag+"</font>"+textAfter;
+            } else {
+                hashtaggedMessage = textBefore+"<a href=\"org.denovogroup.rangzen://hashtag/"+hashtag+"/\">"+hashtag+"</a>"+textAfter;
+            }*
+        }
+        if(!selectionMode){
+            //fix <a href> extended to the end of the line making entire following text clickable
+            if(hashtaggedMessage.indexOf("</a>") == hashtaggedMessage.length()-4){
+                hashtaggedMessage += " ";
+            }
+        }*/
+
+        Spannable spannable = (Spannable) Html.fromHtml(hashtaggedMessage);
+
+        if(highlight != null) {
+            for (String str : highlight) {
+                if (source.toLowerCase().contains(str.toLowerCase())) {
+                    int startoffset = 0;
+                    String digest = source.toLowerCase();
+
+                    while (digest.contains(str.toLowerCase())) {
+                        int digestStart = digest.indexOf(str.toLowerCase());
+                        int start = startoffset + digestStart;
+                        int end = start + str.length();
+                        spannable.setSpan(new BackgroundColorSpan(Color.parseColor("#FFFF02"))
+                                , start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        digest = digest.substring(digestStart + str.length());
+                        startoffset = end;
+                    }
+                }
+            }
+        }
+
+        textView.setText(spannable);
+        /*textView.setText(selectionMode ? spannable : removeUnderlines(spannable));
+
+        if(!selectionMode) {
+            textView.setLinkTextColor(linkColor);
+            textView.setLinksClickable(true);
+            textView.setMovementMethod(LinkMovementMethod.getInstance());
+        }*/
     }
 
     static class ViewHolder {

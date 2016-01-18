@@ -242,12 +242,12 @@ public class FeedAdapter extends CursorAdapter {
 
         if(highlight != null) {
             for (String str : highlight) {
-                if (source.contains(str)) {
+                if (source.toLowerCase().contains(str.toLowerCase())) {
                     int startoffset = 0;
-                    String digest = source;
+                    String digest = source.toLowerCase();
 
-                    while (digest.contains(str)) {
-                        int digestStart = digest.indexOf(str);
+                    while (digest.contains(str.toLowerCase())) {
+                        int digestStart = digest.indexOf(str.toLowerCase());
                         int start = startoffset + digestStart;
                         int end = start + str.length();
                         spannable.setSpan(new BackgroundColorSpan(Color.parseColor("#FFFF02"))
