@@ -178,7 +178,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
                 .setContentText(context.getText(R.string.dialog_no_bluetooth_message))
                 .setLargeIcon(largeIcon)
                 .setContentIntent(pendingIntent)
-                .setSmallIcon(R.mipmap.ic_launcher_small)
+                .setSmallIcon(R.mipmap.ic_error)
                 .build();
         mNotificationManager.notify(notificationId, notification);
     }

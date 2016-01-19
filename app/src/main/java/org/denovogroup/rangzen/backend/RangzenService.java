@@ -144,7 +144,7 @@ public class RangzenService extends Service {
     private static final int BACKOFF_FOR_ATTEMPT_MILLIS = 10 * 1000;
     private static final int BACKOFF_MAX = BACKOFF_FOR_ATTEMPT_MILLIS * (int)Math.pow(2,9);
 
-    private static final boolean USE_MINIMAL_LOGGING = true;
+    private static final boolean USE_MINIMAL_LOGGING = false;
 
     /**
      * Called whenever the service is requested to start. If the service is
@@ -198,7 +198,7 @@ public class RangzenService extends Service {
 
         mMessageStore = MessageStore.getInstance(this);
 
-        setWifiDirectFriendlyName();
+        setWifiDirectFriendlyName(); //TODO loop this periodically until name returned to receiver is appropriate, if name changed again and is not apropriate schedual it again
         mWifiDirectSpeaker.setmSeekingDesired(true);
 
         // Schedule the background task thread to run occasionally.
@@ -720,6 +720,8 @@ public class RangzenService extends Service {
                     }
                 }, RENAME_DELAY);
             }
+        } else{
+            Log.w(TAG, "setWifiDirectFriendlyName was called with null wifiDirectSpeaker");
         }
     }
 

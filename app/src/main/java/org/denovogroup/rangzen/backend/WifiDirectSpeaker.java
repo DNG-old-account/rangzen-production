@@ -46,6 +46,7 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager.ActionListener;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
@@ -179,7 +180,7 @@ public class WifiDirectSpeaker {
     Log.i(TAG, "Finished initializing Wifi P2P Channel.");
     this.mPeerManager = peerManager;
 
-    // Register WifiDirectSpeaker to receive various events from the OS 
+      // Register WifiDirectSpeaker to receive various events from the OS
     // Wifi Direct subsystem. When these events arrive, the onReceive method
     // of this class is called, which dispatches them to other instance methods,
     // one per event.
@@ -481,6 +482,7 @@ public class WifiDirectSpeaker {
    */
   public void setWifiDirectUserFriendlyName(String name) {
     if (mWifiP2pManager == null || mWifiP2pChannel == null) {
+        Log.d(TAG, "setWifiDirectUserFriendlyName failed: WifiP2pManager or WifiP2pChannel are null");
       return;
     }
     try {
@@ -490,6 +492,7 @@ public class WifiDirectSpeaker {
       // change the Wifi Direct name of their device.
       Method method = mWifiP2pManager.getClass().getMethod("setDeviceName", Channel.class, String.class, ActionListener.class);
       method.invoke(mWifiP2pManager, mWifiP2pChannel, name, null);
+      Log.v(TAG, "Device name changed to:"+name);
     } catch (NoSuchMethodException e) {
       e.printStackTrace();
       Log.e(TAG, "Reflection found no such method as setDeviceName");
@@ -531,7 +534,7 @@ public class WifiDirectSpeaker {
         Notification notification = new Notification.Builder(mContext).setContentTitle(mContext.getText(R.string.dialog_no_wifi_title))
                 .setContentText(mContext.getText(R.string.dialog_no_wifi_message))
                 .setLargeIcon(largeIcon)
-                .setSmallIcon(R.mipmap.ic_launcher_small)
+                .setSmallIcon(R.mipmap.ic_error)
                 .setContentIntent(pendingIntent)
                 .build();
         mNotificationManager.notify(notificationId, notification);
