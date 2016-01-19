@@ -176,7 +176,7 @@ public class RangzenService extends Service {
      */
     @Override
     public void onCreate() {
-        log.info( "RangzenService created.");
+        log.info( "RangzenService onCreate.");
 
         sRangzenServiceInstance = this;
 
@@ -220,12 +220,14 @@ public class RangzenService extends Service {
         }, 0, 5, TimeUnit.MINUTES);
 
         TIME_BETWEEN_EXCHANGES_MILLIS = SecurityManager.getCurrentProfile(this).getCooldown() * 1000;
+        log.info( "RangzenService created.");
     }
 
     /**
      * Called when the service is destroyed.
      */
     public void onDestroy() {
+        log.debug("RangzenService onDestroy");
       mBackgroundExecution.cancel(true);
         SharedPreferences pref = getSharedPreferences(MainActivity.PREF_FILE, Context.MODE_PRIVATE);
         if(pref.contains(MainActivity.WIFI_NAME) && mWifiDirectSpeaker != null){
@@ -236,6 +238,7 @@ public class RangzenService extends Service {
         mWifiDirectSpeaker.dismissNoWifiNotification();
         mBluetoothSpeaker.unregisterReceiver(this);
         mBluetoothSpeaker.dismissNoBluetoothNotification();
+        log.debug("RangzenService destroyed");
     }
 
 
@@ -304,6 +307,7 @@ public class RangzenService extends Service {
                 try {
                     log.debug("Checking peer:"+peer);
                     if (peerManager.thisDeviceSpeaksTo(peer)) {
+                        log.debug("This device is in charge of starting conversation");
                         // Connect to the peer, starting an exchange with the peer once
                         // connected. We only do this if thisDeviceSpeaksTo(peer), which
                         // checks whether we initiate conversations with this peer or
@@ -329,6 +333,8 @@ public class RangzenService extends Service {
                             log.debug( "Backoff from peer: " + peer +
                                     " [previously interacted:" + hasHistory + ", store ready:" + storeVersionChanged + " ,backoff timeout:" + waitedMuch + "]");
                         }
+                    } else {
+                        log.debug("Other device is in charge of starting conversation");
                     }
                 } catch (NoSuchAlgorithmException e) {
                     log.error( "No such algorithm for hashing in thisDeviceSpeaksTo!? ",e);
@@ -730,4 +736,6 @@ public class RangzenService extends Service {
         SecurityProfile currentProfile = SecurityManager.getCurrentProfile(this);
             MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile);
     }
+
+    
 }

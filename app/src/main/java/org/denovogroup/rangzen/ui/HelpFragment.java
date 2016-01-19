@@ -241,6 +241,29 @@ public class HelpFragment extends Fragment{
 
         if(includeLog) {
             File log_filename = new File(Environment.getExternalStorageDirectory() + "/"+ ConfigureLog4J.LOG_FILE);
+
+            //get device info
+            String userData = "";
+
+            try {
+                PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+                userData += "Application: Murmur v" + info.versionName + " (" + info.versionCode + ")\n";
+            } catch (PackageManager.NameNotFoundException e) {
+            }
+
+            userData += "OS version: " + android.os.Build.VERSION.SDK_INT + "\n";
+            userData += "Device: " + android.os.Build.DEVICE + "\n";
+            userData += "Model: " + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")\n";
+
+            try {
+                log_filename.createNewFile();
+                BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
+                writer.write(userData);
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
         }
 

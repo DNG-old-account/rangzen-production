@@ -265,7 +265,7 @@ public class BluetoothSpeaker {
    */
   private void createListeningSocket() throws IOException {
       mServerSocket = mBluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(SDP_NAME, mThisDeviceUUID);
-      log.info(String.format("Listening (insecure RFCOMM) - name <%s>, UUID <%s>.",
+      log.info(String.format("Listening socket created: Listening (insecure RFCOMM) - name <%s>, UUID <%s>.",
               SDP_NAME, mThisDeviceUUID));
   }
 
