@@ -44,7 +44,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.content.Context;
 import android.content.Intent;
 import android.app.Service;
@@ -52,6 +51,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
 
+import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 import org.denovogroup.rangzen.ui.MainActivity;
@@ -137,6 +137,7 @@ public class RangzenService extends Service {
 
     /** Android Log Tag. */
     private final static String TAG = "RangzenService";
+    private static final Logger log = Logger.getLogger(TAG);
 
     private static final int NOTIFICATION_ID = R.string.unread_notification_title;
     private static final int RENAME_DELAY = 1000;
@@ -161,7 +162,7 @@ public class RangzenService extends Service {
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startid) {
-        Log.i(TAG, "RangzenService onStartCommand.");
+        log.info( "RangzenService onStartCommand.");
 
         // Returning START_STICKY causes Android to leave the service running
         // even when the foreground activity is closed.
@@ -175,7 +176,7 @@ public class RangzenService extends Service {
      */
     @Override
     public void onCreate() {
-        Log.i(TAG, "RangzenService created.");
+        log.info( "RangzenService created.");
 
         sRangzenServiceInstance = this;
 
@@ -228,7 +229,7 @@ public class RangzenService extends Service {
       mBackgroundExecution.cancel(true);
         SharedPreferences pref = getSharedPreferences(MainActivity.PREF_FILE, Context.MODE_PRIVATE);
         if(pref.contains(MainActivity.WIFI_NAME) && mWifiDirectSpeaker != null){
-            Log.d(TAG, "Restoring wifi name");
+            log.debug( "Restoring wifi name");
             mWifiDirectSpeaker.setWifiDirectUserFriendlyName(pref.getString(MainActivity.WIFI_NAME, ""));
         }
 
@@ -258,9 +259,9 @@ public class RangzenService extends Service {
         timeSinceLastOK = true;
       }
         if(!USE_MINIMAL_LOGGING) {
-            Log.v(TAG, "Ready to connect? " + (timeSinceLastOK && !getConnecting()));
-            Log.v(TAG, "Connecting: " + getConnecting());
-            Log.v(TAG, "timeSinceLastOK: " + timeSinceLastOK);
+            log.info( "Ready to connect? " + (timeSinceLastOK && !getConnecting()));
+            log.info( "Connecting: " + getConnecting());
+            log.info( "timeSinceLastOK: " + timeSinceLastOK);
         }
       return timeSinceLastOK && !getConnecting(); 
     }
@@ -269,7 +270,7 @@ public class RangzenService extends Service {
      * Set the time of the last exchange, kept in storage, to the current time.
      */
     private void setLastExchangeTime() {
-        if(!USE_MINIMAL_LOGGING) Log.i(TAG, "Setting last exchange time");
+        if(!USE_MINIMAL_LOGGING) log.info( "Setting last exchange time");
       long now = System.currentTimeMillis();
       mStore.putLong(LAST_EXCHANGE_TIME_KEY, now);
     }
@@ -279,7 +280,7 @@ public class RangzenService extends Service {
      * background tasks.
      */
     public void backgroundTasks() {
-        if(!USE_MINIMAL_LOGGING) Log.v(TAG, "Background Tasks Started");
+        if(!USE_MINIMAL_LOGGING) log.info( "Background Tasks Started");
 
         if(isAppInForeground()){
             cancelUnreadMessagesNotification();
@@ -301,7 +302,7 @@ public class RangzenService extends Service {
             }
             for(Peer peer : peers) {
                 try {
-                    Log.d(TAG,"Checking peer:"+peer);
+                    log.debug("Checking peer:"+peer);
                     if (peerManager.thisDeviceSpeaksTo(peer)) {
                         // Connect to the peer, starting an exchange with the peer once
                         // connected. We only do this if thisDeviceSpeaksTo(peer), which
@@ -322,27 +323,27 @@ public class RangzenService extends Service {
                         }
 
                         if (!hasHistory || storeVersionChanged || waitedMuch) {
-                            Log.d(TAG, "Can connect with peer: " + peer);
+                            log.debug( "Can connect with peer: " + peer);
                             connectTo(peer);
                         } else {
-                            Log.d(TAG, "Backoff from peer: " + peer +
+                            log.debug( "Backoff from peer: " + peer +
                                     " [previously interacted:" + hasHistory + ", store ready:" + storeVersionChanged + " ,backoff timeout:" + waitedMuch + "]");
                         }
                     }
                 } catch (NoSuchAlgorithmException e) {
-                    Log.e(TAG, "No such algorithm for hashing in thisDeviceSpeaksTo!? " + e);
+                    log.error( "No such algorithm for hashing in thisDeviceSpeaksTo!? " + e);
                     return;
                 } catch (UnsupportedEncodingException e) {
-                    Log.e(TAG, "Unsupported encoding exception in thisDeviceSpeaksTo!?" + e);
+                    log.error( "Unsupported encoding exception in thisDeviceSpeaksTo!?" + e);
                     return;
                 }
             }
         } else {
-          Log.v(TAG, String.format("Not connecting (%d peers, ready to connect is %s)", peers.size(), readyToConnect()));
+          log.info( String.format("Not connecting (%d peers, ready to connect is %s)", peers.size(), readyToConnect()));
         }
         mBackgroundTaskRunCount++;
 
-        // Log.v(TAG, "Background Tasks Finished");
+        // log.info( "Background Tasks Finished");
     }
 
     /**
@@ -354,11 +355,11 @@ public class RangzenService extends Service {
      */
     public void connectTo(Peer peer) {
       if (getConnecting()) {
-        Log.w(TAG, "connectTo() not connecting to " + peer + " -- already connecting to someone");
+        log.warn( "connectTo() not connecting to " + peer + " -- already connecting to someone");
         return;
       }
 
-      Log.i(TAG, "connecting to " + peer);
+      log.info( "connecting to " + peer);
       // TODO(lerner): Why not just use mPeerManager?
       PeerManager peerManager = PeerManager.getInstance(this);
 
@@ -367,7 +368,7 @@ public class RangzenService extends Service {
       // attempted. (One at a time now!)
       setConnecting(true);
 
-      Log.i(TAG, "Starting to connect to " + peer.toString());
+      log.info( "Starting to connect to " + peer.toString());
       // The peer connection callback (defined elsewhere in the class) takes
       // the connect bluetooth socket and uses it to create a new Exchange.
       mBluetoothSpeaker.connect(peer, mPeerConnectionCallback);
@@ -380,10 +381,10 @@ public class RangzenService extends Service {
     /*package*/ PeerConnectionCallback mPeerConnectionCallback = new PeerConnectionCallback() {
       @Override
       public void success(BluetoothSocket socket) {
-        Log.i(TAG, "Callback says we're connected to " + socket.getRemoteDevice().toString());
+        log.info( "Callback says we're connected to " + socket.getRemoteDevice().toString());
         if (socket.isConnected()) {
           mSocket = socket;
-          Log.i(TAG, "Socket connected, attempting exchange");
+          log.info( "Socket connected, attempting exchange");
           try {
             mExchange = new CryptographicExchange(
                     RangzenService.this,
@@ -396,18 +397,18 @@ public class RangzenService extends Service {
                 RangzenService.this.mExchangeCallback);
             (new Thread(mExchange)).start();
           } catch (IOException e) {
-            Log.e(TAG, "Getting input/output stream from socket failed: " + e);
-            Log.e(TAG, "Exchange not happening.");
+            log.error( "Getting input/output stream from socket failed: " + e);
+            log.error( "Exchange not happening.");
             RangzenService.this.cleanupAfterExchange();
           }
         } else {
-          Log.w(TAG, "But the socket claims not to be connected!");
+          log.warn( "But the socket claims not to be connected!");
           RangzenService.this.cleanupAfterExchange();
         }
       }
       @Override
       public void failure(String reason) {
-        Log.i(TAG, "Callback says we failed to connect: " + reason);
+        log.info( "Callback says we failed to connect: " + reason);
         RangzenService.this.cleanupAfterExchange();
       }
     };
@@ -427,14 +428,14 @@ public class RangzenService extends Service {
           mSocket.close();
         }
       } catch (IOException e) {
-        Log.w(TAG, "Couldn't close bt socket: " + e);
+        log.warn( "Couldn't close bt socket: " + e);
       }
       try { 
         if (mBluetoothSpeaker.mSocket != null) {
           mBluetoothSpeaker.mSocket.close();
         }
       } catch (IOException e) {
-        Log.w(TAG, "Couldn't close bt socket in BTSpeaker: " + e);
+        log.warn( "Couldn't close bt socket in BTSpeaker: " + e);
       }
       mSocket = null;
       mBluetoothSpeaker.mSocket = null;
@@ -452,8 +453,8 @@ public class RangzenService extends Service {
           boolean hasNew = false;
         List<RangzenMessage> newMessages = exchange.getReceivedMessages();
         int friendOverlap = exchange.getCommonFriends();
-        Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
-        Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
+        log.info( "Got " + newMessages.size() + " messages in exchangeCallback");
+        log.info( "Got " + friendOverlap + " common friends in exchangeCallback");
           Set<String> myFriends = mFriendStore.getAllFriends();
         for (RangzenMessage message : newMessages) {
           double stored = mMessageStore.getTrust(message.text);
@@ -466,12 +467,12 @@ public class RangzenService extends Service {
             } else {
                 hasNew = true;
 
-                mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop, exchange.toString(), message.bigparent);
+                mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, message.contacts_hop, message.hop, exchange.toString(), message.bigparent);
                 //mark this message as unread
                 mMessageStore.setRead(message.text, false);
             }
           } catch (IllegalArgumentException e) {
-            Log.e(TAG, String.format("Attempted to add/update message %s with trust (%f/%f)" +
+            log.error( String.format("Attempted to add/update message %s with trust (%f/%f)" +
                                     ", %d friends, %d friends in common",
                                     message.text, newTrust, message.priority,
                                     myFriends.size(), friendOverlap));
@@ -492,11 +493,11 @@ public class RangzenService extends Service {
           } else if(ExchangeHistoryTracker.getInstance().getHistoryItem(exchange.getPeerAddress()) != null){
               // Has history, should increment the attempts counter
               ExchangeHistoryTracker.getInstance().updateAttemptsHistory(exchange.getPeerAddress());
-              Log.d(TAG,"Exchange finished without receiving new messages, back-off timeout increased to:"+
+              log.debug("Exchange finished without receiving new messages, back-off timeout increased to:"+
                     Math.min(BACKOFF_MAX , Math.pow(2, ExchangeHistoryTracker.getInstance().getHistoryItem(exchange.getPeerAddress()).attempts) * BACKOFF_FOR_ATTEMPT_MILLIS));
           } else {
               // No history file, create one
-              Log.d(TAG, "Exchange finished without receiving new messages from new peer, creating history track");
+              log.debug( "Exchange finished without receiving new messages from new peer, creating history track");
               ExchangeHistoryTracker.getInstance().updateHistory(RangzenService.this, exchange.getPeerAddress());
           }
 
@@ -505,18 +506,18 @@ public class RangzenService extends Service {
 
       @Override
       public void failure(Exchange exchange, String reason) {
-        Log.e(TAG, "Exchange failed, reason: " + reason);
+        log.error( "Exchange failed, reason: " + reason);
         RangzenService.this.cleanupAfterExchange();
       }
 
         @Override
         public void recover(Exchange exchange, String reason) {
-            Log.e(TAG, "Exchange failed but data can be recovered, reason: " + reason);
+            log.error( "Exchange failed but data can be recovered, reason: " + reason);
             boolean hasNew = false;
             List<RangzenMessage> newMessages = exchange.getReceivedMessages();
             int friendOverlap = Math.max(exchange.getCommonFriends(), 0);
-            Log.i(TAG, "Got " + newMessages.size() + " messages in exchangeCallback");
-            Log.i(TAG, "Got " + friendOverlap + " common friends in exchangeCallback");
+            log.info( "Got " + newMessages.size() + " messages in exchangeCallback");
+            log.info( "Got " + friendOverlap + " common friends in exchangeCallback");
             if(newMessages != null) {
                 for (RangzenMessage message : newMessages) {
                     Set<String> myFriends = mFriendStore.getAllFriends();
@@ -529,12 +530,12 @@ public class RangzenService extends Service {
                             mMessageStore.updateMessage(message.text, newTrust, true);
                         } else {
                             hasNew = true;
-                            mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, SecurityManager.getCurrentProfile(RangzenService.this).getMinContactsForHop(), message.hop, exchange.toString(), message.bigparent);
+                            mMessageStore.addMessage(RangzenService.this, message.messageid, message.text, newTrust, message.priority, message.pseudonym, message.timestamp ,true, message.timebound, message.getLocation(), message.parent, false, message.contacts_hop, message.hop, exchange.toString(), message.bigparent);
                             //mark this message as unread
                             mMessageStore.setRead(message.text, false);
                         }
                     } catch (IllegalArgumentException e) {
-                        Log.e(TAG, String.format("Attempted to add/update message %s with trust (%f/%f)" +
+                        log.error( String.format("Attempted to add/update message %s with trust (%f/%f)" +
                                         ", %d friends, %d friends in common",
                                 message.text, newTrust, message.priority,
                                 myFriends.size(), friendOverlap));
@@ -710,7 +711,7 @@ public class RangzenService extends Service {
 
             mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
             if (btAddress != null && (btAddress.equals(DUMMY_MAC_ADDRESS) || btAddress.equals(""))) {
-                Log.w(TAG, "Bluetooth speaker provided a dummy/blank bluetooth" +
+                log.warn( "Bluetooth speaker provided a dummy/blank bluetooth" +
                         " MAC address (" + btAddress + ") scheduling device name change.");
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
@@ -721,7 +722,7 @@ public class RangzenService extends Service {
                 }, RENAME_DELAY);
             }
         } else{
-            Log.w(TAG, "setWifiDirectFriendlyName was called with null wifiDirectSpeaker");
+            log.warn( "setWifiDirectFriendlyName was called with null wifiDirectSpeaker");
         }
     }
 

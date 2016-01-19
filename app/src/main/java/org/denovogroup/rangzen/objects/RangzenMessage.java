@@ -33,6 +33,7 @@ public final class RangzenMessage extends Message {
     public static final String PARENT_KEY = "parent";
     public static final String BIGPARENT_KEY = "bigparent";
     public static final String HOP_KEY = "hop";
+    public static final String MIN_USERS_P_HOP_KEY = "min_users_p_hop";
 
     /**
      * The message's id, as a String.
@@ -89,7 +90,12 @@ public final class RangzenMessage extends Message {
      */
     public final int hop;
 
-  public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, long timestamp, String latlong, long timebound, String parent, int hop, String bigparent) {
+    /**
+     * The amount of shared contacts required to perform hop
+     */
+    public final int contacts_hop;
+
+  public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, long timestamp, String latlong, long timebound, String parent, int hop, String bigparent, int contacts_hop) {
       this.messageid = messageid;
     this.text = text;
     this.trust = trust;
@@ -101,9 +107,10 @@ public final class RangzenMessage extends Message {
       this.parent = parent;
       this.hop = hop;
       this.bigparent = bigparent;
+      this.contacts_hop = contacts_hop;
   }
 
-    public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, String latlong, long timebound, String parent, int hop, String bigparent) {
+    public RangzenMessage(String messageid, String text, Double trust, Integer priority, String pseudonym, String latlong, long timebound, String parent, int hop, String bigparent, int contacts_hop) {
         this.messageid = messageid;
         this.text = text;
         this.trust = trust;
@@ -115,6 +122,7 @@ public final class RangzenMessage extends Message {
         this.parent = parent;
         this.hop = hop;
         this.bigparent = bigparent;
+        this.contacts_hop = contacts_hop;
     }
 
     public RangzenMessage(String messageid, String text, Double trust) {
@@ -129,6 +137,7 @@ public final class RangzenMessage extends Message {
         this.parent = null;
         this.hop = 0;
         this.bigparent = null;
+        this.contacts_hop = 0;
     }
 
     public static RangzenMessage fromJSON(Context context, JSONObject json){
@@ -150,7 +159,8 @@ public final class RangzenMessage extends Message {
                 json.optLong(TIMEBOUND_KEY, -1L),
                 json.optString(PARENT_KEY, null),
                 json.optInt(HOP_KEY, 0),
-                json.optString(BIGPARENT_KEY, null)
+                json.optString(BIGPARENT_KEY, null),
+                json.optInt(MIN_USERS_P_HOP_KEY,0)
         );
     }
 
@@ -173,6 +183,7 @@ public final class RangzenMessage extends Message {
             result.put(TEXT_KEY, this.text);
             result.put(PRIORITY_KEY, this.priority);
             result.put(HOP_KEY, this.hop + 1);
+            result.put(MIN_USERS_P_HOP_KEY, this.contacts_hop);
             if(parent != null) result.put(PARENT_KEY, this.parent);
             if(bigparent != null) result.put(BIGPARENT_KEY, this.bigparent);
             if(timebound > 0) result.put(TIMEBOUND_KEY, this.timebound);

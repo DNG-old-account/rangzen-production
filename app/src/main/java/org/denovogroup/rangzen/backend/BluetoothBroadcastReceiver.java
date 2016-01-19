@@ -47,6 +47,7 @@ import android.os.Parcelable;
 import android.provider.Settings;
 import android.util.Log;
 
+import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.R;
 
 
@@ -60,6 +61,8 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
 
   /** A default value to be returned when getting extras. */
   private static final int DEFAULT_INT = -500;
+
+  private static final Logger log = Logger.getLogger(TAG);
 
   /**
    * @param context A context, from which to access the Bluetooth subsystem.
@@ -112,7 +115,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
       onBluetoothBroadcastRemoteUUID(context, intent);
     } else {
       // TODO(lerner): This shouldn't happen, exception?
-      Log.wtf(TAG, "Received an event we weren't expecting: " + action);
+      log.debug( "Received an event we weren't expecting: " + action);
     }
   }
 
@@ -128,7 +131,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
     int previousState = intent.getIntExtra(BluetoothAdapter.EXTRA_PREVIOUS_STATE, DEFAULT_INT);
     String currentStateString = getBTStateStringFromCode(currentState);
     String previousStateString = getBTStateStringFromCode(previousState);
-    Log.d(TAG, String.format("BT state change. %s (%d) to %s (%d) ", previousStateString,
+      log.debug(String.format("BT state change. %s (%d) to %s (%d) ", previousStateString,
             previousState,
             currentStateString,
             currentState));
@@ -217,7 +220,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
    * @param intent The intent associated with the broadcast of this event.
    */
   private void onBluetoothRemoteNameChange(Context context, Intent intent) {
-    Log.d(TAG, "Remote device's name changed.");
+    log.debug( "Remote device's name changed.");
   }
 
   /**
@@ -231,7 +234,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
   private void onBluetoothPeerFound(Context context, Intent intent) {
     // TODO(lerner): Rangzen may want to stop doing its thing if other apps
     // are causing seeking?
-    Log.d(TAG, "Peer found broadcast received.");
+    log.debug( "Peer found broadcast received.");
   }
 
   /**
@@ -242,7 +245,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
    * @param intent The intent associated with the broadcast of this event.
    */
   private void onBluetoothRemoteDeviceClassChange(Context context, Intent intent) {
-    Log.d(TAG, "Remote device's class changed.");
+    log.debug("Remote device's class changed.");
   }
 
   /**
@@ -255,7 +258,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
   private void onBluetoothBondStateChange(Context context, Intent intent) {
     // TODO(lerner): Rangzen may want to stop doing its thing if other apps
     // are causing pairing and such?
-    Log.d(TAG, "Bond state change notification received.");
+    log.debug("Bond state change notification received.");
   }
 
   /**
@@ -269,7 +272,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
   private void onBluetoothDisconnectRequested(Context context, Intent intent) {
     BluetoothDevice device;
     device = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-    Log.i(TAG, "Bluetooth broadcast: disconnected! (from " + device + ")");
+    log.info( "Bluetooth broadcast: disconnected! (from " + device + ")");
   }
 
   /**
@@ -279,7 +282,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
   private void onBluetoothDisconnected(Context context, Intent intent) {
     BluetoothDevice device;
     device = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-    Log.i(TAG, "Bluetooth broadcast: disconnected! (from " + device + ")");
+    log.info( "Bluetooth broadcast: disconnected! (from " + device + ")");
   }
 
   /**

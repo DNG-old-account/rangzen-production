@@ -3,8 +3,6 @@ package org.denovogroup.rangzen.backend;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pManager;
-import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -75,8 +73,6 @@ public class Utils {
         int min = (int)TimeUnit.MILLISECONDS.toMinutes(Math.abs(milli - todaymilli)) - (int)TimeUnit.HOURS.toMinutes(hours);
 
         float hoursFloat = hours +(min/60f);
-
-        Log.d("liran", ""+hoursFloat +" "+hours+":"+min);
         return Math.round(hoursFloat);
     }
 

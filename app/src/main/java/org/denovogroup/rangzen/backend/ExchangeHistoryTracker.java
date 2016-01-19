@@ -2,8 +2,8 @@ package org.denovogroup.rangzen.backend;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
 
+import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.ui.RangzenApplication;
 
 import java.util.ArrayList;
@@ -19,6 +19,8 @@ import java.util.List;
 public class ExchangeHistoryTracker {
 
     private static final String TAG = "ExchangeHistoryTracker";
+
+    private static final Logger log = Logger.getLogger(TAG);
 
     private static ExchangeHistoryTracker instance;
 
@@ -45,7 +47,7 @@ public class ExchangeHistoryTracker {
      * @param availablePeers peers to keep in history. discard the rest
      */
     public void cleanHistory(Collection<Peer> availablePeers) {
-        Log.d(TAG, "cleaning history");
+        log.debug( "cleaning history");
         //get a list of peer addresses to cross reference with available history
         List<String> newPeerAddresses = new ArrayList<>();
         if (availablePeers != null){
@@ -72,7 +74,7 @@ public class ExchangeHistoryTracker {
       * @param address WifiP2p device address with which interacted
      */
     public void updateHistory(Context context ,String address){
-        Log.d(TAG, "history updated for:"+address);
+        log.debug( "history updated for:"+address);
         for(ExchangeHistoryItem item : history){
             if(item.address.equals(address)){
                 item.attempts = 0;

@@ -30,8 +30,7 @@
  */
 package org.denovogroup.rangzen.backend;
 
-import android.util.Log;
-
+import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.objects.CleartextFriends;
 import org.denovogroup.rangzen.objects.CleartextMessages;
 import org.denovogroup.rangzen.objects.RangzenMessage;
@@ -118,6 +117,8 @@ public class Exchange implements Runnable {
   /** Included with Android log messages. */
   private static final String TAG = "Exchange";
 
+    private static final Logger log = Logger.getLogger(TAG);
+
   /** Number of bytes in a megabyte. */
   private static final int MEGABYTES = 1024 * 1024;
 
@@ -191,7 +192,7 @@ public class Exchange implements Runnable {
       // just an illogical thing here in all likelihood.
       // But I throw an exception because it simply isn't reasonable to pass null
       // unless we change the architecture of exchanges.
-      Log.w(TAG, "No callback provided for exchange - nothing would happen locally!");
+      log.warn( "No callback provided for exchange - nothing would happen locally!");
       throw new IllegalArgumentException("No callback provided for exchange.");
     }
   }
@@ -255,14 +256,14 @@ public class Exchange implements Runnable {
       Set<String> intersection = new HashSet(myFriends);
       intersection.retainAll(theirFriends);
       commonFriends = intersection.size();
-      Log.i(TAG, "Received " + theirFriends.size() + " friends. Overlap with my " +
+      log.info( "Received " + theirFriends.size() + " friends. Overlap with my " +
               myFriends.size() + " friends is " + commonFriends);
     } else if (mFriendsReceived == null) {
-      Log.e(TAG, "Friends received is null: " + mFriendsReceived);
+      log.info( "Friends received is null: " + mFriendsReceived);
       setExchangeStatus(Status.ERROR);
       setErrorMessage("Failed receiving friends.");
     } else {
-      Log.e(TAG, "Friends received.friends is null");
+      log.error( "Friends received.friends is null");
       setExchangeStatus(Status.ERROR);
       setErrorMessage("Failed receiving friends.");
     }
@@ -319,13 +320,13 @@ public class Exchange implements Runnable {
     // In this version of the exchange there's no crypto, so the messages don't
     // depend on each other at all.
     if (asInitiator) {
-      Log.i(TAG, "About to send friends.");
+      log.info( "About to send friends.");
       sendFriends();
-      Log.i(TAG, "Sent friends. About to send messages.");
+      log.info( "Sent friends. About to send messages.");
       sendMessages();
-      Log.i(TAG, "Sent messages. About to receive friends.");
+      log.info( "Sent messages. About to receive friends.");
       receiveFriends();
-      Log.i(TAG, "Received friends. About to receive messages.");
+      log.info( "Received friends. About to receive messages.");
       receiveMessages();
     } else {
       receiveFriends();
@@ -340,7 +341,7 @@ public class Exchange implements Runnable {
     // We're done with the mechanics of the exchange - if there's a callback
     // to report to, call its .success() or .failure() method as appropriate.
     if (callback == null) {
-      Log.w(TAG, "No callback provided to exchange.");
+      log.warn( "No callback provided to exchange.");
       return;
     }
     if (getExchangeStatus() == Status.SUCCESS) {
@@ -458,7 +459,7 @@ public class Exchange implements Runnable {
         outputStream.flush();
       return true;
     } catch (IOException e) {
-      Log.e(TAG, "Length/value write failed with exception: " + e);
+      log.error( "Length/value write failed with exception: " + e);
       return false;
     }
   }
@@ -475,7 +476,7 @@ public class Exchange implements Runnable {
     if (length < 0) {
       return null;
     } else if (length > MAX_MESSAGE_SIZE) {
-      Log.e(TAG, "Remote party asked us to read " + length + " bytes in a length/value read");
+      log.error( "Remote party asked us to read " + length + " bytes in a length/value read");
       return null;
     }
     byte[] messageBytes = new byte[length];
@@ -489,10 +490,10 @@ public class Exchange implements Runnable {
       recoveredMessage = new JSONObject(new String(messageBytes));
 
     } catch (IOException e) {
-      Log.e(TAG, "IOException parsing message bytes: " + e);
+      log.error( "IOException parsing message bytes: " + e);
         return null;
     } catch (JSONException e) {
-        Log.e(TAG, "IOException parsing message bytes: " + e);
+        log.error( "IOException parsing message bytes: " + e);
         return null;
     }
       return recoveredMessage;
@@ -507,7 +508,7 @@ public class Exchange implements Runnable {
     try {
       stream.read(lengthBytes);
     } catch (IOException e) {
-      Log.e(TAG, "IOException popping length from input stream: " + e);
+      log.error( "IOException popping length from input stream: " + e);
       return -1;
     }
     ByteBuffer buffer = ByteBuffer.wrap(lengthBytes);

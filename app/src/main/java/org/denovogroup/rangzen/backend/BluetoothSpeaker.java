@@ -37,6 +37,8 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.util.Log;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -84,6 +86,9 @@ public class BluetoothSpeaker {
   /** Receives Bluetooth related broadcasts. */
   private BluetoothBroadcastReceiver mBluetoothBroadcastReceiver;
 
+    private static final Logger log = Logger.getLogger(TAG);
+
+
   /**
    * @param context A context, from which to access the Bluetooth subsystem.
    * @param peerManager The app's PeerManager instance.
@@ -104,10 +109,10 @@ public class BluetoothSpeaker {
       // TODO (lerner): Tell the server that this device doesn't do Bluetooth.
       // TODO (lerner): Opt this device out of data collection?
         mBluetoothBroadcastReceiver.showNoBluetoothNotification(context);
-      Log.e(TAG, "Device doesn't support Bluetooth.");
+      log.error( "Device doesn't support Bluetooth.");
       return;
     } else if (!mBluetoothAdapter.isEnabled()) {
-      Log.d(TAG, "Got a non-null Bluetooth Adapter but it's not enabled.");
+      log.error("Got a non-null Bluetooth Adapter but it's not enabled.");
        // TODO(lerner): This is contrary to Android user experience, which
        // states that apps should never turn on Bluetooth without explicit
        // user interaction. We should instead prompt the user with the
@@ -120,20 +125,20 @@ public class BluetoothSpeaker {
     }
 
       this.mThisDeviceUUID = getUUIDFromMACAddress(mBluetoothAdapter.getAddress());
-      Log.i(TAG, "This device's UUID is " + mThisDeviceUUID.toString());
+      log.info( "This device's UUID is " + mThisDeviceUUID.toString());
 
     if (mBluetoothAdapter.isEnabled()) {
       try { 
         createListeningSocket();
         spawnConnectionAcceptingThread();
       } catch (IOException e) {
-        Log.e(TAG, "Failed to create listening BT server socket. " + e);
-        Log.e(TAG, "Can't receive incoming connections.");
+        log.error( "Failed to create listening BT server socket. " + e);
+        log.error( "Can't receive incoming connections.");
       }
     } else {
         mBluetoothBroadcastReceiver.showNoBluetoothNotification(context);
     }
-    Log.d(TAG, "Finished creating BluetoothSpeaker.");
+    log.debug( "Finished creating BluetoothSpeaker.");
   }
 
   /**
@@ -146,7 +151,7 @@ public class BluetoothSpeaker {
       try { 
         return mBluetoothAdapter.getRemoteDevice(address);
       } catch (IllegalArgumentException e) {
-        Log.e(TAG, "Passed illegal address to get remote bluetooth device: '" + address+"'");
+        log.error( "Passed illegal address to get remote bluetooth device: '" + address+"'");
         return null;
       }
     } else {
@@ -238,13 +243,13 @@ public class BluetoothSpeaker {
             try {
               Thread.sleep(10 * 1000);
             } catch (InterruptedException e) {
-              Log.e(TAG, "Connection accepting thread was interrupted during sleep: " + e);
+              log.error( "Connection accepting thread was interrupted during sleep: " + e);
             }
             acceptConnection();
           } catch (IOException e) {
-            Log.e(TAG, "IOException while accepting/responding to a connection" + e);
+            log.error("IOException while accepting/responding to a connection" + e);
             if (!mBluetoothAdapter.isEnabled()) {
-              Log.e(TAG, "Bluetooth adapter is disabled; not accepting connections.");
+              log.error("Bluetooth adapter is disabled; not accepting connections.");
               mServerSocket = null;
               return;
             }
@@ -260,7 +265,7 @@ public class BluetoothSpeaker {
    */
   private void createListeningSocket() throws IOException {
       mServerSocket = mBluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(SDP_NAME, mThisDeviceUUID);
-      Log.i(TAG, String.format("Listening (insecure RFCOMM) - name <%s>, UUID <%s>.",
+      log.info(String.format("Listening (insecure RFCOMM) - name <%s>, UUID <%s>.",
               SDP_NAME, mThisDeviceUUID));
   }
 
@@ -274,10 +279,10 @@ public class BluetoothSpeaker {
     } else if (!mBluetoothAdapter.isEnabled()) {
       throw new IOException("Bluetooth adapter is disabled, not trying to accept().");
     }
-    Log.i(TAG, "Calling mServerSocket.accept()");
+    log.info( "Calling mServerSocket.accept()");
     mSocket = mServerSocket.accept();
-    Log.i(TAG, "Accepted socket from " + mSocket.getRemoteDevice());
-    Log.i(TAG, "Accepted socket connected? " + mSocket.isConnected());
+    log.info("Accepted socket from " + mSocket.getRemoteDevice());
+    log.info( "Accepted socket connected? " + mSocket.isConnected());
     mExchange = new CryptographicExchange(
                             mContext,
                             mSocket.getRemoteDevice().getAddress(),
@@ -302,12 +307,12 @@ public class BluetoothSpeaker {
     if (mServerSocket == null         && mBluetoothAdapter != null &&
         mBluetoothAdapter.isEnabled() && !mConnectionAcceptingThread.isAlive()) {
       try { 
-        Log.v(TAG, "No ServerSocket, creating a new one.");
+        log.info("No ServerSocket, creating a new one.");
         createListeningSocket();
         spawnConnectionAcceptingThread();
       } catch (IOException e) {
-        Log.e(TAG, "Tasks: failed to create listening BT server socket. " + e);
-        Log.e(TAG, "Can't receive incoming connections.");
+        log.error("Tasks: failed to create listening BT server socket. " + e);
+        log.error("Can't receive incoming connections.");
       }
     }
   }

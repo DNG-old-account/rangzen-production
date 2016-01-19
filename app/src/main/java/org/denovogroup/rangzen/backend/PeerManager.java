@@ -33,7 +33,9 @@ package org.denovogroup.rangzen.backend;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
+
+import org.apache.log4j.Logger;
+
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -99,6 +101,9 @@ public class PeerManager {
   /** Displayed in Android Monitor logs. */
   private static String TAG = "RangzenPeerManager";
 
+    private static final Logger log = Logger.getLogger(TAG);
+
+
   /**
    * Private constructor. Use PeerManager.getInstance() to obtain the app's
    * instance of the class.
@@ -109,7 +114,7 @@ public class PeerManager {
     mCurrentPeers = new ArrayList<Peer>();
     mBroadcastManager = LocalBroadcastManager.getInstance(context); 
 
-    Log.d(TAG, "Finished PeerManager constructor.");
+    log.debug( "Finished PeerManager constructor.");
   }
 
   /**
@@ -121,7 +126,7 @@ public class PeerManager {
   public static PeerManager getInstance(Context context) {
     if (sPeerManager == null) {
       sPeerManager = new PeerManager(context);
-      Log.d(TAG, "Created instance of PeerManager");
+      log.debug( "Created instance of PeerManager");
     }
     return sPeerManager;
   }
@@ -222,7 +227,7 @@ public class PeerManager {
    * peers.
    */
   private synchronized void garbageCollectPeer(Peer peer) {
-    Log.d(TAG, "Garbage collected peer " + peer);
+    log.debug( "Garbage collected peer " + peer);
     mCurrentPeers.remove(peer);
   }
 
@@ -302,7 +307,7 @@ public class PeerManager {
   private void recordExchangeTime(Peer peer, Date exchangeTime) {
     BluetoothDevice device = peer.getNetwork().getBluetoothDevice();
     if (device == null) {
-      Log.e(TAG, "Recording exchange time of non-bluetooth peer! Can't do it.");
+      log.error( "Recording exchange time of non-bluetooth peer! Can't do it.");
       return;
     } else {
       exchangeTimes.put(device.getAddress(), exchangeTime);
@@ -318,13 +323,13 @@ public class PeerManager {
   private void recordExchangeAttemptTime(Peer peer, Date exchangeTime) {
     BluetoothDevice device = peer.getNetwork().getBluetoothDevice();
     if (device == null) {
-      Log.e(TAG, "Recording exchange attempt time of non-bluetooth peer! Can't do it.");
+      log.error( "Recording exchange attempt time of non-bluetooth peer! Can't do it.");
       return;
     } else {
       Date nextAttempt = new Date(exchangeTime.getDate() +
                                   (random.nextInt() % MS_BETWEEN_EXCHANGE_ATTEMPTS));
       exchangeAttemptTimes.put(device.getAddress(), nextAttempt);
-      Log.w(TAG, "Will attempt another exchange with peer " + peer + " no sooner than " + nextAttempt);
+      log.warn( "Will attempt another exchange with peer " + peer + " no sooner than " + nextAttempt);
     }
   }
 
@@ -343,7 +348,7 @@ public class PeerManager {
   private Date getLastExchangeTime(Peer peer) {
     BluetoothDevice device = peer.getNetwork().getBluetoothDevice();
     if (device == null) {
-      Log.e(TAG, "Getting last exchange time of non-bluetooth peer! Can't do it!");
+      log.error( "Getting last exchange time of non-bluetooth peer! Can't do it!");
       return null;
     } else {
       Date when = exchangeTimes.get(device.getAddress());
@@ -369,7 +374,7 @@ public class PeerManager {
   private Date getNextExchangeAttemptTime(Peer peer) {
     BluetoothDevice device = peer.getNetwork().getBluetoothDevice();
     if (device == null) {
-      Log.e(TAG, "Getting last exchange time of non-bluetooth peer! Can't do it!");
+      log.error( "Getting last exchange time of non-bluetooth peer! Can't do it!");
       return null;
     } else {
       Date when = exchangeAttemptTimes.get(device.getAddress());

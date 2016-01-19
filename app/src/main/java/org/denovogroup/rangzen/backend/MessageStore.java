@@ -37,8 +37,8 @@ import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.location.Location;
-import android.util.Log;
 
+import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.objects.RangzenMessage;
 
 import java.util.ArrayList;
@@ -60,6 +60,7 @@ public class MessageStore extends SQLiteOpenHelper {
 
     private static MessageStore instance;
     private static final String TAG = "MessageStore";
+    private static final Logger log = Logger.getLogger(TAG);
     //readable true/false operators since SQLite does not support boolean values
     public static final int TRUE = 1;
     public static final int FALSE = 0;
@@ -203,6 +204,7 @@ public class MessageStore extends SQLiteOpenHelper {
         int parentColIndex = cursor.getColumnIndex(COL_PARENT);
         int bigparentColIndex = cursor.getColumnIndex(COL_BIGPARENT);
         int hopColIndex = cursor.getColumnIndex(COL_HOP);
+        int hopContactsColIndex = cursor.getColumnIndex(COL_MIN_CONTACTS_FOR_HOP);
 
         if (cursor.getCount() > 0) {
             while (!cursor.isAfterLast()){
@@ -217,7 +219,8 @@ public class MessageStore extends SQLiteOpenHelper {
                         cursor.getLong(timeboundColIndex),
                         cursor.getString(parentColIndex),
                         cursor.getInt(hopColIndex),
-                        cursor.getString(bigparentColIndex)
+                        cursor.getString(bigparentColIndex),
+                        cursor.getInt(hopContactsColIndex)
                 ));
                 cursor.moveToNext();
             }
@@ -302,8 +305,6 @@ public class MessageStore extends SQLiteOpenHelper {
 
                     likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
                 }
-
-                Log.w("liran", "searching with like:" + likeQuery);
             }
 
             String query = "SELECT * FROM " + TABLE +
@@ -353,8 +354,6 @@ public class MessageStore extends SQLiteOpenHelper {
 
                     likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
                 }
-
-                Log.w("liran", "searching with like:" + likeQuery);
             }
 
             String query = "SELECT * FROM " + TABLE +
@@ -423,7 +422,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 return result;
             }
             cursor.close();
-            Log.d(TAG, "getMessage found no match for [" + message + "]");
+            log.debug("getMessage found no match for [" + message + "]");
         }
         return null;
     }
@@ -512,7 +511,7 @@ public class MessageStore extends SQLiteOpenHelper {
                         + ((exchange != null) ? (COL_EXCHANGE+"="+exchange+",") : "")
                         +COL_EXPIRE+"="+timebound
                         +" WHERE " + COL_MESSAGE + "='" + message + "';");
-                Log.d(TAG, "Message was already in store and was simply updated.");
+                log.debug( "Message was already in store and was simply updated.");
             } else {
                 ContentValues content = new ContentValues();
                 content.put(COL_MESSAGE_ID, messageId);
@@ -530,11 +529,11 @@ public class MessageStore extends SQLiteOpenHelper {
                 content.put(COL_MIN_CONTACTS_FOR_HOP, minContactsHop);
                 content.put(COL_HOP, hop);
                 db.insert(TABLE, null, content);
-                Log.d(TAG, "Message added to store.");
+                log.debug( "Message added to store.");
             }
             return true;
         }
-        Log.d(TAG, "Message not added to store, either message or database is null. ["+message+"]");
+        log.debug( "Message not added to store, either message or database is null. ["+message+"]");
         return false;
     }
 
@@ -552,7 +551,7 @@ public class MessageStore extends SQLiteOpenHelper {
             db.execSQL("UPDATE " + TABLE + " SET " + COL_DELETED + "=" + TRUE + " WHERE " + COL_MESSAGE + "='" + message + "';");
             return  true;
         }
-        Log.d(TAG, "Message not added to store, either message or database is null. ["+message+"]");
+        log.debug( "Message not added to store, either message or database is null. ["+message+"]");
         return false;
     }
 
@@ -569,7 +568,7 @@ public class MessageStore extends SQLiteOpenHelper {
             db.execSQL("UPDATE " + TABLE + " SET " + COL_DELETED + "=" + TRUE + " WHERE " + COL_CHECKED + "=" + TRUE + ";");
             return  true;
         }
-        Log.d(TAG, "Message not added to store, database is null.");
+        log.debug( "Message not added to store, database is null.");
         return false;
     }
 
@@ -585,7 +584,7 @@ public class MessageStore extends SQLiteOpenHelper {
             db.execSQL("DELETE FROM " + TABLE + " WHERE " + COL_MESSAGE + "='" + message + "';");
             return true;
         }
-        Log.d(TAG, "Message not deleted from store, either message or database is null. [" + message + "]");
+        log.debug( "Message not deleted from store, either message or database is null. [" + message + "]");
         return false;
     }
 
@@ -651,10 +650,10 @@ public class MessageStore extends SQLiteOpenHelper {
                             //+COL_LIKES+"="+likes+","
                     +" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
-            Log.d(TAG, "Message trust changed in the store.");
+            log.debug( "Message trust changed in the store.");
             return true;
         }
-        Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
+        log.debug( "Message was not edited, either message or database is null. ["+message+"]");
         return false;
     }
 
@@ -671,10 +670,10 @@ public class MessageStore extends SQLiteOpenHelper {
         if(db != null && message != null){
             db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
-            Log.d(TAG, "Message priority changed in the store.");
+            log.debug( "Message priority changed in the store.");
             return true;
         }
-        Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
+        log.debug( "Message was not edited, either message or database is null. ["+message+"]");
         return false;
     }
 
@@ -691,10 +690,10 @@ public class MessageStore extends SQLiteOpenHelper {
         if(db != null && message != null){
             db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
-            Log.d(TAG, "Message priority changed in the store.");
+            log.debug( "Message priority changed in the store.");
             return true;
         }
-        Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
+        log.debug( "Message was not edited, either message or database is null. ["+message+"]");
         return false;
     }
 
@@ -718,7 +717,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 return true;
             }
         }
-        Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
+        log.debug( "Message was not edited, either message or database is null. ["+message+"]");
         return false;
     }
 
@@ -798,8 +797,6 @@ public class MessageStore extends SQLiteOpenHelper {
 
                     likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
                 }
-
-                Log.w("liran", "checking with like:" + likeQuery);
             }
 
             db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE+" AND ("+likeQuery+");");
@@ -836,10 +833,10 @@ public class MessageStore extends SQLiteOpenHelper {
             int read = isRead ? TRUE : FALSE;
             db.execSQL("UPDATE "+TABLE+" SET "+COL_READ+"="+read+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
-            Log.d(TAG, "Message read state changed in the store.");
+            log.debug( "Message read state changed in the store.");
             return true;
         }
-        Log.d(TAG, "Message was not edited, either message or database is null. ["+message+"]");
+        log.debug( "Message was not edited, either message or database is null. ["+message+"]");
         return false;
     }
 
@@ -849,12 +846,12 @@ public class MessageStore extends SQLiteOpenHelper {
         if(db != null){
             db.execSQL("UPDATE "+TABLE+" SET "+COL_READ+"="+TRUE+";");
 
-            Log.d(TAG, "Messages read state changed in the store.");
+            log.debug( "Messages read state changed in the store.");
             //clear exchange history
             ExchangeHistoryTracker.getInstance().resetExchangeCount();
             return true;
         }
-        Log.d(TAG, "Messages not edited, database is null.");
+        log.debug( "Messages not edited, database is null.");
         return false;
     }
 

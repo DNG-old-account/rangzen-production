@@ -30,7 +30,6 @@
  */
 package org.denovogroup.rangzen.backend;
 
-import android.util.Log;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
@@ -42,6 +41,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+
+import org.apache.log4j.Logger;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 import org.spongycastle.crypto.KeyGenerationParameters;
 import org.spongycastle.crypto.agreement.DHStandardGroups;
@@ -87,6 +88,8 @@ public class Crypto {
   /** Source of secure random bits. */
   public static final SecureRandom random = new SecureRandom();
 
+    private static final Logger log = Logger.getLogger(TAG);
+
   /**
    * Generates a Diffie-Hellman keypair of the default size.
    *
@@ -100,7 +103,7 @@ public class Crypto {
 
       return gen.generateKeyPair();
     } catch (InvalidParameterException e) {
-      Log.e(TAG, "InvalidParameterException while generating a Diffie-Hellman keypair " + e);
+      log.error( "InvalidParameterException while generating a Diffie-Hellman keypair " + e);
     }
 
     return null;

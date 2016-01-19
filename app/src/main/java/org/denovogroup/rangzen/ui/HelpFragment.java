@@ -20,6 +20,7 @@ import android.widget.ExpandableListView;
 import android.widget.HeaderViewListAdapter;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.backend.ConfigureLog4J;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -201,7 +202,7 @@ public class HelpFragment extends Fragment{
         intent.putExtra(Intent.EXTRA_TEXT, "Dear Rangzen support representative");
 
 
-        if(includeLog) {
+        /*if(includeLog) {
             File log_filename = new File(Environment.getExternalStorageDirectory() + "/device_log.txt");
             log_filename.delete();
 
@@ -235,6 +236,11 @@ public class HelpFragment extends Fragment{
                 e.printStackTrace();
             }
 
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
+        }*/
+
+        if(includeLog) {
+            File log_filename = new File(Environment.getExternalStorageDirectory() + "/"+ ConfigureLog4J.LOG_FILE);
             intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
         }
 

@@ -2,7 +2,6 @@
 // Source file: /Users/barathraghavan/code/rangzen/rangzen/buck-out/gen/proto-repo/compile_protobufs__srcs/ClientMessage.proto
 package org.denovogroup.rangzen.objects;
 
-import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;

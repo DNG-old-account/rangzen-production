@@ -30,6 +30,7 @@
  */
 package org.denovogroup.rangzen.backend;
 
+import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection;
 import org.denovogroup.rangzen.backend.Crypto.PrivateSetIntersection.ServerReplyTuple;
 import org.denovogroup.rangzen.objects.ClientMessage;
@@ -91,6 +92,8 @@ public class CryptographicExchange extends Exchange {
   /** Tag appears in Android log messages. */
   private static final String TAG = "CryptographicExchange";
 
+    private static final Logger log = Logger.getLogger(TAG);
+
     private static final String MESSAGE_COUNT_KEY = "count";
 
     private static final String SECURITY_KEY = "security";
@@ -139,7 +142,7 @@ public class CryptographicExchange extends Exchange {
 
       callback.success(this);
     } catch (Exception e) {  // Treat ALL exceptions as fatal.
-        Log.e(TAG, "Exception while run()ing CryptographicExchange: " + e);
+        log.error( "Exception while run()ing CryptographicExchange: " + e);
         if(getExchangeStatus() == Status.ERROR_RECOVERABLE){
             callback.recover(this, getErrorMessage());
         } else {
@@ -335,12 +338,12 @@ public class CryptographicExchange extends Exchange {
     try { 
       srt = mServerPSI.replyToBlindedItems(remoteBlindedFriends);
     } catch (NoSuchAlgorithmException e) {
-      Log.wtf(TAG, "No such algorithm in replyToBlindedItems: " + e);
+      log.info("No such algorithm in replyToBlindedItems: " + e);
       setExchangeStatus(Status.ERROR);
       setErrorMessage("PSI subsystem is broken, NoSuchAlgorithmException");
       throw e;
     } catch (IllegalArgumentException e) {
-      Log.wtf(TAG, "Null passed to replyToBlindedItems on serverPSI? " + e);
+      log.info("Null passed to replyToBlindedItems on serverPSI? " + e);
       setExchangeStatus(Status.ERROR);
       setErrorMessage("Bad argument to server PSI subsystem. (null remoteBlindedItems?)");
       throw e;

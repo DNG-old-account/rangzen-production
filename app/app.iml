@@ -91,14 +91,16 @@
     <orderEntry type="library" exported="" name="mail" level="project" />
     <orderEntry type="library" exported="" name="pkix-1.51.0.0" level="project" />
     <orderEntry type="library" exported="" name="support-v4-22.2.1" level="project" />
+    <orderEntry type="library" exported="" name="android-logging-log4j-1.0.3" level="project" />
     <orderEntry type="library" exported="" name="zxing-android-embedded-3.0.2" level="project" />
     <orderEntry type="library" exported="" name="support-annotations-22.2.1" level="project" />
     <orderEntry type="library" exported="" name="prov-1.51.0.0" level="project" />
     <orderEntry type="library" exported="" name="appcompat-v7-22.2.1" level="project" />
-    <orderEntry type="library" exported="" name="core-3.2.0" level="project" />
+    <orderEntry type="library" exported="" name="log4j-1.2.17" level="project" />
     <orderEntry type="library" exported="" name="core-1.51.0.0" level="project" />
-    <orderEntry type="library" exported="" name="systembartint-1.0.3" level="project" />
+    <orderEntry type="library" exported="" name="core-3.2.0" level="project" />
     <orderEntry type="library" exported="" name="okio-1.0.0" level="project" />
+    <orderEntry type="library" exported="" name="systembartint-1.0.3" level="project" />
     <orderEntry type="library" exported="" name="activation" level="project" />
   </component>
 </module>

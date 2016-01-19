@@ -1,6 +1,5 @@
 package org.denovogroup.rangzen.backend;
 
-import android.util.Log;
 
 import java.util.Calendar;
 

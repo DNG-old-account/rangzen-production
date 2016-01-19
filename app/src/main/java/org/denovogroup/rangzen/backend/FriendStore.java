@@ -43,7 +43,6 @@ import android.net.Uri;
 import android.provider.ContactsContract;
 import android.telephony.TelephonyManager;
 import android.util.Base64;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -51,6 +50,7 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.R;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 
@@ -88,6 +88,8 @@ public class FriendStore extends SQLiteOpenHelper{
 
   /** Tag for Android log messages. */
   private static final String TAG = "FriendStore";
+
+    private static final Logger log = Logger.getLogger(TAG);
 
     private static FriendStore instance;
 
@@ -140,7 +142,7 @@ public class FriendStore extends SQLiteOpenHelper{
     try {
       return Base64.decode(base64, Base64.NO_WRAP);
     } catch (IllegalArgumentException e) {
-      Log.e(TAG, "Returning null on attempt to decode badly formed base64 string: " + base64);
+      log.error( "Returning null on attempt to decode badly formed base64 string: " + base64);
       return null;
     }
   }
@@ -179,9 +181,9 @@ public class FriendStore extends SQLiteOpenHelper{
       // This would be very strange, if only half the ID was stored.
       if (privateDeviceID != publicDeviceID) {
         if (privateDeviceID == null) {
-          Log.wtf(TAG, "Only one of private and public ID are stored! Public is stored, private is null.");
+          log.error( "Only one of private and public ID are stored! Public is stored, private is null.");
         } else {
-          Log.wtf(TAG, "Only one of private and public ID are stored! Private is stored, public is null.");
+          log.error( "Only one of private and public ID are stored! Private is stored, public is null.");
         }
       }
 
@@ -289,7 +291,7 @@ public class FriendStore extends SQLiteOpenHelper{
         if(db == null) return false;
 
         if(getFriendWithKey(key) != null){
-            Log.d(TAG,"Contact was already in the store, data not changed");
+            log.error("Contact was already in the store, data not changed");
             return false;
         }
 
@@ -300,7 +302,7 @@ public class FriendStore extends SQLiteOpenHelper{
         values.put(COL_NUMBER, Utils.makeTextSafeForSQL(number));
 
         db.insert(TABLE, null, values);
-        Log.d(TAG, "Friend Added to store");
+        log.debug( "Friend Added to store");
         return true;
     }
 
@@ -334,7 +336,7 @@ public class FriendStore extends SQLiteOpenHelper{
         if(db == null) return false;
 
         if(getFriendWithKey(key) == null){
-            Log.d(TAG,"Friend was not in the store");
+            log.debug("Friend was not in the store");
             return false;
         }
 

@@ -26,7 +26,6 @@ import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -49,6 +48,7 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.*;
 
@@ -63,6 +63,7 @@ import java.util.List;
 public class ContactsFragment extends Fragment implements View.OnClickListener, TextWatcher, FragmentBackHandler{
 
     private static final String TAG = "ContactsFragment";
+    private static final Logger log = Logger.getLogger(TAG);
     private static final int PICK_CONTACT = 100;
 
     private boolean inSearchMode = false;
@@ -457,12 +458,12 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
      *
      */
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        Log.i(TAG, "Got activity result back in ContactFragment!");
+        log.info( "Got activity result back in ContactFragment!");
 
         // Check whether the activity that returned was the QR code activity,
         // and whether it succeeded.
         IntentResult intentResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
-        Log.d(TAG, "result " + intentResult);
+        log.debug( "result " + intentResult);
         if(intentResult != null){
             // Grab the string extra containing the QR code that was scanned.
             final FriendStore fs = FriendStore.getInstance(getActivity());
@@ -502,7 +503,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
 
                                 boolean wasAdded = fs.addFriendBytes(name, publicIDBytes, FriendStore.ADDED_VIA_QR, null);
 
-                                Log.i(TAG, "Now have " + fs.getAllFriends().size()
+                                log.info( "Now have " + fs.getAllFriends().size()
                                         + " contacts.");
                                 if (wasAdded) {
                                     Toast.makeText(getActivity(), R.string.contact_add_conf, Toast.LENGTH_SHORT)
@@ -526,7 +527,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
                 // stuff isn't valid base64, since we get here based on the
                 // scheme but
                 // not a check of the contents of the URI.
-                Log.i(TAG,
+                log.info(
                         "Opener got back a supposed rangzen scheme code that didn't process to produce a public id:"
                                 + code);
                 Toast.makeText(getActivity(), "Invalid Friend Code", Toast.LENGTH_SHORT)
