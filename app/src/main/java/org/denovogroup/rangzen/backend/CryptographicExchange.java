@@ -142,7 +142,7 @@ public class CryptographicExchange extends Exchange {
 
       callback.success(this);
     } catch (Exception e) {  // Treat ALL exceptions as fatal.
-        log.error( "Exception while run()ing CryptographicExchange: " + e);
+        log.error( "Exception while run()ing CryptographicExchange: " , e);
         if(getExchangeStatus() == Status.ERROR_RECOVERABLE){
             callback.recover(this, getErrorMessage());
         } else {

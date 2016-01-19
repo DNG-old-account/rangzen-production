@@ -459,7 +459,7 @@ public class Exchange implements Runnable {
         outputStream.flush();
       return true;
     } catch (IOException e) {
-      log.error( "Length/value write failed with exception: " + e);
+      log.error( "Length/value write failed with exception: " , e);
       return false;
     }
   }
@@ -490,10 +490,10 @@ public class Exchange implements Runnable {
       recoveredMessage = new JSONObject(new String(messageBytes));
 
     } catch (IOException e) {
-      log.error( "IOException parsing message bytes: " + e);
+      log.error( "IOException parsing message bytes: " , e);
         return null;
     } catch (JSONException e) {
-        log.error( "IOException parsing message bytes: " + e);
+        log.error( "IOException parsing message bytes: ", e);
         return null;
     }
       return recoveredMessage;
@@ -508,7 +508,7 @@ public class Exchange implements Runnable {
     try {
       stream.read(lengthBytes);
     } catch (IOException e) {
-      log.error( "IOException popping length from input stream: " + e);
+      log.error( "IOException popping length from input stream: " , e);
       return -1;
     }
     ByteBuffer buffer = ByteBuffer.wrap(lengthBytes);

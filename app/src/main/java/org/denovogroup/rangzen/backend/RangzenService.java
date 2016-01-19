@@ -737,5 +737,5 @@ public class RangzenService extends Service {
             MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile);
     }
 
-    
+
 }

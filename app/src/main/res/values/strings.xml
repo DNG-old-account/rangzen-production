@@ -46,7 +46,8 @@
     <string name="drawer_menu_toggle_open">Open</string>
     <string name="drawer_menu_toggle_close">Close</string>
 
-    <string name="new_messages_notification_desc">new messages</string>
+    <string name="new_messages_notifications_desc">new messages</string>
+    <string name="new_messages_notification_desc">new message</string>
     <string name="new_messages_notification_btn">View New</string>
 
     <string name="feed">Feed</string>
@@ -141,6 +142,7 @@
     <string name="settings_max_messages_p_exchange">Maximum messages per exchange</string>
     <string name="settings_timeout_p_exchange">Timeout between exchanges(s)</string>
     <string name="exchanges">new exchanges</string>
+    <string name="exchange">new exchange</string>
     <string name="settings_mac_title">Bluetooth MAC address</string>
     <string name="post_hint">Type your message</string>
 
@@ -150,7 +152,7 @@
     <string name="apk_url">http://www.iWishIHadAUrl.com/</string>
 
     <string name="send_feedback">Send a feedback</string>
-    <string name="feedback_email">rangzen_dev@denovogroup.org</string>
+    <string name="feedback_email">murmur_support@denovogroup.org</string>
     <string name="feedback_promo">Help us make Murmur better by sending us a feedback.</string>
     <string name="include_log_prompt">Include device log</string>
     <string name="feedback_send">SEND FEEDBACK</string>

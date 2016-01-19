@@ -20,6 +20,7 @@
         android:text="XX New messages\n(YY exchanges)"
         android:gravity="center_vertical"
         android:layout_gravity="center_vertical"
+        android:lineSpacingMultiplier="1.2"
         />
 
     <Button
