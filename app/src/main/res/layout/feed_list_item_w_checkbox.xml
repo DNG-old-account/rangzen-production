@@ -20,6 +20,7 @@
             android:focusableInTouchMode="false"
             android:layout_gravity="center"
             android:button="@drawable/list_checkbox"
+            android:layout_marginRight="10dp"
             android:text=""/>
 
         <TextView
