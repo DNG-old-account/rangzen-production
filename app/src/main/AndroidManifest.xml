@@ -62,7 +62,7 @@
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.PostActivity"
-            android:windowSoftInputMode="adjustUnspecified"
+            android:windowSoftInputMode="adjustResize"
             android:parentActivityName=".ui.MainActivity" >
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
@@ -76,7 +76,7 @@
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
                 <action android:name="android.intent.action.VIEW" />

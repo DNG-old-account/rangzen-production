@@ -519,7 +519,7 @@ public class MessageStore extends SQLiteOpenHelper {
                 content.put(COL_MESSAGE, message);
                 content.put(COL_TRUST, trust);
                 content.put(COL_LIKES, priority);
-                if(location != null) content.put(COL_LATLONG, location.getLatitude()+"x"+location.getLongitude());
+                if(location != null) content.put(COL_LATLONG, location.getLatitude()+" "+location.getLongitude());
                 content.put(COL_PSEUDONYM, pseudonym);
                 content.put(COL_EXPIRE, timebound);
                 content.put(COL_TIMESTAMP, reducedTimestamp.getTimeInMillis());

@@ -179,7 +179,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         maxMessagesPerExchangeEditText.setText(String.valueOf(currentProfile.getMaxMessages()));
         maxMessagesPerExchangeEditText.addTextChangedListener(this);
 
-        timeoutEditText.setText(String.valueOf(currentProfile.getTimeboundPeriod()));
+        timeoutEditText.setText(String.valueOf(currentProfile.getCooldown()));
         timeoutEditText.addTextChangedListener(this);
 
         String mac = SecurityManager.getStoredMAC(getActivity());

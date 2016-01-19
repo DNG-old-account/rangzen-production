@@ -513,7 +513,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
 
                                 }
                                 alertdialog.dismiss();
-                                query = null;
+                                query = "";
                                 contactListView.setAdapter(new ContactAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(null), false));
                             }
                         });
@@ -589,7 +589,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
                         }
                         if(phoneCursor != null) contactCursor.close();
 
-                        query = null;
+                        query = "";
                         contactListView.setAdapter(new ContactAdapter(getActivity(), FriendStore.getInstance(getActivity()).getFriendsCursor(null),false));
                     } else {
                         Toast.makeText(getActivity(), R.string.contact_add_fail, Toast.LENGTH_SHORT).show();
