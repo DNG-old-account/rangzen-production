@@ -331,10 +331,10 @@ public class RangzenService extends Service {
                         }
                     }
                 } catch (NoSuchAlgorithmException e) {
-                    log.error( "No such algorithm for hashing in thisDeviceSpeaksTo!? " + e);
+                    log.error( "No such algorithm for hashing in thisDeviceSpeaksTo!? ",e);
                     return;
                 } catch (UnsupportedEncodingException e) {
-                    log.error( "Unsupported encoding exception in thisDeviceSpeaksTo!?" + e);
+                    log.error( "Unsupported encoding exception in thisDeviceSpeaksTo!?" , e);
                     return;
                 }
             }
@@ -397,7 +397,7 @@ public class RangzenService extends Service {
                 RangzenService.this.mExchangeCallback);
             (new Thread(mExchange)).start();
           } catch (IOException e) {
-            log.error( "Getting input/output stream from socket failed: " + e);
+            log.error( "Getting input/output stream from socket failed: " , e);
             log.error( "Exchange not happening.");
             RangzenService.this.cleanupAfterExchange();
           }
@@ -428,14 +428,14 @@ public class RangzenService extends Service {
           mSocket.close();
         }
       } catch (IOException e) {
-        log.warn( "Couldn't close bt socket: " + e);
+        log.warn( "Couldn't close bt socket: " , e);
       }
       try { 
         if (mBluetoothSpeaker.mSocket != null) {
           mBluetoothSpeaker.mSocket.close();
         }
       } catch (IOException e) {
-        log.warn( "Couldn't close bt socket in BTSpeaker: " + e);
+        log.warn( "Couldn't close bt socket in BTSpeaker: " , e);
       }
       mSocket = null;
       mBluetoothSpeaker.mSocket = null;
@@ -538,7 +538,7 @@ public class RangzenService extends Service {
                         log.error( String.format("Attempted to add/update message %s with trust (%f/%f)" +
                                         ", %d friends, %d friends in common",
                                 message.text, newTrust, message.priority,
-                                myFriends.size(), friendOverlap));
+                                myFriends.size(), friendOverlap),e);
                     }
                 }
             }

@@ -132,7 +132,7 @@ public class BluetoothSpeaker {
         createListeningSocket();
         spawnConnectionAcceptingThread();
       } catch (IOException e) {
-        log.error( "Failed to create listening BT server socket. " + e);
+        log.error( "Failed to create listening BT server socket. " ,e);
         log.error( "Can't receive incoming connections.");
       }
     } else {
@@ -243,11 +243,11 @@ public class BluetoothSpeaker {
             try {
               Thread.sleep(10 * 1000);
             } catch (InterruptedException e) {
-              log.error( "Connection accepting thread was interrupted during sleep: " + e);
+              log.error( "Connection accepting thread was interrupted during sleep: ",e);
             }
             acceptConnection();
           } catch (IOException e) {
-            log.error("IOException while accepting/responding to a connection" + e);
+            log.error("IOException while accepting/responding to a connection",e);
             if (!mBluetoothAdapter.isEnabled()) {
               log.error("Bluetooth adapter is disabled; not accepting connections.");
               mServerSocket = null;
@@ -311,7 +311,7 @@ public class BluetoothSpeaker {
         createListeningSocket();
         spawnConnectionAcceptingThread();
       } catch (IOException e) {
-        log.error("Tasks: failed to create listening BT server socket. " + e);
+        log.error("Tasks: failed to create listening BT server socket. ",e);
         log.error("Can't receive incoming connections.");
       }
     }
