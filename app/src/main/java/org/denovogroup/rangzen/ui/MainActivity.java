@@ -327,6 +327,10 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                 case R.id.drawer_menu_help:
                     frag = new HelpFragment();
                     break;
+                case R.id.drawer_menu_debug:
+                    //TODO debug only
+                    frag = new DebugFragment();
+                    break;
             }
 
             if (frag != null &&

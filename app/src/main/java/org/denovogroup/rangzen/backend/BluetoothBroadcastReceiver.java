@@ -82,6 +82,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
     intentFilter.addAction(BluetoothDevice.ACTION_FOUND);
     intentFilter.addAction(BluetoothDevice.ACTION_NAME_CHANGED);
     intentFilter.addAction(BluetoothDevice.ACTION_UUID);
+      log.info( "Registering Bluetooth receiver");
     context.registerReceiver(this, intentFilter);
   }
 
@@ -209,7 +210,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
     for (Parcelable uuid : uuids) {
       // Log.d(TAG, String.format("Remote device (%s); UUID: %s ", device, ((ParcelUuid) uuid).toString()));
     }
-
+      log.info( "Bluetooth broadcast: remoteUUID");
   }
 
   /**
@@ -292,6 +293,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
   private void onBluetoothConnected(Context context, Intent intent) {
     BluetoothDevice device;
     device = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+      log.info( "Bluetooth broadcast: connected! (to " + device + ")");
   }
 
   /**

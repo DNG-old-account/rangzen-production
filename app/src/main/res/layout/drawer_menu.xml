@@ -129,6 +129,14 @@
                     android:text="@string/drawer_menu_export"
                     android:drawableLeft="@drawable/drawer_menu_export_feed_btn"/>
 
+                <TextView
+                    style="@style/DrawerMenuItem"
+                    android:id="@+id/drawer_menu_debug"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Debug"
+                    android:drawableLeft="@drawable/ic_info_dark"/>
+
             </LinearLayout>
 
         </LinearLayout>

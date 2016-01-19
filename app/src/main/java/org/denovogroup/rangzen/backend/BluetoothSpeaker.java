@@ -95,7 +95,7 @@ public class BluetoothSpeaker {
    */
   public BluetoothSpeaker(RangzenService context, PeerManager peerManager) {
     super();
-
+      log.info( "Creating BluetoothSpeaker");
     mPayload = new byte[EXCHANGE_SIZE];
     for (int i=0; i < EXCHANGE_SIZE; i++) {
       mPayload[i] = (byte) i;
@@ -377,6 +377,7 @@ public class BluetoothSpeaker {
      * Connect to the peer and report success or failure.
      */
     public void run() {
+        log.info( "Running connectionRunnable for :"+mPeer);
       BluetoothDevice device = mPeer.getNetwork().getBluetoothDevice();
       if (device == null) {
         mCallback.failure("No bluetooth device for peer " + mPeer.toString());
@@ -398,7 +399,7 @@ public class BluetoothSpeaker {
         socket.connect();
       } catch (IOException e) {
         mCallback.failure(
-            String.format("Exception connceting to %s on peer %s. IOException: %s", 
+            String.format("Exception connecting to %s on peer %s. IOException: %s",
                            remoteUUID, mPeer, e)
         );
         return;
@@ -417,6 +418,7 @@ public class BluetoothSpeaker {
     }
 
     public void unregisterReceiver(Context context){
+        log.info( "Unregistering Bluetooth receiver");
         context.unregisterReceiver(mBluetoothBroadcastReceiver);
     }
 }

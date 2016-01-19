@@ -133,11 +133,29 @@ public class ExchangeHistoryTracker {
         /** Number of attempts taken during which local store wasn't changed*/
         int attempts;
 
+        public String getAddress() {
+            return address;
+        }
+
+        public String getStoreVersion() {
+            return storeVersion;
+        }
+
+        public long getLastExchangeTime() {
+            return lastExchangeTime;
+        }
+
+        public int getAttempts() {
+            return attempts;
+        }
+
         public ExchangeHistoryItem(String address, String storeVersion, long lastExchangeTime) {
             this.address = address;
             this.storeVersion = storeVersion;
             this.lastExchangeTime = lastExchangeTime;
             this.attempts = 0;
+
+
         }
     }
 }

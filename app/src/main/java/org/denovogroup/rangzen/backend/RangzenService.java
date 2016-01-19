@@ -142,8 +142,8 @@ public class RangzenService extends Service {
     private static final int NOTIFICATION_ID = R.string.unread_notification_title;
     private static final int RENAME_DELAY = 1000;
     private static final String DUMMY_MAC_ADDRESS = "02:00:00:00:00:00";
-    private static final int BACKOFF_FOR_ATTEMPT_MILLIS = 10 * 1000;
-    private static final int BACKOFF_MAX = BACKOFF_FOR_ATTEMPT_MILLIS * (int)Math.pow(2,9);
+    public static final int BACKOFF_FOR_ATTEMPT_MILLIS = 10 * 1000;
+    public static final int BACKOFF_MAX = BACKOFF_FOR_ATTEMPT_MILLIS * (int)Math.pow(2,9);
 
     private static final boolean USE_MINIMAL_LOGGING = false;
 
@@ -377,6 +377,8 @@ public class RangzenService extends Service {
       log.info( "Starting to connect to " + peer.toString());
       // The peer connection callback (defined elsewhere in the class) takes
       // the connect bluetooth socket and uses it to create a new Exchange.
+        if(mPeerConnectionCallback == null) log.info("Was starting to connect to "+ peer.toString()
+                +" but PeerConnectionCallback was null");
       mBluetoothSpeaker.connect(peer, mPeerConnectionCallback);
     }
 
@@ -432,6 +434,7 @@ public class RangzenService extends Service {
       try {
         if (mSocket != null) {
           mSocket.close();
+            log.info("bluetooth socket closed");
         }
       } catch (IOException e) {
         log.warn( "Couldn't close bt socket: " , e);
@@ -439,6 +442,7 @@ public class RangzenService extends Service {
       try { 
         if (mBluetoothSpeaker.mSocket != null) {
           mBluetoothSpeaker.mSocket.close();
+            log.info( "bluetooth speaker socket closed");
         }
       } catch (IOException e) {
         log.warn( "Couldn't close bt socket in BTSpeaker: " , e);
@@ -620,6 +624,7 @@ public class RangzenService extends Service {
 
     /** Synchronized setter for connecting. */
     private synchronized void setConnecting(boolean connecting) {
+        log.debug("connection was set to:"+connecting);
       this.connecting = connecting;
     }
 

@@ -438,6 +438,7 @@ public class PeerManager {
                                                        UnsupportedEncodingException {
     if (other == null || other.getNetwork() == null || 
         other.getNetwork().getBluetoothDevice() == null ) {
+        log.info( "this device not speaking to peer: "+other+" either peer or peer network is null");
       return false;
     } 
     return thisDeviceSpeaksTo(other.getNetwork().getBluetoothDevice());
@@ -454,10 +455,12 @@ public class PeerManager {
   public boolean thisDeviceSpeaksTo(BluetoothDevice other) throws NoSuchAlgorithmException,
                                                                   UnsupportedEncodingException {
     if (other == null) {
+        log.info( "This device not speaking to peer, peer is null");
       return false;
     } 
     String otherAddr = other.getAddress();
     if (otherAddr == null) {
+        log.info( "This device not speaking to peer :"+other+", peer address is null");
       return false;
     }
     String myAddr = mBluetoothSpeaker.getAddress(); 

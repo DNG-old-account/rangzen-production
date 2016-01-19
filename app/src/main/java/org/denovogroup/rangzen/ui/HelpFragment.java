@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Layout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,12 +25,16 @@ import org.denovogroup.rangzen.backend.ConfigureLog4J;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Created by Liran on 1/11/2016.
@@ -256,7 +261,6 @@ public class HelpFragment extends Fragment{
             userData += "Model: " + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")\n";
 
             try {
-                log_filename.createNewFile();
                 BufferedWriter writer = new BufferedWriter(new FileWriter(log_filename, true));
                 writer.write(userData);
                 writer.close();
@@ -264,9 +268,41 @@ public class HelpFragment extends Fragment{
                 e.printStackTrace();
             }
 
-            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(log_filename));
+            File zippedLog = new File(Environment.getExternalStorageDirectory() + "/"+ ConfigureLog4J.LOG_FILE+"zip");
+
+            createZipFile(log_filename, zippedLog);
+
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(zippedLog));
         }
 
         startActivity(Intent.createChooser(intent, "Send mail using..."));
+    }
+
+    private void createZipFile(File source, File target) {
+        byte[] buffer = new byte[2048];
+        try {
+            if(target.exists())
+            {
+                if(!target.delete())
+                    Log.i("HelpFragment", "cant remove " + target.getAbsolutePath());
+            }
+            GZIPOutputStream gzipOutputStream =
+                    new GZIPOutputStream(new FileOutputStream(target));
+            FileInputStream in =
+                    new FileInputStream(source);
+
+            int read;
+            while ((read = in.read(buffer)) > 0) {
+                gzipOutputStream.write(buffer, 0, read);
+            }
+
+            in.close();
+            gzipOutputStream.finish();
+            gzipOutputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
