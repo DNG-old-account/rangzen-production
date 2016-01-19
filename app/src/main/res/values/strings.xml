@@ -140,7 +140,7 @@
     <string name="settings_add_via_qr">Add contacts via QR code</string>
     <string name="settings_exchange_title">Exchanges</string>
     <string name="settings_max_messages_p_exchange">Maximum messages per exchange</string>
-    <string name="settings_timeout_p_exchange">Timeout between exchanges(s)</string>
+    <string name="settings_timeout_p_exchange">Timeout between exchanges</string>
     <string name="exchanges">new exchanges</string>
     <string name="exchange">new exchange</string>
     <string name="settings_mac_title">Bluetooth MAC address</string>
