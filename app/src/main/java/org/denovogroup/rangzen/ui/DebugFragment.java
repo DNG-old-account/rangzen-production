@@ -1,6 +1,8 @@
 package org.denovogroup.rangzen.ui;
 
+import android.app.ActivityManager;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -34,6 +36,7 @@ public class DebugFragment extends Fragment {
     Timer refreshTimer;
 
     ListView listView;
+    TextView serviceTV;
     TextView connectingTV;
     TextView seekingTV;
     TextView seekingWasLongAgoTV;
@@ -51,6 +54,7 @@ public class DebugFragment extends Fragment {
         View view = inflater.inflate(R.layout.debug_fragment, container, false);
 
         listView = (ListView) view.findViewById(R.id.listView);
+        serviceTV = (TextView) view.findViewById(R.id.textView_service);
         connectingTV = (TextView) view.findViewById(R.id.textView_connecting);
         seekingTV = (TextView) view.findViewById(R.id.textView_seeking);
         seekingWasLongAgoTV = (TextView) view.findViewById(R.id.textView_seekingLongAgo);
@@ -73,7 +77,11 @@ public class DebugFragment extends Fragment {
 
                         PeerManager manager = PeerManager.getInstance(getActivity().getApplicationContext());
                         WifiDirectSpeaker wifiDirectSpeaker = WifiDirectSpeaker.getInstance();
-                        RangzenService serviceRef = RangzenService.getInstance();
+
+                        boolean serviceOn = isMyServiceRunning(RangzenService.class);
+
+                        serviceTV.setText(serviceOn ? "Service running" : "Service offline");
+                        RangzenService serviceRef = serviceOn ? RangzenService.getInstance() : null;
                         String connecting = (serviceRef != null) ? serviceRef.getConnecting() : null;
                         serviceRef = null;
                         connectingTV.setText("Connecting to:"+connecting);
@@ -122,5 +130,15 @@ public class DebugFragment extends Fragment {
         Log.d("liran","stopping refresh debug timer");
         if(refreshTimer != null) refreshTimer.cancel();
         refreshTimer = null;
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
