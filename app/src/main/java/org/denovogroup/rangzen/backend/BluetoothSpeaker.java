@@ -304,8 +304,7 @@ public class BluetoothSpeaker {
    */
   public void tasks() {
     log.info("Starting BluetoothSpeaker tasks.");
-      log.info("mServerSocket:"+(mServerSocket== null)
-              +" mBluetoothAdapter:"+(mBluetoothAdapter== null)
+      log.info("mServerSocket:"+(mServerSocket == null)
               +" mBluetoothAdapter:"+(mBluetoothAdapter != null)
               +" mConnectionAcceptingThread:"+(mBluetoothAdapter != null));
     if (mServerSocket == null         && mBluetoothAdapter != null &&
