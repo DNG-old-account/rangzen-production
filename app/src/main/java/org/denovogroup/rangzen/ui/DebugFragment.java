@@ -4,16 +4,19 @@ import android.bluetooth.BluetoothAdapter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.backend.ExchangeHistoryTracker;
 import org.denovogroup.rangzen.backend.Peer;
 import org.denovogroup.rangzen.backend.PeerManager;
 import org.denovogroup.rangzen.backend.RangzenService;
+import org.denovogroup.rangzen.backend.WifiDirectSpeaker;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -31,6 +34,9 @@ public class DebugFragment extends Fragment {
     Timer refreshTimer;
 
     ListView listView;
+    TextView connectingTV;
+    TextView seekingTV;
+    TextView seekingWasLongAgoTV;
 
     List<String[]> peers = new ArrayList<>();
 
@@ -45,6 +51,9 @@ public class DebugFragment extends Fragment {
         View view = inflater.inflate(R.layout.debug_fragment, container, false);
 
         listView = (ListView) view.findViewById(R.id.listView);
+        connectingTV = (TextView) view.findViewById(R.id.textView_connecting);
+        seekingTV = (TextView) view.findViewById(R.id.textView_seeking);
+        seekingWasLongAgoTV = (TextView) view.findViewById(R.id.textView_seekingLongAgo);
 
         return view;
     }
@@ -61,11 +70,21 @@ public class DebugFragment extends Fragment {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        PeerManager manager = PeerManager.getInstance(getActivity().getApplicationContext());
-                        peers.clear();
-                        List<Peer> peersList = manager.getPeers();
 
-                        for(Peer peer : peersList){
+                        PeerManager manager = PeerManager.getInstance(getActivity().getApplicationContext());
+                        WifiDirectSpeaker wifiDirectSpeaker = WifiDirectSpeaker.getInstance();
+                        RangzenService serviceRef = RangzenService.getInstance();
+                        String connecting = (serviceRef != null) ? serviceRef.getConnecting() : null;
+                        serviceRef = null;
+                        connectingTV.setText("Connecting to:"+connecting);
+                        List<Peer> peersList = manager.getPeers();
+                        Boolean seeking = wifiDirectSpeaker.getSeeking();
+                        seekingTV.setText("Seeking:"+seeking);
+                        Boolean seekingLongAgo = wifiDirectSpeaker.lastSeekingWasLongAgo();
+                        seekingWasLongAgoTV.setText("Seeking long ago:"+seekingLongAgo);
+
+                        peers.clear();
+                        for (Peer peer : peersList) {
                             String[] peerStr = new String[3];
                             peerStr[0] = peer.toString();
                             try {
@@ -75,16 +94,15 @@ public class DebugFragment extends Fragment {
 
                             ExchangeHistoryTracker.ExchangeHistoryItem history = ExchangeHistoryTracker.getInstance().getHistoryItem(peer.address);
 
+                            int backoff = 0;
 
-                            int backoff =  0;
-
-                            if(history != null) {
-                                Math.min(RangzenService.BACKOFF_MAX,
+                            if (history != null) {
+                                backoff = Math.min(RangzenService.BACKOFF_MAX,
                                         (int) (Math.pow(2, history.getAttempts()) * RangzenService.BACKOFF_FOR_ATTEMPT_MILLIS));
                             }
 
                             String backoffString = null;
-                            if(backoff > 0) {
+                            if (backoff > 0) {
                                 backoffString = TimeUnit.MILLISECONDS.toMinutes(backoff) + ":" + (TimeUnit.MILLISECONDS.toSeconds(backoff) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(backoff)));
                             }
 
@@ -99,8 +117,9 @@ public class DebugFragment extends Fragment {
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
+    public void onDestroyView() {
+        super.onDestroyView();
+        Log.d("liran","stopping refresh debug timer");
         if(refreshTimer != null) refreshTimer.cancel();
         refreshTimer = null;
     }

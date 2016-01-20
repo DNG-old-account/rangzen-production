@@ -50,6 +50,7 @@ import android.app.Service;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
+import android.util.Log;
 
 import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.R;
@@ -111,8 +112,8 @@ public class RangzenService extends Service {
     /** Wifi Direct Speaker used for Wifi Direct name based RSVP. */
     private WifiDirectSpeaker mWifiDirectSpeaker;
 
-    /** Whether we're attempting a connection to another device over BT. */
-    private boolean connecting = false;
+    /** The Peer address we're attempting a connection to over BT or null. */
+    private String connecting = null;
 
     /** The BluetoothSpeaker for the app. */
     private static BluetoothSpeaker mBluetoothSpeaker;
@@ -167,6 +168,14 @@ public class RangzenService extends Service {
         // Returning START_STICKY causes Android to leave the service running
         // even when the foreground activity is closed.
         return START_STICKY;
+    }
+
+    /** this is cheap way of getting service reference without using binder pattern, the
+     * returned reference must never be saved, this call is for debug purposes only
+     * @return
+     */
+    public static RangzenService getInstance(){
+        return sRangzenServiceInstance;
     }
 
     /**
@@ -262,11 +271,11 @@ public class RangzenService extends Service {
         timeSinceLastOK = true;
       }
         if(!USE_MINIMAL_LOGGING) {
-            log.info( "Ready to connect? " + (timeSinceLastOK && !getConnecting()));
+            log.info( "Ready to connect? " + (timeSinceLastOK && (getConnecting() == null)));
             log.info( "Connecting: " + getConnecting());
             log.info( "timeSinceLastOK: " + timeSinceLastOK);
         }
-      return timeSinceLastOK && !getConnecting(); 
+      return timeSinceLastOK && (getConnecting() == null);
     }
 
     /**
@@ -298,14 +307,17 @@ public class RangzenService extends Service {
         // TODO(lerner): Don't just connect all willy-nilly every time we have
         // an opportunity. Have some kind of policy for when to connect.
         if (peers.size() > 0 && readyToConnect() ) {
+            log.info(String.format("Can connect with %d peers", peers.size()));
             if(SecurityManager.getCurrentProfile(this).isRandomExchange()) {
+                log.info("Current security profile state that we should pick one random peer to interact with");
                 Peer selectedPeer = peers.get(mRandom.nextInt(peers.size()));
                 peers.clear();
                 peers.add(selectedPeer);
             }
+            log.info(String.format("Checking %d peers", peers.size()));
             for(Peer peer : peers) {
+                log.debug("Checking peer:"+peer);
                 try {
-                    log.debug("Checking peer:"+peer);
                     if (peerManager.thisDeviceSpeaksTo(peer)) {
                         log.debug("This device is in charge of starting conversation");
                         // Connect to the peer, starting an exchange with the peer once
@@ -360,8 +372,8 @@ public class RangzenService extends Service {
      * @param peer The peer we want to talk to.
      */
     public void connectTo(Peer peer) {
-      if (getConnecting()) {
-        log.warn( "connectTo() not connecting to " + peer + " -- already connecting to someone");
+      if (getConnecting() != null) {
+        log.warn( "connectTo() not connecting to " + peer + " -- already connecting to ("+getConnecting()+")");
         return;
       }
 
@@ -372,7 +384,7 @@ public class RangzenService extends Service {
       // This gets reset to false once an exchange is complete or when the 
       // connect call below fails. Until then, no more connections will be
       // attempted. (One at a time now!)
-      setConnecting(true);
+      setConnecting(peer.address);
 
       log.info( "Starting to connect to " + peer.toString());
       // The peer connection callback (defined elsewhere in the class) takes
@@ -429,7 +441,7 @@ public class RangzenService extends Service {
      * Is also used after a Bluetooth connection failure to cleanup.
      */
     /* package */ void cleanupAfterExchange() {
-      setConnecting(false);
+      setConnecting(null);
       setLastExchangeTime();
       try {
         if (mSocket != null) {
@@ -618,12 +630,12 @@ public class RangzenService extends Service {
     }
 
     /** Synchronized accessor for connecting. */
-    private synchronized boolean getConnecting() {
+    public synchronized String getConnecting() {
       return connecting;
     }
 
     /** Synchronized setter for connecting. */
-    private synchronized void setConnecting(boolean connecting) {
+    private synchronized void setConnecting(String connecting) {
         log.debug("connection was set to:"+connecting);
       this.connecting = connecting;
     }

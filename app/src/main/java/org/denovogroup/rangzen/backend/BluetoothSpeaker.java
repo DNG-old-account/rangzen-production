@@ -303,7 +303,11 @@ public class BluetoothSpeaker {
    * thread might be inactive if Bluetooth was turned off previously.
    */
   public void tasks() {
-    // Log.v(TAG, "Starting BluetoothSpeaker tasks.");
+    log.info("Starting BluetoothSpeaker tasks.");
+      log.info("mServerSocket:"+(mServerSocket== null)
+              +" mBluetoothAdapter:"+(mBluetoothAdapter== null)
+              +" mBluetoothAdapter:"+(mBluetoothAdapter != null)
+              +" mConnectionAcceptingThread:"+(mBluetoothAdapter != null));
     if (mServerSocket == null         && mBluetoothAdapter != null &&
         mBluetoothAdapter.isEnabled() && !mConnectionAcceptingThread.isAlive()) {
       try { 
@@ -315,6 +319,7 @@ public class BluetoothSpeaker {
         log.error("Can't receive incoming connections.");
       }
     }
+      log.info("finished BluetoothSpeaker tasks.");
   }
 
   /**

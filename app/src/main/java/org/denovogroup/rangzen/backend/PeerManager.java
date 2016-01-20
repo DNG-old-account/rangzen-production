@@ -418,11 +418,11 @@ public class PeerManager {
    * Run tasks, e.g. garbage collection of peers, speaker tasks, etc.
    */
   public void tasks() {
-    // Log.v(TAG, "Started PeerManager tasks.");
+    log.info("Started PeerManager tasks.");
 
     garbageCollectPeers();
     
-    // Log.v(TAG, "Finished with PeerManager tasks.");
+    log.info("Finished with PeerManager tasks.");
   }
 
   /**
@@ -454,7 +454,15 @@ public class PeerManager {
    */
   public boolean thisDeviceSpeaksTo(BluetoothDevice other) throws NoSuchAlgorithmException,
                                                                   UnsupportedEncodingException {
-    if (other == null) {
+
+      /*TODO LIRAN this method cannot work along with the backoff algorithm if speaker
+        device have a long backoff period and spokento device have some new data to share.
+        speaker device will remain unreachable for the entire duration of the backoff, rendering
+        the app useless, to resolve this this method has been silenced for the production version
+       */
+      if(true) return true;
+
+      if (other == null) {
         log.info( "This device not speaking to peer, peer is null");
       return false;
     } 

@@ -122,7 +122,7 @@ public class WifiDirectSpeaker {
   }
 
   /** Synchronized getter for mSeeking. */
-  private synchronized boolean getSeeking() {
+  public synchronized boolean getSeeking() {
     return mSeeking;
   }
 
@@ -389,11 +389,13 @@ public class WifiDirectSpeaker {
    * periodically over time.
    */
   public void tasks() {
+      log.info("Starting WifiDirectSpeaker tasks (mSeekingDesired:"+mSeekingDesired+")");
     if (mSeekingDesired) {
       seekPeers();
     } else {
       stopSeekingPeers();
     }
+      log.info("finished WifiDirectSpeaker");
   }
 
   /** 
@@ -423,7 +425,7 @@ public class WifiDirectSpeaker {
    * called discoverPeers().
    *
    */
-  private boolean lastSeekingWasLongAgo() {
+  public synchronized boolean lastSeekingWasLongAgo() {
     if (lastSeekingTime == null) {
       return true;
     }
@@ -437,6 +439,7 @@ public class WifiDirectSpeaker {
    */
   private void seekPeers() {
     if (!getSeeking() || lastSeekingWasLongAgo()) {
+        log.info("seeking peers");
       setSeeking(true);
       touchLastSeekingTime();
       mWifiP2pManager.discoverPeers(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
@@ -452,7 +455,7 @@ public class WifiDirectSpeaker {
       }
       });
     } else {
-      //log.info( "Attempted to seek peers while already seeking, not doing it.");
+      log.info("Attempted to seek peers while already seeking, not doing it. (seeking:"+getSeeking()+", seeking was long time ago:"+lastSeekingWasLongAgo()+")");
     }
 
   }
@@ -463,6 +466,7 @@ public class WifiDirectSpeaker {
    * level application code, call setSeekingDesired(true/false).
    */
   private void stopSeekingPeers() {
+      log.info("Stopped seeking peers");
     mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
       @Override
       public void onSuccess() {
