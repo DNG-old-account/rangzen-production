@@ -15,9 +15,9 @@ public abstract class DialogStyler {
         //change background
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.WHITE));
         //change size
-        android.view.WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
+        /*android.view.WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
         params.width = android.view.WindowManager.LayoutParams.MATCH_PARENT;
-        dialog.getWindow().setAttributes(params);
+        dialog.getWindow().setAttributes(params);*/
 
         dialog.show();
 

@@ -5,12 +5,35 @@
               android:layout_height="match_parent"
                 android:padding="10dp">
 
-    <org.denovogroup.rangzen.ui.CustomSeekbar
-        style="@style/Seekbar"
-        android:id="@+id/seeker"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_height="wrap_content"
-        android:layout_weight="1"/>
+        android:layout_width="0dp"
+        android:layout_weight="1">
+
+        <org.denovogroup.rangzen.ui.CustomSeekbar
+            style="@style/Seekbar"
+            android:id="@+id/seeker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <LinearLayout
+            style="@style/Seekbar.Metric.container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/Seekbar.Metric.left"
+                android:text="0"/>
+
+            <TextView
+                style="@style/Seekbar.Metric.right"
+                android:text="240"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
 
     <EditText
         android:selectAllOnFocus="true"
@@ -20,6 +43,7 @@
         android:gravity="right"
         android:inputType="number"
         android:layout_marginRight="5dp"
+        android:maxLength="3"
         android:background="@drawable/edit_text_underline_selected_only"/>
 
     <TextView

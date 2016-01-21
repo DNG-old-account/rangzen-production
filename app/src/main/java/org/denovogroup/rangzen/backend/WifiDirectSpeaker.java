@@ -38,6 +38,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -59,6 +60,7 @@ import android.provider.Settings;
 
 import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.ui.MainActivity;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -515,6 +517,12 @@ public class WifiDirectSpeaker {
      */
     private void showNoWifiNotification(Context context){
         if(mContext == null) return;
+
+        SharedPreferences pref = context.getSharedPreferences(MainActivity.PREF_FILE, Context.MODE_PRIVATE);
+        if(!pref.getBoolean(MainActivity.IS_APP_ENABLED, true)){
+            return;
+        }
+
 
         int notificationId = R.string.dialog_no_wifi_message;
 

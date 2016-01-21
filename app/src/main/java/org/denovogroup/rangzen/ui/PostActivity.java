@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -21,9 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.CalendarView;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -63,6 +60,8 @@ public class PostActivity extends AppCompatActivity {
     View restrictButton;
 
     MenuItem send;
+
+    TextWatcher watcher;
 
     LocationListener listener = new LocationListener() {
         @Override
@@ -185,10 +184,18 @@ public class PostActivity extends AppCompatActivity {
                         final EditText seekBarTv = (EditText) viewGroup.findViewById(R.id.seeker_text);
                         seekBarTv.setText(String.valueOf(seekBar.getProgress()));
 
+                        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(seekBarTv.getWindowToken(), 0);
+
                         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                             @Override
                             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                                if (fromUser) seekBarTv.setText(String.valueOf(progress));
+                                if (fromUser) {
+                                    seekBarTv.removeTextChangedListener(watcher);
+                                    seekBarTv.setText(String.valueOf(progress));
+                                    seekBarTv.selectAll();
+                                    seekBarTv.addTextChangedListener(watcher);
+                                }
                             }
 
                             @Override
@@ -202,7 +209,7 @@ public class PostActivity extends AppCompatActivity {
                             }
                         });
 
-                        seekBarTv.addTextChangedListener(new TextWatcher() {
+                        seekBarTv.addTextChangedListener(watcher = new TextWatcher() {
                             @Override
                             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
@@ -428,5 +435,15 @@ public class PostActivity extends AppCompatActivity {
             result = getResources().getDimensionPixelSize(resourceId);
         }
         return result;
+    }
+
+    private void fixCursorPosition(EditText editText){
+        if(editText.getText() == null) return;
+
+        boolean isSinglePoint = editText.getSelectionStart() == editText.getSelectionEnd();
+        boolean isAppearingAtEnd = editText.getSelectionStart() == 0;
+        if(isSinglePoint && isAppearingAtEnd){
+            editText.setSelection(editText.length());
+        }
     }
 }

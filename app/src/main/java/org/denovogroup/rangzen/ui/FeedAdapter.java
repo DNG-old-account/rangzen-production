@@ -181,7 +181,7 @@ public class FeedAdapter extends CursorAdapter {
         boolean hasLocation = false;
         if(currentProfile.isShareLocation()){
             String location = cursor.getString(location_colIndex);
-            hasLocation = (location != null && location.indexOf("x")> 0);
+            hasLocation = (location != null && location.indexOf(" ")> 0);
         }
         viewHolder.navigate.setVisibility(hasLocation ? View.VISIBLE : View.GONE);
 
