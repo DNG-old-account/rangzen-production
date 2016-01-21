@@ -145,11 +145,14 @@ public class RangzenService extends Service {
     private static final int RENAME_DELAY = 1000;
     private static final String DUMMY_MAC_ADDRESS = "02:00:00:00:00:00";
     public static final int BACKOFF_FOR_ATTEMPT_MILLIS = 10 * 1000;
-    public static final int BACKOFF_MAX = BACKOFF_FOR_ATTEMPT_MILLIS * (int)Math.pow(2,9);
+    public static final int BACKOFF_MAX = BACKOFF_FOR_ATTEMPT_MILLIS * (int)Math.pow(2,5);
 
     private static final boolean USE_MINIMAL_LOGGING = false;
 
-    public static final boolean USE_BACKOFF = false;
+    public static final boolean USE_BACKOFF = true;
+
+    public static int direction = 0;
+    public static String remoteAddress;
 
     /**
      * Called whenever the service is requested to start. If the service is
@@ -244,7 +247,7 @@ public class RangzenService extends Service {
 
         //TODO this is a test to see if service is really being killed, setting startForeground
         // prevent service from being killed by the system
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        /*NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setContentTitle("Murmur is running in background")
                 .setContentText("please do not dismiss this message")
                 .setContentInfo("without it Murmur might not work")
@@ -252,7 +255,7 @@ public class RangzenService extends Service {
 
         Notification notice = builder.build();
 
-        startForeground(R.id.transparentHolder, notice);
+        startForeground(R.id.transparentHolder, notice);*/
     }
 
     /**
@@ -431,6 +434,8 @@ public class RangzenService extends Service {
           mSocket = socket;
           log.info( "Socket connected, attempting exchange");
           try {
+              direction = 1;
+              remoteAddress = socket.getRemoteDevice().getAddress();
             mExchange = new CryptographicExchange(
                     RangzenService.this,
                     socket.getRemoteDevice().getAddress(),
@@ -471,6 +476,8 @@ public class RangzenService extends Service {
       try {
         if (mSocket != null) {
           mSocket.close();
+            direction = 0;
+            remoteAddress = null;
             log.info("bluetooth socket closed");
         }
       } catch (IOException e) {
@@ -479,6 +486,8 @@ public class RangzenService extends Service {
       try { 
         if (mBluetoothSpeaker.mSocket != null) {
           mBluetoothSpeaker.mSocket.close();
+            direction = 0;
+            remoteAddress = null;
             log.info( "bluetooth speaker socket closed");
         }
       } catch (IOException e) {

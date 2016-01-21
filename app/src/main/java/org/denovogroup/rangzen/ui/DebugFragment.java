@@ -121,7 +121,7 @@ public class DebugFragment extends Fragment {
                             peerStr[3] = lastExchange;
                             peers.add(peerStr);
                         }
-                        listView.setAdapter(new DebugAdapter(getActivity(), peers));
+                        listView.setAdapter(new DebugAdapter(getActivity(), peers, RangzenService.direction, RangzenService.remoteAddress));
                     }
                 });
             }

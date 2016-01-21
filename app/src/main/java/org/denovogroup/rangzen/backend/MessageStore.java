@@ -422,7 +422,6 @@ public class MessageStore extends SQLiteOpenHelper {
                 return result;
             }
             cursor.close();
-            log.debug("getMessage found no match for [" + message + "]");
         }
         return null;
     }

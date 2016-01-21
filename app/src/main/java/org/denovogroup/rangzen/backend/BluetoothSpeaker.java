@@ -294,6 +294,8 @@ public class BluetoothSpeaker {
     mSocket = mServerSocket.accept();
     log.info("Accepted socket from " + mSocket.getRemoteDevice());
     log.info( "Accepted socket connected? " + mSocket.isConnected());
+      RangzenService.direction = -1;
+      RangzenService.remoteAddress = mSocket.getRemoteDevice().getAddress();
     mExchange = new CryptographicExchange(
                             mContext,
                             mSocket.getRemoteDevice().getAddress(),
