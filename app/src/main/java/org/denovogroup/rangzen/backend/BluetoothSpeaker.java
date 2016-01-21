@@ -321,7 +321,7 @@ public class BluetoothSpeaker {
               +" mBluetoothAdapter:"+(mBluetoothAdapter != null)
               +" mConnectionAcceptingThread:"+(mBluetoothAdapter != null));
     if (mServerSocket == null         && mBluetoothAdapter != null &&
-        mBluetoothAdapter.isEnabled() && !mConnectionAcceptingThread.isAlive()) {
+        mBluetoothAdapter.isEnabled() && (mConnectionAcceptingThread == null || !mConnectionAcceptingThread.isAlive())) {
       try { 
         log.info("No ServerSocket, creating a new one.");
         createListeningSocket();
