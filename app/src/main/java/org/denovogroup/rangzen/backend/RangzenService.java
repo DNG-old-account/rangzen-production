@@ -540,7 +540,7 @@ public class RangzenService extends Service {
           } else if(ExchangeHistoryTracker.getInstance().getHistoryItem(exchange.getPeerAddress()) != null){
               // Has history, should increment the attempts counter
               ExchangeHistoryTracker.getInstance().updateAttemptsHistory(exchange.getPeerAddress());
-              log.debug("Exchange finished without receiving new messages, back-off timeout increased to:"+
+              if(USE_BACKOFF) log.debug("Exchange finished without receiving new messages, back-off timeout increased to:"+
                     Math.min(BACKOFF_MAX , Math.pow(2, ExchangeHistoryTracker.getInstance().getHistoryItem(exchange.getPeerAddress()).attempts) * BACKOFF_FOR_ATTEMPT_MILLIS));
           } else {
               // No history file, create one

@@ -41,6 +41,15 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 /**
@@ -55,6 +64,8 @@ public class BluetoothSpeaker {
 
   /** Constant int passed to request to enable Bluetooth, required by Android. */
   public static final int REQUEST_ENABLE_BT = 54321;
+
+    private static final int SOCKET_CONNECTION_TIMEOUT = 30 * 1000;
 
   /** SDP name for creating Rangzen service on listening socket. */
   private static final String SDP_NAME = "RANGZEN_SDP_NAME";
@@ -388,7 +399,7 @@ public class BluetoothSpeaker {
         return;
       }
       UUID remoteUUID = getUUIDFromMACAddress(device.getAddress()); 
-      BluetoothSocket socket;
+      final BluetoothSocket socket;
       try {
         socket = device.createInsecureRfcommSocketToServiceRecord(remoteUUID);
       } catch (IOException e) {
@@ -399,15 +410,41 @@ public class BluetoothSpeaker {
         return;
       }
 
-      try {
-        socket.connect();
-      } catch (IOException e) {
-        mCallback.failure(
-            String.format("Exception connecting to %s on peer %s. IOException: %s",
-                           remoteUUID, mPeer, e)
-        );
-        return;
-      }
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        class ConnectBluetoothSocket implements Callable<Boolean>{
+            /* LIRAN: attempt to connect to current socket, this implementation allow
+             * timing out the connection if takes too long, it was found that
+             * from time to time socket.connect() was blocked indefinitely which
+             * in turn cause the app to stop receiving/sending messages
+             */
+            @Override
+            public Boolean call() throws Exception {
+                // cancel the discovery before connecting since it slows down connection.
+                if(mBluetoothAdapter != null) mBluetoothAdapter.cancelDiscovery();
+                socket.connect();
+                return false;
+            }
+        }
+
+        Future<Boolean> task = executor.submit(new ConnectBluetoothSocket());
+        try {
+            Boolean connectSuccessful = task.get(SOCKET_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+            log.debug("got socket connection result");
+        } catch (ExecutionException e) {
+            mCallback.failure(
+                    String.format("Exception connecting to %s on peer %s. IOException: %s",
+                            remoteUUID, mPeer, e)
+            );
+            return;
+        } catch (InterruptedException|TimeoutException e) {
+            log.error("socket connection timed out for: " + mPeer, e);
+            mCallback.failure(
+                    String.format("Exception connecting to %s on peer %s. IOException: %s",
+                            remoteUUID, mPeer, e)
+            );
+            return;
+        }
+
       if (socket.isConnected()) {
         mCallback.success(socket);
       } else {
