@@ -50,6 +50,7 @@ import android.app.Service;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
 import org.apache.log4j.Logger;
@@ -240,6 +241,18 @@ public class RangzenService extends Service {
 
         TIME_BETWEEN_EXCHANGES_MILLIS = SecurityManager.getCurrentProfile(this).getCooldown() * 1000;
         log.info( "RangzenService created.");
+
+        //TODO this is a test to see if service is really being killed, setting startForeground
+        // prevent service from being killed by the system
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setContentTitle("Murmur is running in background")
+                .setContentText("please do not dismiss this message")
+                .setContentInfo("without it Murmur might not work")
+                .setWhen(System.currentTimeMillis()).setAutoCancel(false);
+
+        Notification notice = builder.build();
+
+        startForeground(R.id.transparentHolder, notice);
     }
 
     /**
