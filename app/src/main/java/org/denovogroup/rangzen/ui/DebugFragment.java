@@ -110,7 +110,7 @@ public class DebugFragment extends Fragment {
                             }
 
                             String backoffString = null;
-                            if (backoff > 0) {
+                            if (backoff > 0 && RangzenService.USE_BACKOFF) {
                                 backoffString = TimeUnit.MILLISECONDS.toMinutes(backoff) + ":" + (TimeUnit.MILLISECONDS.toSeconds(backoff) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(backoff)));
                             }
 

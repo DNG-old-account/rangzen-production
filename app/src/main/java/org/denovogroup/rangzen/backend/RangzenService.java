@@ -148,6 +148,8 @@ public class RangzenService extends Service {
 
     private static final boolean USE_MINIMAL_LOGGING = false;
 
+    public static final boolean USE_BACKOFF = false;
+
     /**
      * Called whenever the service is requested to start. If the service is
      * already running, this does /not/ create a new instance of the service.
@@ -327,23 +329,26 @@ public class RangzenService extends Service {
 
 
                         //optimize connection using history tracker
-                        ExchangeHistoryTracker.ExchangeHistoryItem historyItem = ExchangeHistoryTracker.getInstance().getHistoryItem(peer.address);
-                        boolean hasHistory = historyItem != null;
-                        boolean storeVersionChanged = false;
-                        boolean waitedMuch = false;
+                        if(USE_BACKOFF) {
+                            ExchangeHistoryTracker.ExchangeHistoryItem historyItem = ExchangeHistoryTracker.getInstance().getHistoryItem(peer.address);
+                            boolean hasHistory = historyItem != null;
+                            boolean storeVersionChanged = false;
+                            boolean waitedMuch = false;
 
-                        if (hasHistory) {
-                            storeVersionChanged = !historyItem.storeVersion.equals(MessageStore.getInstance(RangzenService.this).getStoreVersion());
-                            waitedMuch = historyItem.lastExchangeTime + Math.min(
-                                    Math.pow(2 , historyItem.attempts) * BACKOFF_FOR_ATTEMPT_MILLIS, BACKOFF_MAX) < System.currentTimeMillis();
-                        }
+                            if (hasHistory) {
+                                storeVersionChanged = !historyItem.storeVersion.equals(MessageStore.getInstance(RangzenService.this).getStoreVersion());
+                                waitedMuch = historyItem.lastExchangeTime + Math.min(
+                                        Math.pow(2, historyItem.attempts) * BACKOFF_FOR_ATTEMPT_MILLIS, BACKOFF_MAX) < System.currentTimeMillis();
+                            }
 
-                        if (!hasHistory || storeVersionChanged || waitedMuch) {
-                            log.debug( "Can connect with peer: " + peer);
-                            connectTo(peer);
+                            if (!hasHistory || storeVersionChanged || waitedMuch) {
+                                log.debug("Can connect with peer: " + peer);
+                            } else {
+                                log.debug("Backoff from peer: " + peer +
+                                        " [previously interacted:" + hasHistory + ", store ready:" + storeVersionChanged + " ,backoff timeout:" + waitedMuch + "]");
+                            }
                         } else {
-                            log.debug( "Backoff from peer: " + peer +
-                                    " [previously interacted:" + hasHistory + ", store ready:" + storeVersionChanged + " ,backoff timeout:" + waitedMuch + "]");
+                            connectTo(peer);
                         }
                     } else {
                         log.debug("Other device is in charge of starting conversation");

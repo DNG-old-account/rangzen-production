@@ -458,9 +458,9 @@ public class PeerManager {
       /*TODO LIRAN this method cannot work along with the backoff algorithm if speaker
         device have a long backoff period and spokento device have some new data to share.
         speaker device will remain unreachable for the entire duration of the backoff, rendering
-        the app useless, to resolve this this method has been silenced for the production version
+        the app useless, to resolve this this method has been silenced if USE_BACKOFF is set to true
        */
-      if(true) return true;
+      if(RangzenService.USE_BACKOFF) return true;
 
       if (other == null) {
         log.info( "This device not speaking to peer, peer is null");
