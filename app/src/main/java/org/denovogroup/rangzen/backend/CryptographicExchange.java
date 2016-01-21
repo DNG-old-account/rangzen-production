@@ -96,7 +96,6 @@ public class CryptographicExchange extends Exchange {
 
     private static final String MESSAGE_COUNT_KEY = "count";
 
-    private static final String SECURITY_KEY = "security";
   
   /**
    * Perform the exchange asynchronously, calling back success or failure on
