@@ -670,7 +670,7 @@ public class MessageStore extends SQLiteOpenHelper {
         if(db != null && message != null){
             db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
-            log.debug( "Message priority changed in the store.");
+            log.debug("Message priority changed in the store.");
             return true;
         }
         log.debug( "Message was not edited, either message or database is null. ["+message+"]");
@@ -690,7 +690,7 @@ public class MessageStore extends SQLiteOpenHelper {
         if(db != null && message != null){
             db.execSQL("UPDATE "+TABLE+" SET "+ COL_LIKES +"="+priority+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
 
-            log.debug( "Message priority changed in the store.");
+            log.debug("Message priority changed in the store.");
             return true;
         }
         log.debug( "Message was not edited, either message or database is null. ["+message+"]");
@@ -831,9 +831,9 @@ public class MessageStore extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         if(db != null && message != null){
             int read = isRead ? TRUE : FALSE;
-            db.execSQL("UPDATE "+TABLE+" SET "+COL_READ+"="+read+" WHERE "+COL_MESSAGE+"='"+Utils.makeTextSafeForSQL(message)+"';");
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_READ + "=" + read + " WHERE " + COL_MESSAGE + "='" + Utils.makeTextSafeForSQL(message) + "';");
 
-            log.debug( "Message read state changed in the store.");
+            log.debug("Message read state changed in the store.");
             return true;
         }
         log.debug( "Message was not edited, either message or database is null. ["+message+"]");
@@ -983,6 +983,12 @@ public class MessageStore extends SQLiteOpenHelper {
     }
 
     public void setSortOption(String[] columns, boolean ascending){
+
+        boolean needSecondaryByRowId = true;
+        for(String col : columns){
+            if(col.equals(COL_ROWID)) needSecondaryByRowId = false;
+        }
+
         String options = "";
         for (int i = 0; i < defaultSort.length; i++) {
             options += defaultSort[i];
@@ -1000,6 +1006,11 @@ public class MessageStore extends SQLiteOpenHelper {
             }
         }
         sortOption = "ORDER BY "+options+(ascending ? " ASC" : " DESC");
+
+
+        if(needSecondaryByRowId){
+            sortOption += ", "+COL_ROWID+" DESC";
+        }
     }
 
     /** return comments of a certain message parent */

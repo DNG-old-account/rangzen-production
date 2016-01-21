@@ -1,6 +1,8 @@
 package org.denovogroup.rangzen.backend;
 
 
+import android.util.Log;
+
 import java.util.Calendar;
 
 /**
@@ -13,6 +15,20 @@ public abstract class SearchHelper {
     public static String searchToSQL(String query){
         String userQuery = query;
         String sqlQuery = "";
+
+        if(userQuery.indexOf("@") > -1 && userQuery.length() > 1){
+            String[] words = userQuery.split(" ");
+            for(String string: words){
+                if(string.indexOf("@") > -1 && string.length() > 1){
+                    String sqlMatch = matchSQL(MessageStore.COL_PSEUDONYM, string.substring(1, string.length()));
+
+                    if(sqlMatch != null){
+                        sqlQuery += " AND "+sqlMatch;
+                    }
+                    break;
+                }
+            }
+        }
 
         while(userQuery.lastIndexOf(":") > 0){
 
@@ -59,6 +75,8 @@ public abstract class SearchHelper {
                 long timestamp = Utils.reduceCalendarMin(calendar).getTimeInMillis();
                 return MessageStore.COL_TIMESTAMP+" <= "+timestamp;
             } catch (Exception e){}
+        } else if(label.equals(MessageStore.COL_PSEUDONYM)){
+            return MessageStore.COL_PSEUDONYM+" LIKE '%"+value+"%'";
         }
 
         return null;
