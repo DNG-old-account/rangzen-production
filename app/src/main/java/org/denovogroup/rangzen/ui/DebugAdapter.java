@@ -9,6 +9,8 @@ import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -35,6 +37,21 @@ public class DebugAdapter extends ArrayAdapter<String[]>{
 
         convertView.findViewById(R.id.speak_to).setVisibility(speakTo ? View.VISIBLE : View.GONE);
         convertView.findViewById(R.id.spoken_of).setVisibility(!speakTo ? View.VISIBLE : View.GONE);
+
+        long lastExchangeTime = currentItem[3] != null ? Long.parseLong(currentItem[3]) : -1;
+
+        String lastExchangeTimeString = "Last exchange:";
+
+        if(lastExchangeTime < 0){
+            lastExchangeTimeString+=" Unknown";
+        } else {
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(lastExchangeTime);
+            SimpleDateFormat format = new SimpleDateFormat("h:mm:ss a");
+            lastExchangeTimeString += format.format(cal.getTime());
+        }
+
+        ((TextView)convertView.findViewById(R.id.last_exchange)).setText(lastExchangeTimeString);
 
         return convertView;
     }

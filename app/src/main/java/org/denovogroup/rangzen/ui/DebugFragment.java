@@ -93,7 +93,7 @@ public class DebugFragment extends Fragment {
 
                         peers.clear();
                         for (Peer peer : peersList) {
-                            String[] peerStr = new String[3];
+                            String[] peerStr = new String[4];
                             peerStr[0] = peer.toString();
                             try {
                                 peerStr[1] = manager.thisDeviceSpeaksTo(peer) ? "true" : null;
@@ -104,9 +104,12 @@ public class DebugFragment extends Fragment {
 
                             int backoff = 0;
 
+                            String lastExchange = null;
                             if (history != null) {
                                 backoff = Math.min(RangzenService.BACKOFF_MAX,
                                         (int) (Math.pow(2, history.getAttempts()) * RangzenService.BACKOFF_FOR_ATTEMPT_MILLIS));
+
+                                lastExchange = String.valueOf(history.getLastExchangeTime());
                             }
 
                             String backoffString = null;
@@ -115,6 +118,7 @@ public class DebugFragment extends Fragment {
                             }
 
                             peerStr[2] = backoffString;
+                            peerStr[3] = lastExchange;
                             peers.add(peerStr);
                         }
                         listView.setAdapter(new DebugAdapter(getActivity(), peers));
