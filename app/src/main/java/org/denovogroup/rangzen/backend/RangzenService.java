@@ -219,14 +219,22 @@ public class RangzenService extends Service {
         // the tasks.
         mBackgroundExecution = mScheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
             public void run() {
-                backgroundTasks();
+                try {
+                    backgroundTasks();
+                } catch (Exception e){
+                    log.error("unhandled exception during backgroundTasks",e);
+                }
             }
         }, 0, 1, TimeUnit.SECONDS);
 
         mCleanupExecution = mScheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                cleanupMessageStore();
+                try {
+                    cleanupMessageStore();
+                } catch (Exception e){
+                    log.error("exception during cleanup message store scheduled task",e);
+                }
             }
         }, 0, 5, TimeUnit.MINUTES);
 
@@ -366,7 +374,6 @@ public class RangzenService extends Service {
         }
         mBackgroundTaskRunCount++;
 
-        // log.info( "Background Tasks Finished");
     }
 
     /**
@@ -756,7 +763,7 @@ public class RangzenService extends Service {
 
     private void cleanupMessageStore(){
         SecurityProfile currentProfile = SecurityManager.getCurrentProfile(this);
-            MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile);
+        MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile);
     }
 
 
