@@ -153,6 +153,13 @@ public class PostActivity extends AppCompatActivity {
         timeboundButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                if(v.isActivated()){
+                    timebound = -1;
+                    v.setActivated(false);
+                    return;
+                }
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(PostActivity.this);
                 builder.setTitle(R.string.timebound_dialog_title);
 
