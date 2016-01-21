@@ -367,6 +367,7 @@ public class RangzenService extends Service {
 
                             if (!hasHistory || storeVersionChanged || waitedMuch) {
                                 log.debug("Can connect with peer: " + peer);
+                                connectTo(peer);
                             } else {
                                 log.debug("Backoff from peer: " + peer +
                                         " [previously interacted:" + hasHistory + ", store ready:" + storeVersionChanged + " ,backoff timeout:" + waitedMuch + "]");
