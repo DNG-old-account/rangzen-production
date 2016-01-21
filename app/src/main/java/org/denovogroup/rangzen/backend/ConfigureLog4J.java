@@ -14,7 +14,7 @@ public class ConfigureLog4J {
     public static final File LOG_DIRECTORY = Environment.getExternalStorageDirectory();
     public static final String LOG_FILE = "rangzen.log";
     public static final String LOG_FILENAME = LOG_DIRECTORY + File.separator + LOG_FILE;
-    public static final String LOG_LINE_PATTERN = "%d - [%p::%c(%t)] - %m%n";
+    public static final String LOG_LINE_PATTERN = "%d - [%t] - [%p::%c] - %m%n";
     public static final Level LOG_LEVEL = Level.DEBUG;
     public static final long FILE_SIZE = 6 * 1024 * 1024; //MB
 

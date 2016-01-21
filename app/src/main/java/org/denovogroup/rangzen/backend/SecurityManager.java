@@ -76,7 +76,7 @@ public class SecurityManager {
                 .setCooldown(5)
                 .setEnforceLock(false)
                 .setUseTrust(false)
-                .setRandomExchange(false)
+                .setRandomExchange(true) // roundrobin was causing network issues so it is disabled for all profiles
                 .setTimeboundPeriod(3)
                 .setMinContactsForHop(3)
         );
@@ -96,7 +96,7 @@ public class SecurityManager {
                 .setCooldown(30)
                 .setEnforceLock(true)
                 .setUseTrust(true)
-                .setRandomExchange(false)
+                .setRandomExchange(true) // roundrobin was causing network issues so it is disabled for all profiles
                 .setTimeboundPeriod(3)
                 .setMinContactsForHop(5)
         );

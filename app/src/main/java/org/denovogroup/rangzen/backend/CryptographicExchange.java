@@ -233,7 +233,7 @@ public class CryptographicExchange extends Exchange {
           success = false;
       } else {
           for (RangzenMessage message : messagesPool) {
-              log.debug("sending message:"+message.text);
+              log.debug("sending a message");
               List<JSONObject> messageWrapper = new ArrayList<>();
               messageWrapper.add(message.toJSON(mContext));
               ClientMessage cm = new ClientMessage((ArrayList<JSONObject>)messageWrapper, null);
@@ -307,7 +307,6 @@ public class CryptographicExchange extends Exchange {
               //Add everything passed in the wrapper to the pool
               for(JSONObject message : mRemoteClientMessage.messages) {
                   mMessagesReceived.add(RangzenMessage.fromJSON(mContext, message));
-                  log.debug("results contained message:"+message);
               }
           } catch (ExecutionException ex){
               executor.shutdown();
