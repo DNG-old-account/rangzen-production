@@ -54,6 +54,7 @@ import android.app.Service;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
+import android.util.Log;
 
 import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.R;
@@ -378,9 +379,16 @@ public class RangzenService extends Service {
             log.info(String.format("Can connect with %d peers", peers.size()));
             if(SecurityManager.getCurrentProfile(this).isRandomExchange()) {
                 log.info("Current security profile state that we should pick one random peer to interact with");
-                Peer selectedPeer = peers.get(mRandom.nextInt(peers.size()));
+                Peer selectedPeer = pickBestPeer(peers);//peers.get(mRandom.nextInt(peers.size()));
                 peers.clear();
                 peers.add(selectedPeer);
+                ExchangeHistoryTracker.ExchangeHistoryItem historyItem
+                        = ExchangeHistoryTracker.getInstance().getHistoryItem(selectedPeer.address);
+                if(historyItem != null){
+                    ExchangeHistoryTracker.getInstance().updatePickHistory(selectedPeer.address);
+                } else {
+                    ExchangeHistoryTracker.getInstance().updateHistory(this, selectedPeer.address);
+                }
             }
             log.info(String.format("Checking %d peers", peers.size()));
             for(Peer peer : peers) {
@@ -832,5 +840,38 @@ public class RangzenService extends Service {
     private void cleanupMessageStore(){
         SecurityProfile currentProfile = SecurityManager.getCurrentProfile(this);
         MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile);
+    }
+
+    private Peer pickBestPeer(List<Peer> peers){
+        ExchangeHistoryTracker tracker = ExchangeHistoryTracker.getInstance();
+        Peer bestMatch = null;
+        long bestMatchLastPicked = 0;
+        for(Peer peer : peers){
+            if(bestMatch == null){
+                //no better match yet, this will be it
+                bestMatch = peer;
+                ExchangeHistoryTracker.ExchangeHistoryItem history = tracker.getHistoryItem(peer.address);
+                if(history != null){
+                    bestMatchLastPicked = history.getLastPicked();
+                }
+            } else {
+                ExchangeHistoryTracker.ExchangeHistoryItem history = tracker.getHistoryItem(peer.address);
+
+                if(history == null){
+                    // no history regarding this peer, must be new
+                    bestMatch = peer;
+                    break;
+                } else {
+                    //has history, compare pick time
+                    if(bestMatchLastPicked > history.getLastPicked()){
+                        //was not picked in a long time, pick him
+                        bestMatch = peer;
+                        bestMatchLastPicked = history.getLastPicked();
+                    }
+                }
+            }
+        }
+
+        return bestMatch;
     }
 }

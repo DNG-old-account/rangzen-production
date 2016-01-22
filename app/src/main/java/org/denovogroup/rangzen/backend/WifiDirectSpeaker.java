@@ -286,8 +286,6 @@ public class WifiDirectSpeaker {
   private void onWifiP2pPeersChanged(Context context, Intent intent) {
     log.info("WifiDirectSpeaker called onWifiP2pPeersChanged");
       Log.d("peerDebug", "WifiDirectSpeaker called onWifiP2pPeersChanged");
-      //clear the existing list of peers which is outdated at this point
-      mPeerManager.forgetAllPeers();
     // Temp used merely for readability (avoiding very long line/weird indent).
     Parcelable temp = intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
     WifiP2pDeviceList peerDevices = (WifiP2pDeviceList) temp;
@@ -481,20 +479,31 @@ public class WifiDirectSpeaker {
       Log.d("peerDebug", "seekPeer (" + (!getSeeking()) + "," + lastSeekingWasLongAgo() + ")");
     if (!getSeeking() || lastSeekingWasLongAgo()) {
         log.info("seeking peers");
-        Log.d("peerDebug","request seekPeer");
+        Log.d("peerDebug", "request seekPeer");
       setSeeking(true);
       touchLastSeekingTime();
-      mWifiP2pManager.discoverPeers(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-        @Override
-        public void onSuccess() {
-          log.debug( "Discovery initiated");
-        }
-      @Override
-      public void onFailure(int reasonCode) {
-        log.debug( "Discovery failed: " + reasonCode);
-        setSeeking(false);
-        stopSeekingPeers();
-      }
+      mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new ActionListener() {
+          @Override
+          public void onSuccess() {
+              mWifiP2pManager.discoverPeers(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+                  @Override
+                  public void onSuccess() {
+                      log.debug("Discovery initiated");
+                  }
+
+                  @Override
+                  public void onFailure(int reasonCode) {
+                      log.debug("Discovery failed: " + reasonCode);
+                      setSeeking(false);
+                      stopSeekingPeers();
+                  }
+              });
+          }
+
+          @Override
+          public void onFailure(int reason) {
+            onSuccess();
+          }
       });
     } else {
       log.info("Attempted to seek peers while already seeking, not doing it. (seeking:"+getSeeking()+", seeking was long time ago:"+lastSeekingWasLongAgo()+")");

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import org.apache.log4j.Logger;
+import org.denovogroup.rangzen.ui.MainActivity;
 
 import java.lang.ref.WeakReference;
 import java.util.Date;
@@ -87,6 +88,11 @@ public class ServiceWatchDog {
 
         if(service == null){
             log.error("Watchdog cannot recover service, service reference is null");
+            return;
+        }
+
+        if(!service.getSharedPreferences(MainActivity.PREF_FILE, Context.MODE_PRIVATE).getBoolean(MainActivity.IS_APP_ENABLED, true)){
+            service.stopSelf();
             return;
         }
 

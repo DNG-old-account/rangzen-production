@@ -304,11 +304,15 @@ public class CryptographicExchange extends Exchange {
           try {
               log.debug("requesting results from receive message task");
               mRemoteClientMessage = task.get(EXCHANGE_TIMEOUT, TimeUnit.MILLISECONDS);
+              log.debug("got results from receive message task");
               //Add everything passed in the wrapper to the pool
               for(JSONObject message : mRemoteClientMessage.messages) {
+                  log.debug("unwrapping message");
                   mMessagesReceived.add(RangzenMessage.fromJSON(mContext, message));
+                  log.debug("message unwrapped");
               }
           } catch (ExecutionException ex){
+              ex.printStackTrace();
               executor.shutdown();
               if (mMessagesReceived.isEmpty()) {
                   setExchangeStatus(Status.ERROR);
@@ -319,6 +323,7 @@ public class CryptographicExchange extends Exchange {
               setErrorMessage(ex.getMessage());
               throw new IOException(ex.getMessage());
           } catch (InterruptedException | TimeoutException e) {
+              e.printStackTrace();
               executor.shutdown();
               if (mMessagesReceived.isEmpty()) {
                   setExchangeStatus(Status.ERROR);

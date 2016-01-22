@@ -80,6 +80,7 @@ public class ExchangeHistoryTracker {
                 item.attempts = 0;
                 item.storeVersion = MessageStore.getInstance(context ).getStoreVersion();
                 item.lastExchangeTime = System.currentTimeMillis();
+                item.lastPicked = System.currentTimeMillis();
                 return;
             }
         }
@@ -87,15 +88,23 @@ public class ExchangeHistoryTracker {
         history.add(new ExchangeHistoryItem(address, MessageStore.getInstance(context ).getStoreVersion(), System.currentTimeMillis()));
     }
 
+    public void updatePickHistory(String address){
+        for(ExchangeHistoryItem item : history){
+            if(item.address.equals(address)){
+                item.lastPicked = System.currentTimeMillis();
+            }
+        }
+    }
+
     /** update the history item attempts counter
      * @param address WifiP2p device address with which interacted
      */
     public void updateAttemptsHistory(String address){
-            for(ExchangeHistoryItem item : history){
-                if(item.address.equals(address)){
-                    item.attempts++;
-                }
+        for(ExchangeHistoryItem item : history){
+            if(item.address.equals(address)){
+                item.attempts++;
             }
+        }
     }
 
     public ExchangeHistoryItem getHistoryItem(String address){
@@ -132,6 +141,8 @@ public class ExchangeHistoryTracker {
         long lastExchangeTime;
         /** Number of attempts taken during which local store wasn't changed*/
         int attempts;
+        /** the last time this peer was picked for exchange */
+        long lastPicked;
 
         public String getAddress() {
             return address;
@@ -149,13 +160,20 @@ public class ExchangeHistoryTracker {
             return attempts;
         }
 
+        public long getLastPicked() {
+            return lastPicked;
+        }
+
+        public void updateLastPicked(){
+            lastPicked = System.currentTimeMillis();
+        }
+
         public ExchangeHistoryItem(String address, String storeVersion, long lastExchangeTime) {
             this.address = address;
             this.storeVersion = storeVersion;
             this.lastExchangeTime = lastExchangeTime;
             this.attempts = 0;
-
-
+            this.lastPicked=0;
         }
     }
 }

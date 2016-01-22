@@ -81,7 +81,7 @@ public class PeerManager {
    * The length of time (in milliseconds) we consider peers valid. 
    * TODO(lerner): Decide on an appropriate value for this.
    */
-  public static final long PEER_TIMEOUT = 1 * 60 * 1000;
+  public static final long PEER_TIMEOUT = 2 * 60 * 1000;
 
   /** 
    * The length of time we wait before talking to the same peer again, in ms.
