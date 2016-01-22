@@ -28,6 +28,7 @@
         android:hint="@string/post_hint"
         android:textColor="@color/drawer_menu_text_grey"
         android:padding="16dp"
+        android:maxLength="500"
         android:background="@android:color/white">
 
         <requestFocus />

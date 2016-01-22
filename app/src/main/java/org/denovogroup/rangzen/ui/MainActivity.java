@@ -119,12 +119,6 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
             if (selectedItem != null) selectedItem.setActivated(true);
         }
 
-        if (Intent.ACTION_SEND.equals(getIntent().getAction()) && "text/plain".equals(getIntent().getType())) {
-            Intent intent = new Intent(this, PostActivity.class);
-            intent.putExtra(PostActivity.MESSAGE_BODY, getIntent().getStringExtra(Intent.EXTRA_TEXT));
-            startActivityForResult(intent, FeedFragment.REQ_CODE_MESSAGE);
-        }
-
         //start Rangzen service if necessary
         SharedPreferences pref = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
         if (pref.getBoolean(IS_APP_ENABLED, true)) {
@@ -132,6 +126,14 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
             startService(startServiceIntent);
         } else {
             Toast.makeText(this, R.string.offline_mode_toast, Toast.LENGTH_LONG).show();
+        }
+        
+        if (Intent.ACTION_SEND.equals(getIntent().getAction()) && ("text/plain".equals(getIntent().getType()) || getIntent().getType() == null)) {
+            try {
+                Intent intent = new Intent(this, PostActivity.class);
+                intent.putExtra(PostActivity.MESSAGE_BODY, getIntent().getStringExtra(Intent.EXTRA_TEXT));
+                startActivityForResult(intent, FeedFragment.REQ_CODE_MESSAGE);
+            } catch (Exception e){}
         }
     }
 
