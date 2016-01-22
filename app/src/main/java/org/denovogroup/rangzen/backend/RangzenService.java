@@ -31,6 +31,7 @@
 package org.denovogroup.rangzen.backend;
 
 import android.app.ActivityManager;
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -215,6 +216,8 @@ public class RangzenService extends Service {
     @Override
     public void onCreate() {
 
+        ServiceWatchDog.getInstance().init(this);
+
         if(errorHandler != null){
             IntentFilter filter = new IntentFilter(SERVICE_ERROR_HANDLER_FILTER);
             filter.addAction(ACTION_TURNOFF);
@@ -294,6 +297,7 @@ public class RangzenService extends Service {
      * Called when the service is destroyed.
      */
     public void onDestroy() {
+        ServiceWatchDog.getInstance().notifyServiceDestroy();
         if(errorHandler != null){
             try {
                 unregisterReceiver(errorHandler);
@@ -364,8 +368,8 @@ public class RangzenService extends Service {
         // TODO(lerner): Why not just use mPeerManager?
         PeerManager peerManager = PeerManager.getInstance(getApplicationContext());
         peerManager.tasks();
-        mBluetoothSpeaker.tasks();
-        mWifiDirectSpeaker.tasks();
+        if(!mBluetoothSpeaker.tasks()) return;
+        if(!mWifiDirectSpeaker.tasks()) return;
 
         List<Peer> peers = peerManager.getPeers();
         // TODO(lerner): Don't just connect all willy-nilly every time we have
@@ -468,7 +472,7 @@ public class RangzenService extends Service {
     /*package*/ PeerConnectionCallback mPeerConnectionCallback = new PeerConnectionCallback() {
       @Override
       public void success(BluetoothSocket socket) {
-        log.info( "Callback says we're connected to " + socket.getRemoteDevice().toString());
+        log.info("Callback says we're connected to " + socket.getRemoteDevice().toString());
         if (socket.isConnected()) {
           mSocket = socket;
           log.info( "Socket connected, attempting exchange");
@@ -497,7 +501,7 @@ public class RangzenService extends Service {
       }
       @Override
       public void failure(String reason) {
-        log.info( "Callback says we failed to connect: " + reason);
+        log.info("Callback says we failed to connect: " + reason);
         RangzenService.this.cleanupAfterExchange();
       }
     };
@@ -545,6 +549,7 @@ public class RangzenService extends Service {
     /* package */ ExchangeCallback mExchangeCallback = new ExchangeCallback() {
       @Override
       public void success(Exchange exchange) {
+          ServiceWatchDog.getInstance().notifyLastExchange();
           boolean hasNew = false;
         List<RangzenMessage> newMessages = exchange.getReceivedMessages();
         int friendOverlap = exchange.getCommonFriends();
@@ -607,6 +612,7 @@ public class RangzenService extends Service {
 
         @Override
         public void recover(Exchange exchange, String reason) {
+            ServiceWatchDog.getInstance().notifyLastExchange();
             log.error( "Exchange failed but data can be recovered, reason: " + reason);
             boolean hasNew = false;
             List<RangzenMessage> newMessages = exchange.getReceivedMessages();
@@ -827,6 +833,4 @@ public class RangzenService extends Service {
         SecurityProfile currentProfile = SecurityManager.getCurrentProfile(this);
         MessageStore.getInstance(this).deleteOutdatedOrIrrelevant(currentProfile);
     }
-
-
 }

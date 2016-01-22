@@ -421,16 +421,21 @@ public class WifiDirectSpeaker {
   /**
    * The "main loop" for WifiDirectSpeaker. This method is called each time
    * the RangzenService runs its backgroundTasks() method, which happens
-   * periodically over time.
+   * periodically over time. returning true if proper wifi handling is possible,
+   * or false otherwise
    */
-  public void tasks() {
+  public boolean tasks() {
       log.info("Starting WifiDirectSpeaker tasks (mSeekingDesired:" + mSeekingDesired + ")");
-    if (mSeekingDesired) {
+
+      WifiManager wifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+    if (mSeekingDesired && wifiManager.isWifiEnabled()) {
       seekPeers();
     } else {
       stopSeekingPeers();
+      return false;
     }
       log.info("finished WifiDirectSpeaker");
+      return true;
   }
 
   /** 
@@ -473,7 +478,7 @@ public class WifiDirectSpeaker {
    * level application code, call setSeekingDesired(true/false).
    */
   private void seekPeers() {
-      Log.d("peerDebug","seekPeer ("+(!getSeeking())+","+lastSeekingWasLongAgo()+")");
+      Log.d("peerDebug", "seekPeer (" + (!getSeeking()) + "," + lastSeekingWasLongAgo() + ")");
     if (!getSeeking() || lastSeekingWasLongAgo()) {
         log.info("seeking peers");
         Log.d("peerDebug","request seekPeer");
@@ -503,20 +508,22 @@ public class WifiDirectSpeaker {
    * level application code, call setSeekingDesired(true/false).
    */
   private void stopSeekingPeers() {
-      log.info("Stopped seeking peers");
-      Log.d("peerDebug","Stopped seeking peers");
-    mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-      @Override
-      public void onSuccess() {
-        log.debug( "Discovery stopped successfully.");
-        setSeeking(false);
+      if(getSeeking()) {
+          log.info("Stopped seeking peers");
+          Log.d("peerDebug","Stopped seeking peers");
+          mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+              @Override
+              public void onSuccess() {
+                  log.debug("Discovery stopped successfully.");
+                  setSeeking(false);
+              }
+
+              @Override
+              public void onFailure(int reasonCode) {
+                  log.debug("Failed to stop peer discovery? Reason: " + reasonCode);
+              }
+          });
       }
-      @Override
-      public void onFailure(int reasonCode) {
-        setSeeking(false);
-        log.debug( "Failed to stop peer discovery? Reason: " + reasonCode);
-      }
-    });
   }
 
   /**

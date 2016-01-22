@@ -143,8 +143,10 @@ public class BluetoothSpeaker {
         createListeningSocket();
         spawnConnectionAcceptingThread();
       } catch (IOException e) {
-        log.error( "Failed to create listening BT server socket. " ,e);
-        log.error( "Can't receive incoming connections.");
+        log.error("Failed to create listening BT server socket. ", e);
+          e.printStackTrace();
+        log.error("Can't receive incoming connections.");
+          ServiceWatchDog.getInstance().notifyError(e);
       }
     } else {
         mBluetoothBroadcastReceiver.showNoBluetoothNotification(context);
@@ -313,9 +315,10 @@ public class BluetoothSpeaker {
   /**
    * Called periodically by the background tasks method of the Rangzen Service.
    * Recreates the listening socket and thread if they're not active. The listening
-   * thread might be inactive if Bluetooth was turned off previously.
+   * thread might be inactive if Bluetooth was turned off previously. return true
+   * if state allow for proper bluetooth handling or false if process should be terminated
    */
-  public void tasks() {
+  public boolean tasks() {
     log.info("Starting BluetoothSpeaker tasks.");
       log.info("mServerSocket:"+(mServerSocket == null)
               +" mBluetoothAdapter:"+(mBluetoothAdapter != null)
@@ -329,9 +332,17 @@ public class BluetoothSpeaker {
       } catch (IOException e) {
         log.error("Tasks: failed to create listening BT server socket. ",e);
         log.error("Can't receive incoming connections.");
+        return false;
       }
     }
+
+      if(mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()){
+          log.info("bluetooth tasks failed, bluetooth disabled");
+          return false;
+      }
+
       log.info("finished BluetoothSpeaker tasks.");
+      return true;
   }
 
   /**
