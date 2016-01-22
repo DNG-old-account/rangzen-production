@@ -513,9 +513,7 @@ public class RangzenService extends Service {
       setLastExchangeTime();
       try {
         if (mSocket != null) {
-            direction = 0;
-          mSocket.close();
-            remoteAddress = null;
+            mSocket.close();
             log.info("bluetooth socket closed");
         }
       } catch (IOException e) {
@@ -523,9 +521,7 @@ public class RangzenService extends Service {
       }
       try { 
         if (mBluetoothSpeaker.mSocket != null) {
-            direction = 0;
-          mBluetoothSpeaker.mSocket.close();
-            remoteAddress = null;
+            mBluetoothSpeaker.mSocket.close();
             log.info( "bluetooth speaker socket closed");
         }
       } catch (IOException e) {
@@ -533,6 +529,9 @@ public class RangzenService extends Service {
       }
       mSocket = null;
       mBluetoothSpeaker.mSocket = null;
+
+        direction = 0;
+        remoteAddress = null;
     }
 
     /**
