@@ -307,6 +307,7 @@ public class RangzenService extends Service {
             mWifiDirectSpeaker.setWifiDirectUserFriendlyName(pref.getString(MainActivity.WIFI_NAME, ""));
         }
 
+        mPeerManager.forgetAllPeers();
         mWifiDirectSpeaker.dismissNoWifiNotification();
         mBluetoothSpeaker.unregisterReceiver(this);
         mBluetoothSpeaker.dismissNoBluetoothNotification();
@@ -527,8 +528,9 @@ public class RangzenService extends Service {
       } catch (IOException e) {
         log.warn( "Couldn't close bt socket in BTSpeaker: " , e);
       }
-      mSocket = null;
-      mBluetoothSpeaker.mSocket = null;
+        mSocket = null;
+        mBluetoothSpeaker.mSocket = null;
+        log.debug("socket and BluetoothSpeaker socket has been set to null");
 
         direction = 0;
         remoteAddress = null;

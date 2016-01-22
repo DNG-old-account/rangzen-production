@@ -273,6 +273,8 @@ public class WifiDirectSpeaker {
    */
   private void onWifiP2pPeersChanged(Context context, Intent intent) {
     log.info("WifiDirectSpeaker called onWifiP2pPeersChanged");
+      //clear the existing list of peers which is outdated at this point
+      mPeerManager.forgetAllPeers();
     // Temp used merely for readability (avoiding very long line/weird indent).
     Parcelable temp = intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
     WifiP2pDeviceList peerDevices = (WifiP2pDeviceList) temp;

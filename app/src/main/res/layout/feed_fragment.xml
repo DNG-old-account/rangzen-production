@@ -33,7 +33,8 @@
             android:gravity="center"
             android:background="@drawable/ui_buttoncircle"/>
 
-        <include layout="@layout/new_message_snackbar"/>
+        <include layout="@layout/new_message_snackbar"
+            android:visibility="gone"/>
 
     </LinearLayout>
 

@@ -178,6 +178,8 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         newMessagesNotification_button = (Button) v.findViewById(R.id.new_message_notification_btn);
             newMessagesNotification_button.setOnClickListener(this);
 
+        MessageStore.getInstance(getActivity()).setAllAsRead();
+
         setListView();
 
         Bundle args = getArguments();
@@ -746,7 +748,9 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     public void onResume() {
         super.onResume();
 
+        MessageStore.getInstance(getActivity()).setAllAsRead();
         setPendingUnreadMessagesDisplay();
+        swapCursor();
 
         receiver = new MessageEventReceiver();
         getActivity().registerReceiver(receiver, filter);
