@@ -45,7 +45,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
-import android.util.Log;
 
 import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.R;
@@ -156,7 +155,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
     public void showNoBluetoothNotification(Context context){
         if(context == null) return;
 
-        int notificationId = R.string.dialog_no_bluetooth_message;
+        int notificationId = R.string.notification_no_bluetooth_message;
 
         Intent notificationIntent = new Intent(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));;
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
@@ -185,8 +184,8 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
         offIntent.setAction(RangzenService.ACTION_TURNOFF);
         PendingIntent pendingOffIntent = PendingIntent.getBroadcast(context, -1, offIntent, 0);
 
-        Notification notification = new Notification.Builder(context).setContentTitle(context.getText(R.string.dialog_no_bluetooth_title))
-                .setContentText(context.getText(R.string.dialog_no_bluetooth_message))
+        Notification notification = new Notification.Builder(context).setContentTitle(context.getText(R.string.notification_no_bluetooth_title))
+                .setContentText(context.getText(R.string.notification_no_bluetooth_message))
                 .setLargeIcon(largeIcon)
                 .setContentIntent(pendingIntent)
                 .setSmallIcon(R.mipmap.ic_error)
@@ -199,7 +198,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
     /** dismiss the no bluetooth notification if showing
      */
     public void dismissNoBluetoothNotification(Context context){
-        int notificationId = R.string.dialog_no_bluetooth_message;
+        int notificationId = R.string.notification_no_bluetooth_message;
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancel(notificationId);

@@ -34,20 +34,16 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
-import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager.ActionListener;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
@@ -577,7 +573,7 @@ public class WifiDirectSpeaker {
         }
 
 
-        int notificationId = R.string.dialog_no_wifi_message;
+        int notificationId = R.string.notification_no_wifi_message;
 
         Intent notificationIntent = new Intent(new Intent(Settings.ACTION_WIFI_SETTINGS));;
         PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, notificationIntent, 0);
@@ -606,8 +602,8 @@ public class WifiDirectSpeaker {
         PendingIntent pendingOffIntent = PendingIntent.getBroadcast(context, -1, offIntent, 0);
 
         NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification notification = new Notification.Builder(mContext).setContentTitle(mContext.getText(R.string.dialog_no_wifi_title))
-                .setContentText(mContext.getText(R.string.dialog_no_wifi_message))
+        Notification notification = new Notification.Builder(mContext).setContentTitle(mContext.getText(R.string.notification_no_wifi_title))
+                .setContentText(mContext.getText(R.string.notification_no_wifi_message))
                 .setLargeIcon(largeIcon)
                 .setSmallIcon(R.mipmap.ic_error)
                 .setContentIntent(pendingIntent)
@@ -623,7 +619,7 @@ public class WifiDirectSpeaker {
 
         if(mContext == null) return;
 
-        int notificationId = R.string.dialog_no_wifi_message;
+        int notificationId = R.string.notification_no_wifi_message;
 
         NotificationManager mNotificationManager = (NotificationManager)mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancel(notificationId);

@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         } else {
             Toast.makeText(this, R.string.offline_mode_toast, Toast.LENGTH_LONG).show();
         }
-        
+
         if (Intent.ACTION_SEND.equals(getIntent().getAction()) && ("text/plain".equals(getIntent().getType()) || getIntent().getType() == null)) {
             try {
                 Intent intent = new Intent(this, PostActivity.class);

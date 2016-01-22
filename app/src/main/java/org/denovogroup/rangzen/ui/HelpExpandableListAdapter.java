@@ -1,7 +1,10 @@
 package org.denovogroup.rangzen.ui;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.support.v4.content.ContextCompat;
 import android.text.Html;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +13,6 @@ import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,10 +25,13 @@ public class HelpExpandableListAdapter extends BaseExpandableListAdapter {
     List<String> headers;
     Map<String,List<String>> data;
 
+    ImageGetter imageGetter;
+
     public HelpExpandableListAdapter(Context context, List<String> headers, Map<String, List<String>> data) {
         this.context = context;
         this.data = data;
         this.headers = headers;
+        this.imageGetter = new ImageGetter();
     }
 
     @Override
@@ -82,7 +87,7 @@ public class HelpExpandableListAdapter extends BaseExpandableListAdapter {
         if(convertView == null){
             convertView = LayoutInflater.from(context).inflate(R.layout.help_body, parent, false);
         }
-        ((TextView) convertView.findViewById(R.id.help_body)).setText(Html.fromHtml((String)getChild(groupPosition, childPosition)));
+        ((TextView) convertView.findViewById(R.id.help_body)).setText(Html.fromHtml((String)getChild(groupPosition, childPosition),imageGetter, null));
 
         convertView.findViewById(R.id.shadow).setVisibility(isLastChild ? View.VISIBLE : View.GONE);
 
@@ -92,5 +97,25 @@ public class HelpExpandableListAdapter extends BaseExpandableListAdapter {
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {
         return false;
+    }
+
+    private class ImageGetter implements Html.ImageGetter {
+
+        @Override
+        public Drawable getDrawable(String source) {
+            int id;
+            if (source.equals("icon_demo.png")) {
+                id = R.drawable.icon_demo;
+            }
+            else {
+                return null;
+            }
+
+            Drawable d = ContextCompat.getDrawable(context, id);
+            if(d != null) {
+                d.setBounds(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
+            }
+            return d;
+        }
     }
 }

@@ -6,7 +6,7 @@
               android:padding="20dp">
 
     <TextView
-        android:text="@string/conf_friend_dialog_name"
+        android:text="@string/conf_friend_dialog_name_title"
         style="@style/Configure_friend_field_title"/>
 
     <EditText
@@ -16,7 +16,7 @@
         android:layout_marginBottom="7dp"/>
 
     <TextView
-        android:text="@string/conf_friend_dialog_number"
+        android:text="@string/conf_friend_dialog_number_title"
         android:maxLength="20"
         android:layout_marginTop="18dp"
         style="@style/Configure_friend_field_title"/>

@@ -107,14 +107,14 @@ public class HelpFragment extends Fragment{
         headers.add(header2);
         data.put(header2, body2);
 
-        if(partial) return;
-        //make all other stuff
-
         String header3 = getString(R.string.help_title3);
         List<String> body3 = new ArrayList<>();
         body3.add(getString(R.string.help_content3));
         headers.add(header3);
         data.put(header3, body3);
+
+        if(partial) return;
+        //make all other stuff
 
         String header4 = getString(R.string.help_title4);
         List<String> body4 = new ArrayList<>();
@@ -199,6 +199,18 @@ public class HelpFragment extends Fragment{
         body17.add(getString(R.string.help_content17));
         headers.add(header17);
         data.put(header17, body17);
+
+        String header18 = getString(R.string.help_title18);
+        List<String> body18 = new ArrayList<>();
+        body17.add(getString(R.string.help_content18));
+        headers.add(header18);
+        data.put(header18, body18);
+
+        String header19 = getString(R.string.help_title19);
+        List<String> body19 = new ArrayList<>();
+        body19.add(getString(R.string.help_content19));
+        headers.add(header19);
+        data.put(header19, body19);
     }
 
     private void openEmailSendingForm(boolean includeLog){

@@ -160,7 +160,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.feed);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.drawer_menu_feed);
 
         searchView = (EditText) ((MainActivity)getActivity()).getToolbar().findViewById(R.id.searchView);
 
@@ -475,7 +475,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                 }
             }
             actionBar.setBackgroundDrawable(actionbarBg);
-            actionBar.setTitle(inSelectionMode ? R.string.empty_string : (inSearchMode ? R.string.empty_string : R.string.feed));
+            actionBar.setTitle(inSelectionMode ? R.string.empty_string : (inSearchMode ? R.string.empty_string : R.string.drawer_menu_feed));
         }
         if(menu != null) {
             menu.setGroupVisible(R.id.checked_only_actions, inSelectionMode);
@@ -722,7 +722,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
         long unreadCount = MessageStore.getInstance(getActivity()).getUnreadCount();
         if(newMessagesNotification != null){
             if(unreadCount > 0) {
-                String countString = ((unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? unreadCount +" "+getString(R.string.new_messages_notification_desc) : "+"+MAX_NEW_MESSAGES_DISPLAY) +"\n("+ ExchangeHistoryTracker.getInstance().getExchangeHistory()+" "+getString(R.string.exchanges)+")";
+                String countString = ((unreadCount <= MAX_NEW_MESSAGES_DISPLAY) ? unreadCount +" "+getString(unreadCount > 1 ? R.string.new_messages_notification_desc : R.string.new_message_notification_desc) : "+"+MAX_NEW_MESSAGES_DISPLAY) +"\n("+ ExchangeHistoryTracker.getInstance().getExchangeHistory()+" "+getString(ExchangeHistoryTracker.getInstance().getExchangeHistory() > 1 ? R.string.exchanges : R.string.exchange)+")";
 
                 ((TextView)newMessagesNotification.findViewById(R.id.new_message_notification_desc)).setText(countString);
                 newMessagesNotification.setVisibility(View.VISIBLE);

@@ -345,7 +345,7 @@ public class PostActivity extends AppCompatActivity {
                     }
 
                     if (myLocation == null) {
-                        Toast.makeText(PostActivity.this, "Could not determine location please activate your GPS", Toast.LENGTH_LONG).show();
+                        Toast.makeText(PostActivity.this, R.string.no_gps_error, Toast.LENGTH_LONG).show();
                         break;
                     }
                 }

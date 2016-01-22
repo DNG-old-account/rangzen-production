@@ -9,7 +9,6 @@ import android.text.Spannable;
 import android.text.method.LinkMovementMethod;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.URLSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -147,7 +146,7 @@ public class FeedAdapter extends CursorAdapter {
         long timebound = cursor.getLong(timebound_colIndex);
         long timstamp = cursor.getLong(timestamp_colIndex);
 
-        String timeboundString = (timebound > 0) ?  context.getString(R.string.self_distruct_in)+" "+Utils.convertTimestampToRelativeHoursRound(timstamp + timebound)+context.getString(R.string.hours_short) : null;
+        String timeboundString = (timebound > 0) ?  context.getString(R.string.self_destruct_in)+" "+Utils.convertTimestampToRelativeHoursRound(timstamp + timebound)+context.getString(R.string.hours_short) : null;
 
         int age = timstamp > 0 ? Utils.convertTimestampToRelativeHours(timstamp) : -1;
         String timestampString = null;
