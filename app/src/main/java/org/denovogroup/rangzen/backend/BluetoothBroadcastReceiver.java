@@ -177,12 +177,21 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
         int width = (int) res.getDimension(android.R.dimen.notification_large_icon_width);
         largeIcon = Bitmap.createScaledBitmap(largeIcon, width, height, false);
 
+        Intent onIntent = new Intent();
+        onIntent.setAction(RangzenService.ACTION_ONBT);
+        PendingIntent pendingOnIntent = PendingIntent.getBroadcast(context, -1, onIntent, 0);
+
+        Intent offIntent = new Intent();
+        offIntent.setAction(RangzenService.ACTION_TURNOFF);
+        PendingIntent pendingOffIntent = PendingIntent.getBroadcast(context, -1, offIntent, 0);
 
         Notification notification = new Notification.Builder(context).setContentTitle(context.getText(R.string.dialog_no_bluetooth_title))
                 .setContentText(context.getText(R.string.dialog_no_bluetooth_message))
                 .setLargeIcon(largeIcon)
                 .setContentIntent(pendingIntent)
                 .setSmallIcon(R.mipmap.ic_error)
+                .addAction(R.drawable.blank_square, context.getString(R.string.error_notification_action_turnon_bt), pendingOnIntent)
+                .addAction(R.drawable.blank_square, context.getString(R.string.error_notification_action_off_service), pendingOffIntent)
                 .build();
         mNotificationManager.notify(notificationId, notification);
     }

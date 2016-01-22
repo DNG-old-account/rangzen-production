@@ -272,7 +272,7 @@ public class WifiDirectSpeaker {
    * an extra.
    */
   private void onWifiP2pPeersChanged(Context context, Intent intent) {
-
+    log.info("WifiDirectSpeaker called onWifiP2pPeersChanged");
     // Temp used merely for readability (avoiding very long line/weird indent).
     Parcelable temp = intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
     WifiP2pDeviceList peerDevices = (WifiP2pDeviceList) temp;
@@ -543,12 +543,23 @@ public class WifiDirectSpeaker {
         int width = (int) res.getDimension(android.R.dimen.notification_large_icon_width);
         largeIcon = Bitmap.createScaledBitmap(largeIcon, width, height, false);
 
+
+        Intent onIntent = new Intent();
+        onIntent.setAction(RangzenService.ACTION_ONWIFI);
+        PendingIntent pendingOnIntent = PendingIntent.getBroadcast(context, -1, onIntent, 0);
+
+        Intent offIntent = new Intent();
+        offIntent.setAction(RangzenService.ACTION_TURNOFF);
+        PendingIntent pendingOffIntent = PendingIntent.getBroadcast(context, -1, offIntent, 0);
+
         NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         Notification notification = new Notification.Builder(mContext).setContentTitle(mContext.getText(R.string.dialog_no_wifi_title))
                 .setContentText(mContext.getText(R.string.dialog_no_wifi_message))
                 .setLargeIcon(largeIcon)
                 .setSmallIcon(R.mipmap.ic_error)
                 .setContentIntent(pendingIntent)
+                .addAction(R.drawable.blank_square, context.getString(R.string.error_notification_action_onwifi), pendingOnIntent)
+                .addAction(R.drawable.blank_square, context.getString(R.string.error_notification_action_off_service), pendingOffIntent)
                 .build();
         mNotificationManager.notify(notificationId, notification);
     }

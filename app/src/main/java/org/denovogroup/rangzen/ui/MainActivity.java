@@ -130,6 +130,8 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         if (pref.getBoolean(IS_APP_ENABLED, true)) {
             Intent startServiceIntent = new Intent(this, RangzenService.class);
             startService(startServiceIntent);
+        } else {
+            Toast.makeText(this, R.string.offline_mode_toast, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -139,8 +141,8 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
             @Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
-                View selectedItem = findViewById(selectedDrawerItem);
-                if (selectedItem != null) selectedItem.setActivated(true);
+                SharedPreferences pref = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
+                ((SwitchCompat) drawerMenu.findViewById(R.id.drawer_menu_offline_mode)).setChecked(!pref.getBoolean(IS_APP_ENABLED, true));
             }
 
             @Override
@@ -148,6 +150,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                 super.onDrawerClosed(drawerView);
             }
         };
+        drawerLayout.setDrawerListener(drawerToggle);
 
         drawerMenu = (ViewGroup) findViewById(R.id.drawer_menu);
         fixedDrawerMenu = (ViewGroup) findViewById(R.id.fixed_drawer_menu);

@@ -36,11 +36,14 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
@@ -50,8 +53,6 @@ import android.app.Service;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
-import android.support.v7.app.NotificationCompat;
-import android.util.Log;
 
 import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.R;
@@ -127,6 +128,28 @@ public class RangzenService extends Service {
     /** Socket over which the ongoing exchange is taking place. */
     private BluetoothSocket mSocket;
 
+    private BroadcastReceiver errorHandler = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if(ACTION_ONBT.equals(action)){
+                BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+                if (mBluetoothAdapter != null) mBluetoothAdapter.enable();
+            } else if(ACTION_ONWIFI.equals(action)){
+                WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                if(wifiManager != null) wifiManager.setWifiEnabled(true);
+            } else{
+                SharedPreferences pref = getSharedPreferences(MainActivity.PREF_FILE, MODE_PRIVATE);
+                pref.edit().putBoolean(MainActivity.IS_APP_ENABLED, false).commit();
+                RangzenService.this.stopSelf();
+            }
+        }
+    };
+    public static final String SERVICE_ERROR_HANDLER_FILTER = "org.denovogroup.error";
+    public static final String ACTION_TURNOFF = SERVICE_ERROR_HANDLER_FILTER+".turn_off_service";
+    public static final String ACTION_ONWIFI = SERVICE_ERROR_HANDLER_FILTER+".turn_on_widi";
+    public static final String ACTION_ONBT = SERVICE_ERROR_HANDLER_FILTER+".turn_on_BT";
+
     /** When announcing our address over Wifi Direct name, prefix this string to our MAC. */
     public final static String RSVP_PREFIX = "RANGZEN-";
 
@@ -191,6 +214,15 @@ public class RangzenService extends Service {
      */
     @Override
     public void onCreate() {
+
+        if(errorHandler != null){
+            IntentFilter filter = new IntentFilter(SERVICE_ERROR_HANDLER_FILTER);
+            filter.addAction(ACTION_TURNOFF);
+            filter.addAction(ACTION_ONBT);
+            filter.addAction(ACTION_ONWIFI);
+            registerReceiver(errorHandler, filter);
+        }
+
         log.info( "RangzenService onCreate.");
 
         sRangzenServiceInstance = this;
@@ -262,6 +294,11 @@ public class RangzenService extends Service {
      * Called when the service is destroyed.
      */
     public void onDestroy() {
+        if(errorHandler != null){
+            try {
+                unregisterReceiver(errorHandler);
+            } catch (Exception e){}
+        }
         log.debug("RangzenService onDestroy");
       mBackgroundExecution.cancel(true);
         SharedPreferences pref = getSharedPreferences(MainActivity.PREF_FILE, Context.MODE_PRIVATE);

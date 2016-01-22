@@ -223,5 +223,9 @@
     <string name="qr_code_prefix">Murmur:</string>
     <string name="qr_badqr_error">Not a Murmur QR code</string>
     <string name="share_prefix">Sent with Murmur</string>
+    <string name="offline_mode_toast">Murmur is running in offline mode</string>
+    <string name="error_notification_action_turnon_bt">Turn on Bluetooth</string>
+    <string name="error_notification_action_off_service">Turn off Murmur</string>
+    <string name="error_notification_action_onwifi">Turn on WiFi</string>
 
 </resources>
