@@ -57,6 +57,7 @@ import android.os.Build;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.provider.Settings;
+import android.util.Log;
 
 import org.apache.log4j.Logger;
 import org.denovogroup.rangzen.R;
@@ -200,6 +201,7 @@ public class WifiDirectSpeaker {
           showNoWifiNotification(context);
       }
 
+      mSeeking = false;
     log.debug( "Finished creating WifiDirectSpeaker.");
       initialized = true;
   }
@@ -217,6 +219,7 @@ public class WifiDirectSpeaker {
     String action = intent.getAction();
 
       if(!initialized){
+          Log.d("peerDebug", "received action:"+action+", but speaker not yet initialized, ignoring transmission");
           log.warn("received action:"+action+", but speaker not yet initialized, ignoring transmission");
           return;
       }
@@ -234,6 +237,7 @@ public class WifiDirectSpeaker {
     } else {
       // TODO(lerner): This shouldn't happen, exception?
       log.error( "Received an event we weren't expecting: " + action);
+      Log.d("peerDebug", "Received an event we weren't expecting: " + action);
     }
   }
 
@@ -248,16 +252,24 @@ public class WifiDirectSpeaker {
                                    DEFAULT_EXTRA_INT);
     if (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
       log.debug( "Wifi Direct enabled");
+        Log.d("peerDebug", "Wifi Direct enabled");
       // Wifi Direct mode is enabled
         dismissNoWifiNotification();
     } else if (state == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
         showNoWifiNotification(context);
-      log.debug( "Wifi Direct disabled");
+      log.debug("Wifi Direct disabled");
+        Log.d("peerDebug", "Wifi Direct disabled");
       // Wifi Direct mode is disabled
     } else if (state == DEFAULT_EXTRA_INT) {
       log.error( "Wifi P2P state changed event handled, but the intent " +
                  "doesn't include an int to tell whether it's enabled or " +
                  "disabled!");
+        Log.d("peerDebug",  "Wifi P2P state changed event handled, but the intent " +
+                "doesn't include an int to tell whether it's enabled or " +
+                "disabled!");
+    } else {
+        log.error("Wifi P2P state changed to an unknown state:"+state);
+        Log.d("peerDebug","Wifi P2P state changed to an unknown state:"+state);
     }
   }
 
@@ -273,6 +285,7 @@ public class WifiDirectSpeaker {
    */
   private void onWifiP2pPeersChanged(Context context, Intent intent) {
     log.info("WifiDirectSpeaker called onWifiP2pPeersChanged");
+      Log.d("peerDebug", "WifiDirectSpeaker called onWifiP2pPeersChanged");
       //clear the existing list of peers which is outdated at this point
       mPeerManager.forgetAllPeers();
     // Temp used merely for readability (avoiding very long line/weird indent).
@@ -283,26 +296,36 @@ public class WifiDirectSpeaker {
       if (device.deviceName != null && device.deviceName.startsWith(RangzenService.RSVP_PREFIX)) {
         String bluetoothAddress = device.deviceName.replace(RangzenService.RSVP_PREFIX, "");
         log.info( "Found Rangzen peer " + device.deviceName + " with address " + bluetoothAddress);
+          Log.d("peerDebug",  "Found Rangzen peer " + device.deviceName + " with address " + bluetoothAddress);
         if (BluetoothSpeaker.looksLikeBluetoothAddress(bluetoothAddress) &&
             !BluetoothSpeaker.isReservedMACAddress(bluetoothAddress)) {
           BluetoothDevice bluetoothDevice = mBluetoothSpeaker.getDevice(bluetoothAddress);
           if (bluetoothDevice != null) {
             Peer peer = getCanonicalPeerByDevice(bluetoothDevice);
-            log.debug( "Adding peer " + peer);  
+            log.debug( "Adding peer " + peer);
+              Log.d("peerDebug", "Adding peer " + peer);
             mPeerManager.addPeer(peer);
           } else {
             log.error( "Address " + bluetoothAddress + " got a null bluetooth device, not adding as peer.");
+              Log.d("peerDebug",  "Address " + bluetoothAddress + " got a null bluetooth device, not adding as peer.");
           }
         }
         else {
           log.warn( "Address from peer doesn't look like BT address or is reserved: " + bluetoothAddress);
+            Log.d("peerDebug", "Address from peer doesn't look like BT address or is reserved: " + bluetoothAddress);
         }
       } else {
-          if(device != null) log.info( "Found device? "+device);
-          else log.info( "Got null device");
+          if(device != null){
+              log.info( "Found device? "+device);
+              Log.d("peerDebug", "Found device? "+device);
+          } else {
+              log.info( "Got null device");
+              Log.d("peerDebug", "Got null device");
+          }
       }
     }
     log.info( "P2P peers changed "+peerDevices.getDeviceList().size());
+      Log.d("peerDebug", "P2P peers changed "+peerDevices.getDeviceList().size());
 
       ExchangeHistoryTracker.getInstance().cleanHistory(mPeerManager.getPeers());
   }
@@ -316,8 +339,10 @@ public class WifiDirectSpeaker {
 
     if (info.isConnected()) {
       log.info( "Wifi P2P connected");
+        Log.d("peerDebug","Wifi P2P connected");
     } else {
       log.info( "Wifi P2P disconnected");
+        Log.d("peerDebug", "Wifi P2P disconnected");
     }
   }
   
@@ -328,6 +353,7 @@ public class WifiDirectSpeaker {
   private void onWifiP2pThisDeviceChanged(Context context, Intent intent) {
     mLocalDevice = (WifiP2pDevice) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
     log.info( "Wifi P2P this device changed action received; local device is now: " + mLocalDevice);
+      Log.d("peerDebug", "Wifi P2P this device changed action received; local device is now: " + mLocalDevice);
   }
 
   /**
@@ -338,12 +364,15 @@ public class WifiDirectSpeaker {
     int discoveryStateCode = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
     if (discoveryStateCode == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
       log.debug( "Device is seeking Wifi Direct peers.");
+        Log.d("peerDebug", "Device is seeking Wifi Direct peers.");
       setSeeking(true);
     } else if (discoveryStateCode == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
       log.debug( "Device is NOT seeking Wifi Direct peers.");
+        Log.d("peerDebug", "Device is NOT seeking Wifi Direct peers.");
       setSeeking(false);
     } else {
       log.error( "Discovery changed event didn't have an EXTRA_DISCOVERY_STATE?!");
+        Log.d("peerDebug", "Discovery changed event didn't have an EXTRA_DISCOVERY_STATE?!");
     }
   }
 
@@ -356,6 +385,7 @@ public class WifiDirectSpeaker {
     @Override
     public void onChannelDisconnected() {
       log.warn( "Communication with WifiP2pManager framework lost!");
+        Log.d("peerDebug", "Communication with WifiP2pManager framework lost!");
       // TODO(lerner): Respond to this fact with some ameliorating action, probably
       // ceasing to take other actions that won't work without the framework.
     }
@@ -369,6 +399,7 @@ public class WifiDirectSpeaker {
     @Override
     public void onPeersAvailable(WifiP2pDeviceList peerDevices) {
       log.debug( "New wifi direct peer devices available" + peerDevices);
+        Log.d("peerDebug", "New wifi direct peer devices available" + peerDevices);
       // Actual handling of these peers is performed directly when the
       // peers changed event is raised, rather than indirectly here after
       // a request an a callback.
@@ -393,7 +424,7 @@ public class WifiDirectSpeaker {
    * periodically over time.
    */
   public void tasks() {
-      log.info("Starting WifiDirectSpeaker tasks (mSeekingDesired:"+mSeekingDesired+")");
+      log.info("Starting WifiDirectSpeaker tasks (mSeekingDesired:" + mSeekingDesired + ")");
     if (mSeekingDesired) {
       seekPeers();
     } else {
@@ -442,8 +473,10 @@ public class WifiDirectSpeaker {
    * level application code, call setSeekingDesired(true/false).
    */
   private void seekPeers() {
+      Log.d("peerDebug","seekPeer ("+(!getSeeking())+","+lastSeekingWasLongAgo()+")");
     if (!getSeeking() || lastSeekingWasLongAgo()) {
         log.info("seeking peers");
+        Log.d("peerDebug","request seekPeer");
       setSeeking(true);
       touchLastSeekingTime();
       mWifiP2pManager.discoverPeers(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
@@ -471,6 +504,7 @@ public class WifiDirectSpeaker {
    */
   private void stopSeekingPeers() {
       log.info("Stopped seeking peers");
+      Log.d("peerDebug","Stopped seeking peers");
     mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
       @Override
       public void onSuccess() {
@@ -479,6 +513,7 @@ public class WifiDirectSpeaker {
       }
       @Override
       public void onFailure(int reasonCode) {
+        setSeeking(false);
         log.debug( "Failed to stop peer discovery? Reason: " + reasonCode);
       }
     });
