@@ -513,8 +513,8 @@ public class RangzenService extends Service {
       setLastExchangeTime();
       try {
         if (mSocket != null) {
-          mSocket.close();
             direction = 0;
+          mSocket.close();
             remoteAddress = null;
             log.info("bluetooth socket closed");
         }
@@ -523,8 +523,8 @@ public class RangzenService extends Service {
       }
       try { 
         if (mBluetoothSpeaker.mSocket != null) {
-          mBluetoothSpeaker.mSocket.close();
             direction = 0;
+          mBluetoothSpeaker.mSocket.close();
             remoteAddress = null;
             log.info( "bluetooth speaker socket closed");
         }
@@ -639,6 +639,7 @@ public class RangzenService extends Service {
 
             if(hasNew){
                 mMessageStore.updateStoreVersion();
+                ExchangeHistoryTracker.getInstance().incrementExchangeCount();
                 ExchangeHistoryTracker.getInstance().updateHistory(RangzenService.this, exchange.getPeerAddress());
                 if(isAppInForeground()) {
                     Intent intent = new Intent();
