@@ -3,6 +3,7 @@ package org.denovogroup.rangzen.ui;
 import android.app.ActivityManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -14,11 +15,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
-import org.denovogroup.rangzen.backend.ExchangeHistoryTracker;
-import org.denovogroup.rangzen.backend.Peer;
-import org.denovogroup.rangzen.backend.PeerManager;
-import org.denovogroup.rangzen.backend.RangzenService;
-import org.denovogroup.rangzen.backend.WifiDirectSpeaker;
+import org.denovogroup.rangzen.backend.*;
+import org.denovogroup.rangzen.backend.SecurityManager;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -48,7 +46,13 @@ public class DebugFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         if(BluetoothAdapter.getDefaultAdapter() != null) {
-            ((MainActivity) getActivity()).getSupportActionBar().setTitle(BluetoothAdapter.getDefaultAdapter().getAddress());
+            if(Build.VERSION.SDK_INT >= 23) {
+                ((MainActivity) getActivity()).getSupportActionBar().setTitle(SecurityManager.getStoredMAC(getActivity()));
+            } else{
+                ((MainActivity) getActivity()).getSupportActionBar().setTitle(BluetoothAdapter.getDefaultAdapter().getAddress());
+            }
+        } else {
+            ((MainActivity) getActivity()).getSupportActionBar().setTitle("Incompatible device");
         }
 
         View view = inflater.inflate(R.layout.debug_fragment, container, false);

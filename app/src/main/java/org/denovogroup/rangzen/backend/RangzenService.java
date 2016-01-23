@@ -375,7 +375,7 @@ public class RangzenService extends Service {
         List<Peer> peers = peerManager.getPeers();
         // TODO(lerner): Don't just connect all willy-nilly every time we have
         // an opportunity. Have some kind of policy for when to connect.
-        if (peers.size() > 0 && readyToConnect() ) {
+        if (peers.size() > 0 && readyToConnect()) {
             log.info(String.format("Can connect with %d peers", peers.size()));
             if(SecurityManager.getCurrentProfile(this).isRandomExchange()) {
                 log.info("Current security profile state that we should pick one random peer to interact with");

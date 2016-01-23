@@ -107,6 +107,7 @@
                     android:id="@+id/edit_mac"
                     android:layout_width="match_parent"
                     android:inputType="none"
+                    android:maxLength="25"
                     android:gravity="center"/>
 
             </LinearLayout>

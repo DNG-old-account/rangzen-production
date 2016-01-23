@@ -9,11 +9,11 @@
     <string name="close">Navigation Drawer is Closed</string>
 
     <!-- Network error notification and prompts -->
-    <string name="offline_mode_toast">Murmur is running in offline mode</string>
-    <string name="notification_no_bluetooth_title">Connection Error:Bluetooth is off</string>
-    <string name="notification_no_bluetooth_message">Please turn on Bluetooth or switch to offline mode</string>
-    <string name="notification_no_wifi_title">Connection Error:WiFi is off</string>
-    <string name="notification_no_wifi_message">Please turn on WiFi or switch to offline mode</string>
+    <string name="offline_mode_toast">Murmur is running in Offline mode</string>
+    <string name="notification_no_bluetooth_title">Connection Error: Bluetooth is off</string>
+    <string name="notification_no_bluetooth_message">Please turn on Bluetooth or switch to Offline mode</string>
+    <string name="notification_no_wifi_title">Connection Error: WiFi is off</string>
+    <string name="notification_no_wifi_message">Please turn on WiFi or switch to Offline mode</string>
 
     <string name="error_notification_action_onwifi">Turn on</string>
     <string name="error_notification_action_turnon_bt">Turn on</string>
@@ -54,9 +54,9 @@
     <string name="export">Exporting....</string>
     <string name="export_message">Please wait...</string>
     <string name="export_successful">Feed exported to your downloads folder</string>
-    <string name="export_failed">Oops, cannot export</string>
+    <string name="export_failed">Oops, feed export failed, please try again</string>
 
-<!-- Share message (from feed/stared)-->
+<!-- Share message (from feed/starred)-->
     <string name="share_prefix">Sent with Murmur</string>
 
 <!-- Actionbar/Toolbar-->
@@ -80,9 +80,9 @@
     <string name="delete">Delete</string>
 
     <!-- menu item titles (shown when in advance delete mode-->
-    <string name="delete_from_sender">Same sender</string><!--Delete messages with same sender(s)-->
-    <string name="delete_by_connection">Same or lower connection</string><!--Delete messages with same or lower connection-->
-    <string name="delete_by_exchange">Same exchange</string><!--Delete messages from same exchange-->
+    <string name="delete_from_sender">Same nickname(s)</string><!--Delete messages with same sender(s)-->
+    <string name="delete_by_connection">Lower connection score</string><!--Delete messages with same or lower connection-->
+    <string name="delete_by_exchange">Same exchange(s)</string><!--Delete messages from same exchange-->
 
 <!-- Feed/Starred-->
 
@@ -103,7 +103,7 @@
 
     <!-- reset application dialog -->
     <string name="reset_dialog_title">Reset application</string>
-    <string name="reset_app_message">Are you sure you wish to reset Murmur?\nMessages, contacts and preferences will erased.</string>
+    <string name="reset_app_message">Are you sure you wish to reset Murmur?\nAll messages and contacts will be erased.</string>
     <string name="confirm_reset_dialog_title">Confirm reset</string>
     <string name="confirm_reset_app_message">Click \'yes\' to reset Murmur.</string>
 
@@ -211,7 +211,7 @@
     <string name="apk_url" translatable="false">http://www.iWishIHadAUrl.com/</string>
 
 <!-- On-boarding -->
-    <string name="skip_welcome">SKIP</string>
+    <string name="skip_welcome">Skip</string>
 
     <string name="intro_3">Help Study Anonymous Messaging</string>
     <string name="intro_2">Pass Other Murmur Users and Share Messages</string>
@@ -221,7 +221,7 @@
 
 <!-- Help & Feedback-->
     <!-- feedback-->
-    <string name="send_feedback">Send a feedback</string>
+    <string name="send_feedback">Send feedback</string>
     <string name="feedback_email" translatable="false">murmur_support@denovogroup.org</string>
 
     <string name="more_help"><u>More FAQ</u></string>
