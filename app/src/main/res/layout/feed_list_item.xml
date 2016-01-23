@@ -30,7 +30,8 @@
         style="@style/FeedListItem_Message"
         android:id="@+id/feed_item_message"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:autoLink="web|phone"/>
 
     <LinearLayout
         android:layout_width="match_parent"

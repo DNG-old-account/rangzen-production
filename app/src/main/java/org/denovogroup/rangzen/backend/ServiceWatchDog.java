@@ -1,11 +1,22 @@
 package org.denovogroup.rangzen.backend;
 
 import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.wifi.WifiManager;
+import android.os.Build;
+import android.provider.Settings;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.chainsaw.Main;
+import org.denovogroup.rangzen.R;
 import org.denovogroup.rangzen.ui.MainActivity;
 
 import java.lang.ref.WeakReference;
@@ -52,12 +63,12 @@ public class ServiceWatchDog {
 
     public void notifyLastExchange(){
 
-        if(timer != null){
+        if(timer != null) {
             timer.cancel();
+            timer = null;
         }
-        else{
-            timer = new Timer();
-        }
+
+        timer = new Timer();
         lastExchange = new Date();
 
         timer.schedule(new TimerTask() {
@@ -112,6 +123,74 @@ public class ServiceWatchDog {
      */
     public void notifyServiceDestroy(){
         if(timer != null) timer.cancel();
+        timer = null;
+
+        notifyHardwareStateChanged();
+
         serviceWeakReference = null;
+    }
+
+    public void notifyHardwareStateChanged(){
+
+        if(serviceWeakReference == null || !RangzenService.CONSOLIDATE_ERRORS) return;
+
+        RangzenService service = serviceWeakReference.get();
+
+        if(service == null) return;
+
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+
+        boolean bluetoothEnabled = (adapter != null && adapter.isEnabled());
+
+        WifiManager manager = (WifiManager) service.getSystemService(Context.WIFI_SERVICE);
+
+        boolean wifiEnabled = (manager != null && manager.isWifiEnabled());
+
+
+        int notificationId = R.string.notification_connection_error_title;
+
+        //Intent notificationIntent = new Intent(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));;
+        //PendingIntent pendingIntent = PendingIntent.getActivity(service, 0, notificationIntent, 0);
+
+        NotificationManager mNotificationManager = (NotificationManager) service.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        boolean serviceIsOn = service.getSharedPreferences(MainActivity.PREF_FILE,Context.MODE_PRIVATE).getBoolean(MainActivity.IS_APP_ENABLED, true);
+
+        if((wifiEnabled && bluetoothEnabled) || !serviceIsOn){
+            mNotificationManager.cancel(notificationId);
+            return;
+        }
+
+        // create large icon
+        Resources res = service.getResources();
+        BitmapDrawable largeIconDrawable;
+        if(Build.VERSION.SDK_INT >= 21){
+            largeIconDrawable = (BitmapDrawable) res.getDrawable(R.mipmap.ic_launcher, null);
+        } else {
+            largeIconDrawable = (BitmapDrawable) res.getDrawable(R.mipmap.ic_launcher);
+        }
+        Bitmap largeIcon = largeIconDrawable.getBitmap();
+
+        int height = (int) res.getDimension(android.R.dimen.notification_large_icon_height);
+        int width = (int) res.getDimension(android.R.dimen.notification_large_icon_width);
+        largeIcon = Bitmap.createScaledBitmap(largeIcon, width, height, false);
+
+        /*Intent onIntent = new Intent();
+        onIntent.setAction(RangzenService.ACTION_ONBT);
+        PendingIntent pendingOnIntent = PendingIntent.getBroadcast(service, -1, onIntent, 0);*/
+
+        Intent offIntent = new Intent();
+        offIntent.setAction(RangzenService.ACTION_TURNOFF);
+        PendingIntent pendingOffIntent = PendingIntent.getBroadcast(service, -1, offIntent, 0);
+
+        Notification notification = new Notification.Builder(service).setContentTitle(service.getText(R.string.notification_connection_error_title))
+                .setContentText(service.getText(R.string.notification_connection_error_message))
+                .setLargeIcon(largeIcon)
+                //.setContentIntent(pendingIntent)
+                .setSmallIcon(R.mipmap.ic_error)
+                //.addAction(R.drawable.blank_square, context.getString(R.string.error_notification_action_turnon_bt), pendingOnIntent)
+                .addAction(R.drawable.blank_square, service.getString(R.string.error_notification_action_off_service), pendingOffIntent)
+                .build();
+        mNotificationManager.notify(notificationId, notification);
     }
 }

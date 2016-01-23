@@ -242,6 +242,16 @@ public class PostActivity extends AppCompatActivity {
                         });
                     }
                 });
+                dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        messageBox.requestFocus();
+                        InputMethodManager imm = (InputMethodManager)
+                                getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,
+                                InputMethodManager.HIDE_IMPLICIT_ONLY);
+                    }
+                });
 
                 DialogStyler.styleAndShow(PostActivity.this, dialog);
 

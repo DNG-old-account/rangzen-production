@@ -12,6 +12,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
 import org.denovogroup.rangzen.R;
+import org.denovogroup.rangzen.backend.Utils;
 
 import java.util.List;
 import java.util.Map;
@@ -87,6 +88,9 @@ public class HelpExpandableListAdapter extends BaseExpandableListAdapter {
         if(convertView == null){
             convertView = LayoutInflater.from(context).inflate(R.layout.help_body, parent, false);
         }
+
+        convertView.measure(View.MeasureSpec.UNSPECIFIED,View.MeasureSpec.UNSPECIFIED);
+
         ((TextView) convertView.findViewById(R.id.help_body)).setText(Html.fromHtml((String)getChild(groupPosition, childPosition),imageGetter, null));
 
         convertView.findViewById(R.id.shadow).setVisibility(isLastChild ? View.VISIBLE : View.GONE);
@@ -112,8 +116,12 @@ public class HelpExpandableListAdapter extends BaseExpandableListAdapter {
             }
 
             Drawable d = ContextCompat.getDrawable(context, id);
+
+            int containerSize = Utils.dpToPx(270, context);
+            float whR = d.getIntrinsicWidth()/((float)d.getIntrinsicHeight());
+
             if(d != null) {
-                d.setBounds(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
+                d.setBounds(0, 0, containerSize, (int)(containerSize/whR));
             }
             return d;
         }

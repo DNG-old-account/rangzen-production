@@ -565,6 +565,12 @@ public class WifiDirectSpeaker {
      * state of the wifi service.
      */
     private void showNoWifiNotification(Context context){
+
+        if(RangzenService.CONSOLIDATE_ERRORS) {
+            ServiceWatchDog.getInstance().notifyHardwareStateChanged();
+            return;
+        }
+
         if(mContext == null) return;
 
         SharedPreferences pref = context.getSharedPreferences(MainActivity.PREF_FILE, Context.MODE_PRIVATE);
@@ -616,6 +622,11 @@ public class WifiDirectSpeaker {
     /** dismiss the no wifi notification if showing
      */
     public void dismissNoWifiNotification(){
+
+        if(RangzenService.CONSOLIDATE_ERRORS) {
+            ServiceWatchDog.getInstance().notifyHardwareStateChanged();
+            return;
+        }
 
         if(mContext == null) return;
 

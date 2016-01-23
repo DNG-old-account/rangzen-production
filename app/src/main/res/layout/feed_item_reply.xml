@@ -47,7 +47,8 @@
                 style="@style/FeedListItem_Message"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/feed_reply_item_pseudonym"/>
+                android:layout_below="@id/feed_reply_item_pseudonym"
+                android:autoLink="web|phone"/>
 
 
 

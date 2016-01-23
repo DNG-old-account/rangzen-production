@@ -153,6 +153,13 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
      * state of the bluetooth service.
      */
     public void showNoBluetoothNotification(Context context){
+
+        if(RangzenService.CONSOLIDATE_ERRORS) {
+            ServiceWatchDog.getInstance().notifyHardwareStateChanged();
+            return;
+        }
+
+
         if(context == null) return;
 
         int notificationId = R.string.notification_no_bluetooth_message;
@@ -198,6 +205,12 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
     /** dismiss the no bluetooth notification if showing
      */
     public void dismissNoBluetoothNotification(Context context){
+
+        if(RangzenService.CONSOLIDATE_ERRORS) {
+            ServiceWatchDog.getInstance().notifyHardwareStateChanged();
+            return;
+        }
+
         int notificationId = R.string.notification_no_bluetooth_message;
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

@@ -202,7 +202,7 @@ public class HelpFragment extends Fragment{
 
         String header18 = getString(R.string.help_title18);
         List<String> body18 = new ArrayList<>();
-        body17.add(getString(R.string.help_content18));
+        body18.add(getString(R.string.help_content18));
         headers.add(header18);
         data.put(header18, body18);
 
@@ -215,8 +215,8 @@ public class HelpFragment extends Fragment{
 
     private void openEmailSendingForm(boolean includeLog){
         Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", getString(R.string.feedback_email), null));
-        intent.putExtra(Intent.EXTRA_SUBJECT, "Rangzen Feedback");
-        intent.putExtra(Intent.EXTRA_TEXT, "Dear Rangzen support representative");
+        intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.feedback_title));
+        intent.putExtra(Intent.EXTRA_TEXT, getString(R.string.feedback_intro));
 
 
         /*if(includeLog) {

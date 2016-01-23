@@ -176,6 +176,8 @@ public class RangzenService extends Service {
 
     public static final boolean USE_BACKOFF = true;
 
+    public static final boolean CONSOLIDATE_ERRORS = true;
+
     public static int direction = 0;
     public static String remoteAddress;
 
