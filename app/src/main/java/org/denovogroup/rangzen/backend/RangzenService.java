@@ -760,8 +760,8 @@ public class RangzenService extends Service {
 
         Notification.Builder builder = new Notification.Builder(getApplicationContext());
         builder.setContentIntent(pendingIntent);
-        builder.setContentTitle(getString(R.string.unread_notification_title));
-        builder.setContentText(MessageStore.getInstance(this).getUnreadCount() + " " + getString(R.string.unread_notification_content));
+        builder.setContentTitle(getString(R.string.unread_notification_title) + " (" + MessageStore.getInstance(this).getUnreadCount() + ")");
+        builder.setContentText(getString(R.string.unread_notification_content) + " (" + ExchangeHistoryTracker.getInstance().getExchangeHistory() + ")");
 
         // create large icon
         Resources res = this.getResources();

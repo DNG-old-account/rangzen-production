@@ -1,6 +1,6 @@
 <resources>
 
-<!-- General -->
+    <!-- General -->
     <!-- Application name-->
     <string name="app_name" translatable="false">Murmur</string>
 
@@ -11,7 +11,7 @@
     <!-- Network error notification and prompts -->
     <string name="offline_mode_toast">Murmur is running in Offline mode</string>
     <string name="notification_connection_error_title">Connection Error</string>
-    <string name="notification_connection_error_message">WiFi or Bluetooth are off</string>
+    <string name="notification_connection_error_message">Please turn on Bluetooth/WiFi or switch to Offline mode</string>
     <string name="notification_no_bluetooth_title">Connection Error: Bluetooth is off</string><!-- no longer in use, uses single error for both WIFI and BT-->
     <string name="notification_no_bluetooth_message">Please turn on Bluetooth or switch to Offline mode</string><!-- no longer in use, uses single error for both WIFI and BT-->
     <string name="notification_no_wifi_title">Connection Error: WiFi is off</string><!-- no longer in use, uses single error for both WIFI and BT-->
@@ -23,7 +23,7 @@
 
     <!-- New messages notification-->
     <string name="unread_notification_title">New unread messages</string>
-    <string name="unread_notification_content">Tap to read</string>
+    <string name="unread_notification_content">New exchanges</string>
 
     <!-- New messages snackbar -->
     <string name="new_messages_notification_desc">new messages</string>
@@ -49,22 +49,22 @@
     <!-- share app picker title-->
     <string name="share_using">Share using</string>
 
-<!-- Export -->
+    <!-- Export -->
     <string name="export_subdiractory" translatable="false">Murmur exports</string>
 
     <!-- export process toasts-->
     <string name="export">Exporting....</string>
     <string name="export_message">Please wait...</string>
-    <string name="export_successful">Feed exported to your downloads folder</string>
+    <string name="export_successful">Feed exported to your Download folder</string>
     <string name="export_failed">Oops, feed export failed, please try again</string>
 
-<!-- Share message (from feed/starred)-->
+    <!-- Share message (from feed/stared)-->
     <string name="share_prefix">Sent with Murmur</string>
 
-<!-- Actionbar/Toolbar-->
+    <!-- Actionbar/Toolbar-->
 
     <string name="empty_string"></string>
-    <string name="select_all">SELECT ALL</string>
+    <string name="select_all">Select All</string>
 
     <!-- actionbar sort options-->
     <string name="sort_opt_newest">Newest</string>
@@ -86,7 +86,7 @@
     <string name="delete_by_connection">Lower connection score</string><!--Delete messages with same or lower connection-->
     <string name="delete_by_exchange">Same exchange(s)</string><!--Delete messages from same exchange-->
 
-<!-- Feed/Starred-->
+    <!-- Feed/Starred-->
 
     <!-- delete dialog conformation-->
     <string name="delete_dialog_title">Delete items</string>
@@ -105,11 +105,11 @@
 
     <!-- reset application dialog -->
     <string name="reset_dialog_title">Reset application</string>
-    <string name="reset_app_message">Are you sure you wish to reset Murmur?\nAll messages and contacts will be erased.</string>
+    <string name="reset_app_message">Are you sure you wish to reset Murmur?\nAll messages and contacts will be erased</string>
     <string name="confirm_reset_dialog_title">Confirm reset</string>
     <string name="confirm_reset_app_message">Click \'yes\' to reset Murmur.</string>
 
-<!-- Post/Reply post -->
+    <!-- Post/Reply post -->
     <!-- actionbar titles-->
     <string name="new_post">New post</string>
     <string name="reply">Reply</string>
@@ -123,11 +123,11 @@
     <!-- Share location error -->
     <string name="no_gps_error">Could not determine location please activate your GPS</string>
 
-<!-- Profile -->
+    <!-- Profile -->
     <string name="pseudonym_title">Nickname</string>
     <string name="qr_title">QR Code</string>
 
-<!-- Contacts-->
+    <!-- Contacts-->
 
     <!-- Menu item title (not shown but required) -->
     <string name="add">Add</string>
@@ -158,7 +158,7 @@
     <string name="contact_add_fail">Selected contact doesn\'t have a phone number</string>
     <string name="qr_badqr_error">Not a Murmur QR code</string>
 
-<!-- Settings-->
+    <!-- Settings-->
     <!-- profile preset block-->
     <string name="select_profile_title">Choose a profile</string>
     <string name="profile_flexible">More features / less security</string>
@@ -202,26 +202,26 @@
 
     <string name="settings_mac_title">Bluetooth MAC address</string>
 
-<!-- Info -->
+    <!-- Info -->
 
     <string name="aboutTitle">About Murmur</string>
     <string name="aboutBody">Murmur is an open-source, anonymous messaging app that does not require an Internet connection. It provides an alternative means of communication that caters to various types of users based on their communication, anonymity and security needs. Messages do not spread in real-time like in other messaging apps that are using the Internet and instead spread directly from one device to another using BlueTooth and WiFi Direct whenever devices are in physical proximity to each other. The network formed by Murmur devices is delay-tolerant, meaning when a user sends a message, it is saved in the app until it is within range of another device. The app runs in the background, periodically searching for nearby devices and sending and receiving messages to and from each device, therefore not requiring user’s active participation in message forwarding.\n\nNote, this is an early version of the app that has gone through only limited testing. Unfortunately, given the current design of the Android OS (Operating System) there are still severe limitations on apps, such as Murmur, attempting to create peer-to-peer connectivity. We therefore highly recommend, especially for users with stricter anonymity and security requirements, to thoroughly research and test the app prior to using it.</string>
 
-<!-- Share app-->
+    <!-- Share app-->
     <!-- notification attached to the url message -->
     <string name="share_app_promo">Check out Murmur!</string>
     <string name="apk_url" translatable="false">http://www.iWishIHadAUrl.com/</string>
 
-<!-- On-boarding -->
+    <!-- On-boarding -->
     <string name="skip_welcome">Skip</string>
 
     <string name="intro_3">Help Study Anonymous Messaging</string>
     <string name="intro_2">Pass Other Murmur Users and Share Messages</string>
 
-<!--Replies feed-->
+    <!--Replies feed-->
     <string name="comments">Replies</string>
 
-<!-- Help & Feedback-->
+    <!-- Help & Feedback-->
     <!-- feedback-->
     <string name="send_feedback">Send feedback</string>
     <string name="feedback_email" translatable="false">murmur_support@denovogroup.org</string>
@@ -277,7 +277,7 @@
     <string name="help_title15">What do the various options included in the Settings screen mean?</string>
     <string name="help_content15"><![CDATA[<u>General</u><br><br>&#8226; <b>Timestamps</b> - if enabled, posted messages receive a timestamp (resolution of hours) and the feed displays the timestamp of messages received (if available). If disabled, then no timestamp is added to posted messages and the feed does not display any timestamp (nor are timestamps retained in the app’s database).<br><br>&#8226; <b>Connection score</b> - if enabled, a connection score is calculated per message as part of any message exchange and presented accordingly in the feed.<br><br>&#8226; <b>Location tagging</b> - if enabled, location tagging is enabled in New Post screen.<br><br>&#8226; <b>Nicknames</b> - if enabled, posted messages will automatically include the nickname set-up in the Profile screen.<br><br><u>Feed</u><br><br>&#8226; <b>Auto-delete messages</b> - allows you to set a criteria by which messages are automatically deleted from the feed:<br>  1) connection score - deletes messages with score below the set threshold<br>  2) older than - deletes messages that have been received more than the preset threshold before.<br><br><u>Contacts</u><br><br>&#8226; <b>Add contacts via Phonebook</b> - if enabled you can add contacts directly from Phonebook<br><br>&#8226; <b>Add contacts via QR code</b> - if enabled you can add contacts using QR codes which require physical proximity to each contact.<br>]]></string>
 
-    <string name="help_title16">How do I reset the app</string>
+    <string name="help_title16">How do I reset the app?</string>
     <string name="help_content16">Tap on Advanced in the left navigation menu and then Reset app. Beware that this will erase all messages and contacts from the app and restore the Settings to the default settings. There is no way to undo this operation.</string>
 
     <string name="help_title17">How do I export messages from Murmur?</string>

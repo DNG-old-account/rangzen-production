@@ -93,6 +93,21 @@
                 android:layout_height="wrap_content"
                 android:text="@string/drawer_menu_share_app"
                 android:drawableLeft="@drawable/drawer_menu_share_app_btn"/>
+            <TextView
+                style="@style/DrawerMenuItem"
+                android:id="@+id/drawer_menu_settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/drawer_menu_settings"
+                android:drawableLeft="@drawable/drawer_menu_settings_btn"/>
+
+            <TextView
+                style="@style/DrawerMenuItem"
+                android:id="@+id/drawer_menu_help"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/drawer_menu_help"
+                android:drawableLeft="@drawable/drawer_menu_help_btn"/>
 
             <CheckBox
                 style="@style/DrawerMenuItem"
@@ -136,7 +151,6 @@
                     android:layout_height="wrap_content"
                     android:text="Debug"
                     android:drawableLeft="@drawable/ic_info_dark"/>
-
             </LinearLayout>
 
         </LinearLayout>
@@ -149,23 +163,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-
-        <TextView
-            style="@style/DrawerMenuItem"
-            android:id="@+id/drawer_menu_settings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/drawer_menu_settings"
-            android:drawableLeft="@drawable/drawer_menu_settings_btn"/>
-
-        <TextView
-            style="@style/DrawerMenuItem"
-            android:id="@+id/drawer_menu_help"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/drawer_menu_help"
-            android:drawableLeft="@drawable/drawer_menu_help_btn"/>
-
     </LinearLayout>
 
 </LinearLayout>

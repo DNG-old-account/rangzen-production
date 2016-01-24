@@ -72,7 +72,7 @@ public class SecurityManager {
                 .setAutodeleteAge(0)
                 .setShareLocation(true)
                 .setMinSharedContacts(0)
-                .setMaxMessages(0)
+                .setMaxMessages(1000)
                 .setCooldown(5)
                 .setEnforceLock(false)
                 .setUseTrust(false)

@@ -142,7 +142,7 @@ public class CryptographicExchange extends Exchange {
 
       callback.success(this);
     } catch (Exception e) {  // Treat ALL exceptions as fatal.
-        log.error( "Exception while run()ing CryptographicExchange: " , e);
+        log.error("Exception while run()ing CryptographicExchange: ", e);
         if(getExchangeStatus() == Status.ERROR_RECOVERABLE){
             callback.recover(this, getErrorMessage());
         } else {
@@ -226,6 +226,7 @@ public class CryptographicExchange extends Exchange {
       //create a message pool to be sent and send each message individually to allow partial data recovery in case of connection loss
       boolean success = true;
       List<RangzenMessage> messagesPool = getMessages(commonFriends);
+
       //notify the recipient how many items we expect to send him.
       JSONObject exchangeInfoMessage = new JSONObject("{\""+MESSAGE_COUNT_KEY+"\":"+messagesPool.size()+"}");
 
@@ -264,7 +265,7 @@ public class CryptographicExchange extends Exchange {
       if(exchangeInfo != null){
           try {
               log.debug("peer wish to send us:"+exchangeInfo.getInt(MESSAGE_COUNT_KEY)+" messages");
-              messageCount = Math.min(NUM_MESSAGES_TO_EXCHANGE, exchangeInfo.getInt(MESSAGE_COUNT_KEY));
+              messageCount = Math.min(SecurityManager.getCurrentProfile(mContext).getMaxMessages(), exchangeInfo.getInt(MESSAGE_COUNT_KEY));
               log.debug("we accept receiving only:"+messageCount+" message");
           } catch (Exception e){}
       }

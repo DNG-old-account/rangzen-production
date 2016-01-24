@@ -190,9 +190,10 @@ public class PostActivity extends AppCompatActivity {
                         ((TextView) viewGroup.findViewById(R.id.unit_id)).setText(R.string.hours_short);
                         final EditText seekBarTv = (EditText) viewGroup.findViewById(R.id.seeker_text);
                         seekBarTv.setText(String.valueOf(seekBar.getProgress()));
+                        seekBarTv.selectAll();
 
-                        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(seekBarTv.getWindowToken(), 0);
+                        //InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                        //imm.hideSoftInputFromWindow(seekBarTv.getWindowToken(), 0);
 
                         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                             @Override
