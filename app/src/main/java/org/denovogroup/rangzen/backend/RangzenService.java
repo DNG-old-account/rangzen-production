@@ -153,7 +153,7 @@ public class RangzenService extends Service {
     public static final String ACTION_ONBT = SERVICE_ERROR_HANDLER_FILTER+".turn_on_BT";
 
     /** When announcing our address over Wifi Direct name, prefix this string to our MAC. */
-    public final static String RSVP_PREFIX = "RANGZEN-";
+    public final static String RSVP_PREFIX = "MURMUR-";
 
     /** Key into storage to store the last time we had an exchange. */
     private static final String LAST_EXCHANGE_TIME_KEY = 

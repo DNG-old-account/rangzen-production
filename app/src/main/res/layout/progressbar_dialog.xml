@@ -25,7 +25,7 @@
 
             <TextView
                 style="@style/Seekbar.Metric.left"
-                android:text="0"/>
+                android:text="1"/>
 
             <TextView
                 style="@style/Seekbar.Metric.right"

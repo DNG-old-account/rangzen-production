@@ -168,7 +168,7 @@ public class PostActivity extends AppCompatActivity {
                 builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        timebound = ((SeekBar) viewGroup.findViewById(R.id.seeker)).getProgress();
+                        timebound = ((SeekBar) viewGroup.findViewById(R.id.seeker)).getProgress() + 1;
                         timeboundButton.setActivated(timebound > 0);
                         dialog.dismiss();
                     }
@@ -184,13 +184,14 @@ public class PostActivity extends AppCompatActivity {
                     @Override
                     public void onShow(DialogInterface dialog) {
                         final SeekBar seekBar = (SeekBar) viewGroup.findViewById(R.id.seeker);
-                        seekBar.setMax(240);
-
-                        seekBar.setProgress(timebound > 0 ? timebound : SecurityManager.getCurrentProfile(PostActivity.this).getTimeboundPeriod());
+                        seekBar.setMax(239);
+                        int initialValue = timebound > 0 ? timebound : SecurityManager.getCurrentProfile(PostActivity.this).getTimeboundPeriod();
+                        seekBar.setProgress(initialValue - 1);
                         ((TextView) viewGroup.findViewById(R.id.unit_id)).setText(R.string.hours_short);
                         final EditText seekBarTv = (EditText) viewGroup.findViewById(R.id.seeker_text);
-                        seekBarTv.setText(String.valueOf(seekBar.getProgress()));
+                        seekBarTv.setText(String.valueOf(seekBar.getProgress() + 1));
                         seekBarTv.selectAll();
+                        seekBarTv.requestFocus();
 
                         //InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
                         //imm.hideSoftInputFromWindow(seekBarTv.getWindowToken(), 0);
@@ -200,8 +201,9 @@ public class PostActivity extends AppCompatActivity {
                             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                                 if (fromUser) {
                                     seekBarTv.removeTextChangedListener(watcher);
-                                    seekBarTv.setText(String.valueOf(progress));
+                                    seekBarTv.setText(String.valueOf(progress + 1));
                                     seekBarTv.selectAll();
+                                    seekBarTv.requestFocus();
                                     seekBarTv.addTextChangedListener(watcher);
                                 }
                             }
@@ -227,15 +229,23 @@ public class PostActivity extends AppCompatActivity {
                                 final SeekBar seekBar = (SeekBar) viewGroup.findViewById(R.id.seeker);
                                 try {
                                     value = Integer.parseInt(s.toString());
-                                    if (value > seekBar.getMax()) {
-                                        value = seekBar.getMax();
+                                    if (value > seekBar.getMax() + 1) {
+                                        value = seekBar.getMax() + 1;
+                                        seekBarTv.setText(String.valueOf(value));
+                                        seekBarTv.selectAll();
+                                    }
+                                    if(value < 1)
+                                    {
+                                        value = 1;
                                         seekBarTv.setText(String.valueOf(value));
                                         seekBarTv.selectAll();
                                     }
                                 } catch (NumberFormatException e){
-                                    value = 0;
+                                    value = 1;
+                                    seekBarTv.setText(String.valueOf(value));
+                                    seekBarTv.selectAll();
                                 }
-                                seekBar.setProgress(value);
+                                seekBar.setProgress(value - 1);
                             }
 
                             @Override

@@ -12,7 +12,7 @@ import java.io.File;
 public class ConfigureLog4J {
 
     public static final File LOG_DIRECTORY = Environment.getExternalStorageDirectory();
-    public static final String LOG_FILE = "rangzen.log";
+    public static final String LOG_FILE = "murmur.log";
     public static final String LOG_FILENAME = LOG_DIRECTORY + File.separator + LOG_FILE;
     public static final String LOG_LINE_PATTERN = "%d - [%t] - [%p::%c] - %m%n";
     public static final Level LOG_LEVEL = Level.DEBUG;
