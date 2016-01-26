@@ -818,9 +818,6 @@ public class RangzenService extends Service {
                 }
             }
 
-            if(Build.VERSION.SDK_INT >= 23){
-                btAddress = SecurityManager.getStoredMAC(this);
-            }
 
             mWifiDirectSpeaker.setWifiDirectUserFriendlyName(RSVP_PREFIX + btAddress);
             if (btAddress != null && (btAddress.equals(DUMMY_MAC_ADDRESS) || btAddress.equals(""))) {

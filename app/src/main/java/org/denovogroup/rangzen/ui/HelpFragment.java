@@ -280,7 +280,7 @@ public class HelpFragment extends Fragment{
                 e.printStackTrace();
             }
 
-            File zippedLog = new File(Environment.getExternalStorageDirectory() + "/"+ ConfigureLog4J.LOG_FILE+".zip");
+            File zippedLog = new File(Environment.getExternalStorageDirectory() + "/"+ ConfigureLog4J.LOG_FILE+"zip");
 
             createZipFile(log_filename, zippedLog);
 

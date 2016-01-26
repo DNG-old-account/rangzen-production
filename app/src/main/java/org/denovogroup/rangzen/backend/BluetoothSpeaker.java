@@ -35,6 +35,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 
 import org.apache.log4j.Logger;
@@ -135,7 +136,7 @@ public class BluetoothSpeaker {
       }*/
     }
 
-      this.mThisDeviceUUID = getUUIDFromMACAddress(mBluetoothAdapter.getAddress());
+      this.mThisDeviceUUID = getUUIDFromMACAddress(getAddress());
       log.info( "This device's UUID is " + mThisDeviceUUID.toString());
 
     if (mBluetoothAdapter.isEnabled()) {
@@ -178,12 +179,16 @@ public class BluetoothSpeaker {
    * @return The Bluetooth MAC address of this device.
    */
   public String getAddress() {
-    if (mBluetoothAdapter != null) {
-      return mBluetoothAdapter.getAddress();
-    } else {
+    if(mBluetoothAdapter == null)
       return null;
+
+    if(Build.VERSION.SDK_INT >= 23){
+      if(mContext == null)
+        return null;
+      return SecurityManager.getStoredMAC(mContext);
     }
 
+    return mBluetoothAdapter.getAddress();
   }
 
   /**

@@ -1,11 +1,14 @@
 package org.denovogroup.rangzen.ui;
 
 import android.bluetooth.BluetoothAdapter;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -17,6 +20,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -62,6 +66,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
     EditText maxMessagesPerExchangeEditText;
     EditText timeoutEditText;
     EditText macEditText;
+    private Button deviceSettings;
 
     int autodelMaxTrust = 100;
     int autodelMaxAge = 365;
@@ -106,7 +111,7 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         maxMessagesPerExchangeEditText = (EditText) view.findViewById(R.id.edit_max_messages_p_exchange);
         timeoutEditText = (EditText) view.findViewById(R.id.edit_timeout_p_exchange);
         macEditText = (EditText) view.findViewById(R.id.edit_mac);
-
+        deviceSettings = (Button) view.findViewById(R.id.device_settings);
         setupView();
 
         return view;
@@ -191,6 +196,16 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
             macEditText.setTextColor(getResources().getColor(android.R.color.black));
         }
         macEditText.addTextChangedListener(this);
+
+        deviceSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final Intent i = new Intent();
+                i.setAction(Intent.ACTION_MAIN);
+                i.setComponent(new ComponentName("com.android.settings", "com.android.settings.deviceinfo.Status"));
+                startActivity(i);
+            }
+        });
     }
 
     @Override

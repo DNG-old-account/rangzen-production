@@ -94,6 +94,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
+                android:id="@+id/layout_mac"
                 android:layout_margin="@dimen/settings_fragment_margin">
 
                 <TextView
@@ -103,13 +104,19 @@
                     android:text="@string/settings_mac_title"/>
 
                 <EditText
-                    style="@style/SettingsEditTextAction"
                     android:id="@+id/edit_mac"
                     android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:inputType="none"
                     android:maxLength="25"
                     android:gravity="center"/>
 
+                <Button
+                    android:id="@+id/device_settings"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_bt_device_settings"
+                    android:textColor="@android:color/white"/>
             </LinearLayout>
 
             <View style="@style/SettingsDivider"/>
@@ -220,7 +227,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_margin="@dimen/settings_fragment_margin">
+                android:layout_margin="@dimen/settings_fragment_margin"
+                android:id="@+id/layout_self_dest">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -255,7 +263,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_margin="@dimen/settings_fragment_margin">
+                android:layout_margin="@dimen/settings_fragment_margin"
+                android:id="@+id/layout_restricted">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -349,7 +358,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_margin="@dimen/settings_fragment_margin">
+                android:layout_margin="@dimen/settings_fragment_margin"
+                android:id="@+id/layout_autodelete_trust">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -400,7 +410,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_margin="@dimen/settings_fragment_margin">
+                android:layout_margin="@dimen/settings_fragment_margin"
+                android:id="@+id/layout_autodelete_age">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -526,7 +537,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/settings_exchange_title"
-                android:layout_margin="@dimen/settings_fragment_margin"/>
+                android:layout_margin="@dimen/settings_fragment_margin"
+                android:id="@+id/layout_max_messages_p_exchange"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -554,7 +566,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_margin="@dimen/settings_fragment_margin">
+                android:layout_margin="@dimen/settings_fragment_margin"
+                android:id="@+id/layout_timeout_p_exchange">
 
                 <TextView
                     style="@style/SettingsText"

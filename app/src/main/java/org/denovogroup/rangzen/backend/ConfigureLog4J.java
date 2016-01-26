@@ -17,6 +17,7 @@ public class ConfigureLog4J {
     public static final String LOG_LINE_PATTERN = "%d - [%t] - [%p::%c] - %m%n";
     public static final Level LOG_LEVEL = Level.DEBUG;
     public static final long FILE_SIZE = 6 * 1024 * 1024; //MB
+    public static final int MAX_BACKUP_SIZE = 2; //Number of files
 
     public static void configure(boolean FreezeLogging) {
         final LogConfigurator logConfigurator = new LogConfigurator();
@@ -24,6 +25,7 @@ public class ConfigureLog4J {
         logConfigurator.setFileName(LOG_FILENAME);
         logConfigurator.setRootLevel(FreezeLogging ? Level.OFF : LOG_LEVEL);
         logConfigurator.setMaxFileSize(FILE_SIZE);
+        logConfigurator.setMaxBackupSize(MAX_BACKUP_SIZE);
         // Set log level of a specific logger
         logConfigurator.setLevel("org.apache", Level.ERROR);
         logConfigurator.setResetConfiguration(FreezeLogging);

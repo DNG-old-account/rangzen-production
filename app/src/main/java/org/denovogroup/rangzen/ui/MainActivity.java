@@ -513,7 +513,17 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
             boolean shouldBreak = ((FragmentBackHandler) fragment).onBackPressed();
             if (shouldBreak) return;
         }
-        super.onBackPressed();
+        if(fragment instanceof FeedFragment)
+            super.onBackPressed();
+        else
+        {
+            Fragment frag = new FeedFragment();
+            drawerLayout.closeDrawers();
+            Spinner spinner = (Spinner) toolbar.findViewById(R.id.sortSpinner);
+            if (spinner != null) spinner.setVisibility(View.INVISIBLE);
+            getSupportFragmentManager().beginTransaction().replace(contentHolder.getId(), frag).commit();
+        }
+
     }
 
     private void resetApplication() {

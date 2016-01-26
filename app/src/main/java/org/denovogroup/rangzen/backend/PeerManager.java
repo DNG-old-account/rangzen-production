@@ -32,6 +32,7 @@ package org.denovogroup.rangzen.backend;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.os.Build;
 import android.support.v4.content.LocalBroadcastManager;
 
 import org.apache.log4j.Logger;
@@ -436,7 +437,7 @@ public class PeerManager {
    */
   public boolean thisDeviceSpeaksTo(Peer other) throws NoSuchAlgorithmException,
                                                        UnsupportedEncodingException {
-    if (other == null || other.getNetwork() == null || 
+    if (other == null || other.getNetwork() == null ||
         other.getNetwork().getBluetoothDevice() == null ) {
         log.info( "this device not speaking to peer: "+other+" either peer or peer network is null");
       return false;
