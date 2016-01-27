@@ -112,6 +112,17 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         timeoutEditText = (EditText) view.findViewById(R.id.edit_timeout_p_exchange);
         macEditText = (EditText) view.findViewById(R.id.edit_mac);
         deviceSettings = (Button) view.findViewById(R.id.device_settings);
+
+        deviceSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final Intent i = new Intent();
+                i.setAction(Intent.ACTION_MAIN);
+                i.setComponent(new ComponentName("com.android.settings", "com.android.settings.deviceinfo.Status"));
+                startActivity(i);
+            }
+        });
+
         setupView();
 
         return view;
@@ -197,15 +208,6 @@ public class SettingsFragment extends Fragment implements SeekBar.OnSeekBarChang
         }
         macEditText.addTextChangedListener(this);
 
-        deviceSettings.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent i = new Intent();
-                i.setAction(Intent.ACTION_MAIN);
-                i.setComponent(new ComponentName("com.android.settings", "com.android.settings.deviceinfo.Status"));
-                startActivity(i);
-            }
-        });
     }
 
     @Override

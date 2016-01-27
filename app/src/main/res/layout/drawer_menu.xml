@@ -156,13 +156,4 @@
         </LinearLayout>
     </ScrollView>
 
-    <View style="@style/DrawerMenuDivider"/>
-
-    <LinearLayout
-        android:id="@+id/fixed_drawer_menu"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-    </LinearLayout>
-
 </LinearLayout>

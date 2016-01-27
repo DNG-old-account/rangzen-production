@@ -35,6 +35,7 @@ import org.denovogroup.rangzen.backend.SecurityManager;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -446,7 +447,7 @@ public class PostActivity extends AppCompatActivity {
 
         String hexColor = String.format("#%06X", (0xFFFFFF & getResources().getColor(R.color.app_purple)));
 
-        List<String> hashtags = Utils.getHashtags(source);
+        Set<String> hashtags = Utils.getHashtags(source);
         for(String hashtag : hashtags){
             String textBefore = hashtaggedMessage.substring(0,hashtaggedMessage.indexOf(hashtag));
             String textAfter = hashtaggedMessage.substring(hashtaggedMessage.indexOf(hashtag)+hashtag.length());

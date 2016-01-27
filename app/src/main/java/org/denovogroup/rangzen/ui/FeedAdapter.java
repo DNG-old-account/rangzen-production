@@ -23,6 +23,7 @@ import org.denovogroup.rangzen.backend.SecurityProfile;
 import org.denovogroup.rangzen.backend.Utils;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Liran on 12/27/2015.
@@ -220,14 +221,14 @@ public class FeedAdapter extends CursorAdapter {
 
         String hexColor = String.format("#%06X", (0xFFFFFF & linkColor));
 
-        List<String> hashtags = Utils.getHashtags(source);
+        Set<String> hashtags = Utils.getHashtags(source);
         for(String hashtag : hashtags){
             String textBefore = hashtaggedMessage.substring(0,hashtaggedMessage.indexOf(hashtag));
             String textAfter = hashtaggedMessage.substring(hashtaggedMessage.indexOf(hashtag)+hashtag.length());
             if(selectionMode){
                 hashtaggedMessage = textBefore+"<font color="+hexColor+">"+hashtag+"</font>"+textAfter;
             } else {
-                hashtaggedMessage = textBefore+"<a href=\"org.denovogroup.rangzen://hashtag/"+hashtag+"/\">"+hashtag+"</a>"+textAfter;
+                hashtaggedMessage = textBefore+"<a href=\"murmur://org.denovogroup.rangzen/hashtag/"+hashtag+"/\">"+hashtag+"</a>"+textAfter;
             }
         }
         if(!selectionMode){
@@ -245,7 +246,7 @@ public class FeedAdapter extends CursorAdapter {
                     int startoffset = 0;
                     String digest = source.toLowerCase();
 
-                    while (digest.contains(str.toLowerCase())) {
+                    while (str.length() > 0 && digest.contains(str.toLowerCase())) {
                         int digestStart = digest.indexOf(str.toLowerCase());
                         int start = startoffset + digestStart;
                         int end = start + str.length();

@@ -8,8 +8,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -172,8 +174,8 @@ public class Utils {
      * @param text the string containing hashtags
      * @return Hashtags found in the list (including the # sign)
      */
-    public static List<String> getHashtags(String text){
-        List<String> hashtags = new ArrayList<>();
+    public static Set<String> getHashtags(String text){
+        Set<String> hashtags = new HashSet<>();
 
         while(text.contains("#")){
 

@@ -138,7 +138,7 @@ public class ContactAdapter extends CursorAdapter {
                     int startoffset = 0;
                     String digest = source.toLowerCase();
 
-                    while (digest.contains(str.toLowerCase())) {
+                    while (str.length() > 0 && digest.contains(str.toLowerCase())) {
                         int digestStart = digest.indexOf(str.toLowerCase());
                         int start = startoffset + digestStart;
                         int end = start + str.length();

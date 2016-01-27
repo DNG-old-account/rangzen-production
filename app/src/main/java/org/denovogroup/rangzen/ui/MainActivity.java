@@ -63,7 +63,6 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
 
     DrawerLayout drawerLayout;
     ViewGroup drawerMenu;
-    ViewGroup fixedDrawerMenu;
     ViewGroup advancedDrawerMenu;
     ActionBarDrawerToggle drawerToggle;
     View contentHolder;
@@ -108,8 +107,11 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
             Fragment frag = new FeedFragment();
             Bundle args = new Bundle();
             if (data != null) {
-                String hashtag = data.toString().substring(data.toString().indexOf("#"), data.toString().length() - 1);
-                args.putString(FeedFragment.HASHTAG, hashtag);
+                int hashTagIndex = data.toString().indexOf("#");
+                if(hashTagIndex > -1) {
+                    String hashtag = data.toString().substring(hashTagIndex, data.toString().length() - 1);
+                    args.putString(FeedFragment.HASHTAG, hashtag);
+                }
             }
             frag.setArguments(args);
 
@@ -155,7 +157,6 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         drawerLayout.setDrawerListener(drawerToggle);
 
         drawerMenu = (ViewGroup) findViewById(R.id.drawer_menu);
-        fixedDrawerMenu = (ViewGroup) findViewById(R.id.fixed_drawer_menu);
         advancedDrawerMenu = (ViewGroup) findViewById(R.id.drawer_menu_advanced_list);
         advancedToggle = (CheckBox) findViewById(R.id.drawer_menu_advanced);
 
@@ -168,12 +169,6 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
         int childcount = drawerMenu.getChildCount();
         for (int i = 0; i < childcount; i++) {
             View v = drawerMenu.getChildAt(i);
-            if (v instanceof TextView) v.setOnClickListener(drawerMenuClickListener);
-        }
-
-        childcount = fixedDrawerMenu.getChildCount();
-        for (int i = 0; i < childcount; i++) {
-            View v = fixedDrawerMenu.getChildAt(i);
             if (v instanceof TextView) v.setOnClickListener(drawerMenuClickListener);
         }
 
@@ -244,11 +239,6 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
                     int childcount = drawerMenu.getChildCount();
                     for (int i = 0; i < childcount; i++) {
                         View child = drawerMenu.getChildAt(i);
-                        child.setActivated(child == v);
-                    }
-                    childcount = fixedDrawerMenu.getChildCount();
-                    for (int i = 0; i < childcount; i++) {
-                        View child = fixedDrawerMenu.getChildAt(i);
                         child.setActivated(child == v);
                     }
                     childcount = advancedDrawerMenu.getChildCount();

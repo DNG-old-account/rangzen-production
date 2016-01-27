@@ -570,6 +570,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                     swapCursor();
 
                     int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
+                    setActionbar();
                     ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
                 }
             } : null);
