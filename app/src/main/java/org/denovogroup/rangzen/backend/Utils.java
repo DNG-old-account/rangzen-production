@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.net.wifi.WifiManager;
 
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -234,8 +235,15 @@ public class Utils {
         }
 
         String[] words = digest.split("\\s");
+        ArrayList<String> retwords = new ArrayList<>();
+        for(String word : words)
+        {
+            if(word.length() > 0)
+                retwords.add(word);
+        }
 
-        if(words.length > 0) return words;
+        if(retwords.size() > 0)
+            return retwords.toArray(new String[retwords.size()]);
 
         return null;
     }

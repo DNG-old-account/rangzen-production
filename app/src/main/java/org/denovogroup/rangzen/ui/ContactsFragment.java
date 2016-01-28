@@ -219,7 +219,6 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
 
         ((ContactAdapter)contactListView.getAdapter()).setSelectionMode(inSelectionMode);
         swapCursor();
-
         contactListView.setOnItemLongClickListener(null);
         contactListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -235,7 +234,8 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
                 int checkedCount = (int) FriendStore.getInstance(getActivity()).getCheckedCount();
 
                 ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
-                if(menu != null) menu.findItem(R.id.action_delete).setEnabled(checkedCount > 0);
+                updateSelectAll();
+                if (menu != null) menu.findItem(R.id.action_delete).setEnabled(checkedCount > 0);
 
             }
         });
@@ -244,7 +244,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
 
     private void setListInDisplayMode(){
         inSelectionMode = false;
-        FriendStore.getInstance(getActivity()).setCheckedAll(false);
+        FriendStore.getInstance(getActivity()).setCheckedAll(false, null);
         ((ContactAdapter) contactListView.getAdapter()).setSelectionMode(false);
         contactListView.setOnItemLongClickListener(longClickListener);
 
@@ -372,19 +372,34 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
             //initSortSpinner();
         }
         if(leftText != null){
-            leftText.setText(inSelectionMode ? R.string.select_all : R.string.empty_string);
+            updateSelectAll();
             leftText.setVisibility(inSelectionMode ? View.VISIBLE : View.GONE);
             leftText.setOnClickListener(inSelectionMode ? new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    FriendStore.getInstance(getActivity()).setCheckedAll(!selectAll);
+                    FriendStore.getInstance(getActivity()).setCheckedAll(!selectAll, query);
                     selectAll = !selectAll;
                     swapCursor();
 
                     int checkedCount = (int) FriendStore.getInstance(getActivity()).getCheckedCount();
                     ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
+                    updateSelectAll();
                 }
             } : null);
+        }
+    }
+
+    private void updateSelectAll() {
+        //TODO: Danielk Should this contain replies as well?
+        int checkedCount = (int) FriendStore.getInstance(getActivity()).getCheckedCount();
+        int totalCount =  getCursor().getCount();
+        selectAll = checkedCount == totalCount;
+        if(leftText != null)
+        {
+            if (inSelectionMode)
+                leftText.setText(!selectAll ? R.string.select_all : R.string.deselect_all);
+            else
+                leftText.setText(R.string.empty_string);
         }
     }
 
@@ -582,7 +597,19 @@ public class ContactsFragment extends Fragment implements View.OnClickListener, 
                                     }
                                 }
 
-                                if(encryptedNumber != null) FriendStore.getInstance(getActivity()).addFriendBytes(adjustedName, encryptedNumber, FriendStore.ADDED_VIA_PHONE, noneNullValue);
+                                if(encryptedNumber != null) {
+                                    FriendStore fs = FriendStore.getInstance(getActivity());
+                                    boolean wasAdded = fs.addFriendBytes(adjustedName, encryptedNumber, FriendStore.ADDED_VIA_PHONE, noneNullValue);
+                                    log.info("Now have " + fs.getAllFriends().size()
+                                            + " contacts.");
+                                    if (wasAdded) {
+                                        Toast.makeText(getActivity(), R.string.contact_add_conf, Toast.LENGTH_SHORT)
+                                                .show();
+                                    } else {
+                                        Toast.makeText(getActivity(), R.string.contact_exist, Toast.LENGTH_SHORT)
+                                                .show();
+                                    }
+                                }
 
                                 requireReformating = true;
                                 phoneCursor.moveToNext();

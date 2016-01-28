@@ -6,9 +6,11 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.text.Html;
 import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.URLSpan;
+import android.text.util.Linkify;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +26,8 @@ import org.denovogroup.rangzen.backend.Utils;
 
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Liran on 12/27/2015.
@@ -60,6 +64,7 @@ public class FeedAdapter extends CursorAdapter {
     int checkedBgColor;
 
     private String[] highlight;
+    private String hexlinkColor;
 
     public interface FeedAdapterCallbacks{
         void onUpvote(String message, int oldPriority);
@@ -87,6 +92,7 @@ public class FeedAdapter extends CursorAdapter {
 
     private void init(Context context , Cursor cursor){
         linkColor = context.getResources().getColor(R.color.app_purple);
+        hexlinkColor = String.format("#%06X", (0xFFFFFF & linkColor));
         normalBgColor = context.getResources().getColor(R.color.list_item_bg);
         checkedBgColor = context.getResources().getColor(R.color.list_item_bg_checked);
 
@@ -217,29 +223,32 @@ public class FeedAdapter extends CursorAdapter {
      */
     private void setHashtagLinks(TextView textView, String source){
 
+        StringBuilder hashtaggedMessageBuilder = new StringBuilder();
+        SpannableString spannableString = new SpannableString(source);
+        Linkify.addLinks(spannableString, Linkify.WEB_URLS | Linkify.PHONE_NUMBERS);
+
         String hashtaggedMessage = source;
-
-        String hexColor = String.format("#%06X", (0xFFFFFF & linkColor));
-
         Set<String> hashtags = Utils.getHashtags(source);
         for(String hashtag : hashtags){
             String textBefore = hashtaggedMessage.substring(0,hashtaggedMessage.indexOf(hashtag));
             String textAfter = hashtaggedMessage.substring(hashtaggedMessage.indexOf(hashtag)+hashtag.length());
             if(selectionMode){
-                hashtaggedMessage = textBefore+"<font color="+hexColor+">"+hashtag+"</font>"+textAfter;
+                hashtaggedMessage = textBefore+"<font color="+hexlinkColor+">"+hashtag+"</font>"+textAfter;
             } else {
                 hashtaggedMessage = textBefore+"<a href=\"murmur://org.denovogroup.rangzen/hashtag/"+hashtag+"/\">"+hashtag+"</a>"+textAfter;
             }
+            Linkify.addLinks(spannableString, Pattern.compile(hashtag), "murmur://", new Linkify.MatchFilter() {
+                @Override
+                public boolean acceptMatch(CharSequence s, int start, int end) {
+                    return !AlreadyInSpan(new SpannableString(s), start, end);
+                }
+            }, new Linkify.TransformFilter() {
+                @Override
+                public String transformUrl(Matcher match, String url) {
+                    return "murmur://org.denovogroup.rangzen/hashtag/"+url;
+                }
+            });
         }
-        if(!selectionMode){
-            //fix <a href> extended to the end of the line making entire following text clickable
-            if(hashtaggedMessage.indexOf("</a>") == hashtaggedMessage.length()-4){
-                hashtaggedMessage += " ";
-            }
-        }
-
-        Spannable spannable = (Spannable) Html.fromHtml(hashtaggedMessage);
-
         if(highlight != null) {
             for (String str : highlight) {
                 if (source.toLowerCase().contains(str.toLowerCase())) {
@@ -250,7 +259,7 @@ public class FeedAdapter extends CursorAdapter {
                         int digestStart = digest.indexOf(str.toLowerCase());
                         int start = startoffset + digestStart;
                         int end = start + str.length();
-                        spannable.setSpan(new BackgroundColorSpan(Color.parseColor("#FFFF02"))
+                        spannableString.setSpan(new BackgroundColorSpan(Color.parseColor("#FFFF02"))
                                 , start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                         digest = digest.substring(digestStart + str.length());
                         startoffset = end;
@@ -259,15 +268,18 @@ public class FeedAdapter extends CursorAdapter {
             }
         }
 
-        textView.setText(selectionMode ? spannable : removeUnderlines(spannable));
+        textView.setText(removeUnderlines(spannableString));
 
-        if(!selectionMode) {
-            textView.setLinkTextColor(linkColor);
-            textView.setLinksClickable(true);
-            textView.setMovementMethod(LinkMovementMethod.getInstance());
-        }
+        textView.setLinkTextColor(linkColor);
+        textView.setLinksClickable(!selectionMode);
+        textView.setMovementMethod(selectionMode ? null : LinkMovementMethod.getInstance());
     }
 
+    public static boolean AlreadyInSpan(Spannable text, int start, int end)
+    {
+        URLSpan[] spans = text.getSpans(start, end, URLSpan.class);
+        return spans.length > 0;
+    }
     public static Spannable removeUnderlines(Spannable p_Text) {
         URLSpan[] spans = p_Text.getSpans(0, p_Text.length(), URLSpan.class);
         for (URLSpan span : spans) {

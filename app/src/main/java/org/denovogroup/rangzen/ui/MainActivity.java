@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements DrawerActivityHel
             if (data != null) {
                 int hashTagIndex = data.toString().indexOf("#");
                 if(hashTagIndex > -1) {
-                    String hashtag = data.toString().substring(hashTagIndex, data.toString().length() - 1);
+                    String hashtag = data.toString().substring(hashTagIndex, data.toString().length());
                     args.putString(FeedFragment.HASHTAG, hashtag);
                 }
             }

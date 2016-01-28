@@ -299,16 +299,19 @@ public class MessageStore extends SQLiteOpenHelper {
                 String[] words = message.split("\\s");
 
                 for(int i=0; i<words.length; i++){
-                    if(i > 0){
-                        likeQuery +=" OR ";
+                    if(words[i].length() > 0)
+                    {
+                        if (likeQuery.length() > 0)
+                        {
+                            likeQuery += " OR ";
+                        }
+                        likeQuery += " " + COL_MESSAGE + " LIKE '%" + words[i] + "%' ";
                     }
-
-                    likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
                 }
             }
 
             String query = "SELECT * FROM " + TABLE +
-                    " WHERE " + likeQuery
+                    " WHERE (" + likeQuery + ")"
                     + (!getReplies ? "AND ("+COL_BIGPARENT+ " IS NULL OR "+COL_BIGPARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+ "))" : "")
                     + (!getDeleted ? " AND " + COL_DELETED + "=" + FALSE : "")
                     + " "+sortOption
@@ -348,11 +351,13 @@ public class MessageStore extends SQLiteOpenHelper {
                 String[] words = message.split("\\s");
 
                 for(int i=0; i<words.length; i++){
-                    if(i > 0){
-                        likeQuery +=" OR ";
-                    }
+                    if(words[i].length() > 0) {
+                        if (likeQuery.length() > 0) {
+                            likeQuery += " OR ";
+                        }
 
-                    likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
+                        likeQuery += " " + COL_MESSAGE + " LIKE '%" + words[i] + "%' ";
+                    }
                 }
             }
 
@@ -592,10 +597,20 @@ public class MessageStore extends SQLiteOpenHelper {
      * @param countDeleted if set to true count will include items marked as deleted
      * @return number of items in the database.
      */
-    public long getMessageCount(boolean countDeleted){
+    public long getMessageCount(boolean countDeleted, boolean countReplies){
         SQLiteDatabase db = getWritableDatabase();
         if (db != null){
-            return DatabaseUtils.queryNumEntries(db, TABLE, countDeleted ? null : COL_DELETED + "=" + FALSE);
+            String query = "";
+            if(!countDeleted) {
+                query += COL_DELETED + "=" + FALSE;
+                if(!countReplies)
+                    query += " AND ";
+            }
+            if(!countReplies)
+            {
+                query += "(" + COL_BIGPARENT + " IS NULL OR " + COL_BIGPARENT + " NOT IN (SELECT " + COL_MESSAGE_ID + " FROM " + TABLE + " WHERE " + COL_DELETED + "=" + FALSE + ") AND " + COL_PARENT + " NOT IN (SELECT " + COL_MESSAGE_ID + " FROM " + TABLE + " WHERE " + COL_DELETED + "=" + FALSE + "))";
+            }
+            return DatabaseUtils.queryNumEntries(db, TABLE, query);
         }
         return 0;
     }
@@ -741,10 +756,11 @@ public class MessageStore extends SQLiteOpenHelper {
     }
 
     /** set the checked state of the all messages as true or false */
-    public boolean checkAllMessages(boolean check){
+    public boolean checkAllMessages(boolean check, boolean checkReplies){
         SQLiteDatabase db = getWritableDatabase();
         if(db != null){
-            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE+";");
+            String parentOnly = " AND ("+COL_BIGPARENT+ " IS NULL OR "+COL_BIGPARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+ "))";
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE (" + COL_DELETED + " =" + FALSE + ") " + (checkReplies ? "" : parentOnly) + " ;");
             return true;
         }
         return false;
@@ -753,12 +769,13 @@ public class MessageStore extends SQLiteOpenHelper {
     /** set the checked state of the all messages as true or false */
     public boolean checkAllQueriedMessages(boolean check, String query){
         if(query == null || query.length() == 0){
-            return checkAllMessages(check);
+            return checkAllMessages(check, false);
         }
 
         SQLiteDatabase db = getWritableDatabase();
         if(db != null){
-            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE+" "+query+";");
+            String parentOnly = " AND ("+COL_BIGPARENT+ " IS NULL OR "+COL_BIGPARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+ "))";
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE + " " + query + parentOnly + ";");
             return true;
         }
         return false;
@@ -767,7 +784,7 @@ public class MessageStore extends SQLiteOpenHelper {
     /** set the checked state of the all messages as true or false */
     public boolean checkAllMessagesContaining(boolean check, String message){
         if(message == null || message.length() == 0){
-            return checkAllMessages(check);
+            return checkAllMessages(check, false);
         }
         message = Utils.makeTextSafeForSQL(message);
 
@@ -775,30 +792,23 @@ public class MessageStore extends SQLiteOpenHelper {
         if(db != null){
 
             String likeQuery ="";
-
             String messageNoSpace = message.replaceAll("\\s","");
-
             if(message.length() == 0 || messageNoSpace.length() == 0) likeQuery =  (COL_MESSAGE + " LIKE '%" + message + "%'");
-
             if(likeQuery.length() == 0){
                 message = message.replaceAll("[\n\"]", " ");
-
                 while(message.charAt(0) == ' '){
                     message = message.substring(1);
                 }
-
                 String[] words = message.split("\\s");
-
                 for(int i=0; i<words.length; i++){
                     if(i > 0){
                         likeQuery +=" OR ";
                     }
-
                     likeQuery += " "+COL_MESSAGE + " LIKE '%"+words[i]+"%' ";
                 }
             }
-
-            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE+" AND ("+likeQuery+");");
+            String parentOnly = " AND ("+COL_BIGPARENT+ " IS NULL OR "+COL_BIGPARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+") AND "+COL_PARENT+" NOT IN (SELECT "+COL_MESSAGE_ID+" FROM "+TABLE+" WHERE "+COL_DELETED+"="+FALSE+ "))";
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + (check ? TRUE : FALSE) + " WHERE " + COL_DELETED + " =" + FALSE+" AND ("+likeQuery+")" + parentOnly + ";");
             return true;
         }
         return false;

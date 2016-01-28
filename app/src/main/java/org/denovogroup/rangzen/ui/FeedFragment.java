@@ -387,7 +387,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
 
                 Cursor checkedCursor = MessageStore.getInstance(getActivity()).getCheckedMessages();
                 int checkedCount = checkedCursor.getCount();
-
+                updateSelectAll();
                 ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
 
                 if (menu != null) {
@@ -435,7 +435,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
 
     private void setListInDisplayMode(){
         inSelectionMode = false;
-        MessageStore.getInstance(getActivity()).checkAllMessages(false);
+        MessageStore.getInstance(getActivity()).checkAllMessages(false, true);
                 ((FeedAdapter) feedListView.getAdapter()).setSelectionMode(false);
         feedListView.setOnItemLongClickListener(longClickListener);
         feedListView.setOnItemClickListener(null/*new AdapterView.OnItemClickListener() {
@@ -483,6 +483,8 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
 
             Cursor checkedCursor = MessageStore.getInstance(getActivity()).getCheckedMessages();
             int checkedCount = checkedCursor.getCount();
+            if(inSelectionMode)
+                ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
 
             menu.findItem(R.id.action_delete).setEnabled(checkedCount > 0);
             boolean canDeleteTrust = false;
@@ -555,7 +557,7 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
             initSortSpinner();
         }
         if(leftText != null){
-            leftText.setText(inSelectionMode ? R.string.select_all : R.string.empty_string);
+            updateSelectAll();
             leftText.setVisibility(inSelectionMode ? View.VISIBLE : View.GONE);
             leftText.setOnClickListener(inSelectionMode ? new View.OnClickListener() {
                 @Override
@@ -569,11 +571,23 @@ public class FeedFragment extends Fragment implements View.OnClickListener, Text
                     selectAll = !selectAll;
                     swapCursor();
 
-                    int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
                     setActionbar();
-                    ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
                 }
             } : null);
+        }
+    }
+
+    private void updateSelectAll() {
+        //TODO: Danielk Should this contain replies as well?
+        int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
+        long totalCount = getCursor().getCount();
+        selectAll = checkedCount == totalCount;
+        if(leftText != null)
+        {
+            if (inSelectionMode)
+                leftText.setText(!selectAll ? R.string.select_all : R.string.deselect_all);
+            else
+                leftText.setText(R.string.empty_string);
         }
     }
 

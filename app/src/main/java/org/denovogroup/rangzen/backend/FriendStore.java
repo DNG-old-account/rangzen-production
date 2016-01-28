@@ -401,11 +401,12 @@ public class FriendStore extends SQLiteOpenHelper{
             String[] words = query.split("\\s");
 
             for(int i=0; i<words.length; i++){
-                if(i > 0){
-                    likeQuery +=" OR ";
+                if(words[i].length() > 0) {
+                    if (likeQuery.length() > 0) {
+                        likeQuery += " OR ";
+                    }
+                    likeQuery += " " + COL_DISPLAY_NAME + " LIKE '%" + words[i] + "%' ";
                 }
-
-                likeQuery += " "+COL_DISPLAY_NAME + " LIKE '%"+words[i]+"%' ";
             }
 
             return db.rawQuery("SELECT * FROM "+TABLE+" WHERE ("+likeQuery+") ORDER BY "+COL_DISPLAY_NAME+" COLLATE NOCASE ASC;",null);
@@ -451,14 +452,29 @@ public class FriendStore extends SQLiteOpenHelper{
     }
 
     /** set the checked state for all friends entry */
-    public void setCheckedAll(boolean isChecked){
+    public void setCheckedAll(boolean isChecked, String query) {
         SQLiteDatabase db = getWritableDatabase();
-        if(db == null) return;
+        if (db == null) return;
 
         int checked = isChecked ? TRUE : FALSE;
-        db.execSQL("UPDATE "+TABLE+" SET "+COL_CHECKED+"="+checked+";");
+        if (!isChecked || query == null || query.length() == 0) {
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + checked + ";");
+        } else {
+            query = Utils.makeTextSafeForSQL(query);
+            String likeQuery = "";
+            query = query.replaceAll("[\n\"]", " ");
+            String[] words = query.split("\\s");
+            for (int i = 0; i < words.length; i++) {
+                if (words[i].length() > 0) {
+                    if (likeQuery.length() > 0) {
+                        likeQuery += " OR ";
+                    }
+                    likeQuery += " " + COL_DISPLAY_NAME + " LIKE '%" + words[i] + "%' ";
+                }
+            }
+            db.execSQL("UPDATE " + TABLE + " SET " + COL_CHECKED + "=" + checked + " WHERE " + likeQuery + ";");
+        }
     }
-
     public void deleteChecked(){
         SQLiteDatabase db = getWritableDatabase();
         if(db == null) return;

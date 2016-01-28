@@ -358,43 +358,8 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
 
                 MessageStore.getInstance(getActivity()).checkMessage(message, !isChecked);
                 swapCursor();
+                setActionbar();
 
-                Cursor checkedCursor = MessageStore.getInstance(getActivity()).getCheckedMessages();
-                int checkedCount = checkedCursor.getCount();
-
-                ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
-
-                boolean canDeleteTrust = false;
-                boolean canDeleteLikes = false;
-                boolean canDeleteSender = false;
-                boolean canDeleteExchange = false;
-
-                if (checkedCount == 1) {
-                    checkedCursor.moveToFirst();
-                    String sender = checkedCursor.getString(checkedCursor.getColumnIndex(MessageStore.COL_PSEUDONYM));
-
-                    if (sender != null)
-                        canDeleteSender = MessageStore.getInstance(getActivity()).getMessagesBySenderCount(sender) > 0;
-
-                    String exchange = checkedCursor.getString(checkedCursor.getColumnIndex(MessageStore.COL_EXCHANGE));
-
-                    if (exchange != null)
-                        canDeleteExchange = MessageStore.getInstance(getActivity()).getMessagesByExchangeCount(exchange) > 0;
-
-                    float trust = checkedCursor.getFloat(checkedCursor.getColumnIndex(MessageStore.COL_TRUST));
-
-                    canDeleteTrust = MessageStore.getInstance(getActivity()).getMessagesByTrustCount(trust) > 0;
-
-                    int likes = checkedCursor.getInt(checkedCursor.getColumnIndex(MessageStore.COL_LIKES));
-
-                    canDeleteLikes = MessageStore.getInstance(getActivity()).getMessagesByLikeCount(likes) > 0;
-                }
-
-                checkedCursor.close();
-
-                menu.findItem(R.id.action_delete_by_connection).setEnabled(checkedCount == 1 && canDeleteTrust);
-                menu.findItem(R.id.action_delete_by_exchange).setEnabled(checkedCount == 1 && canDeleteExchange);
-                menu.findItem(R.id.action_delete_from_sender).setEnabled(checkedCount == 1 && canDeleteSender);
             }
         });
         setActionbar();
@@ -404,7 +369,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
 
     private void setListInDisplayMode(){
         inSelectionMode = false;
-        MessageStore.getInstance(getActivity()).checkAllMessages(false);
+        MessageStore.getInstance(getActivity()).checkAllMessages(false, true);
                 ((FeedAdapter) feedListView.getAdapter()).setSelectionMode(false);
         feedListView.setOnItemLongClickListener(longClickListener);
         feedListView.setOnItemClickListener(null/*new AdapterView.OnItemClickListener() {
@@ -441,6 +406,8 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
 
             Cursor checkedCursor = MessageStore.getInstance(getActivity()).getCheckedMessages();
             int checkedCount = checkedCursor.getCount();
+            if(inSelectionMode)
+                ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
 
             menu.findItem(R.id.action_delete).setEnabled(checkedCount > 0);
             boolean canDeleteTrust = false;
@@ -513,7 +480,7 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
             initSortSpinner();
         }
         if(leftText != null){
-            leftText.setText(inSelectionMode ? R.string.select_all : R.string.empty_string);
+            updateSelectAll();
             leftText.setVisibility(inSelectionMode ? View.VISIBLE : View.GONE);
             leftText.setOnClickListener(inSelectionMode ? new View.OnClickListener() {
                 @Override
@@ -525,14 +492,26 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
                         sqlQuery += baseCondition;
                     } else {
                         sqlQuery = baseCondition;
+                        String safequery = Utils.makeTextSafeForSQL(query);
+                        String likeQuery = "";
+                        safequery = safequery.replaceAll("[\n\"]", " ");
+                        String[] words = safequery.split("\\s");
+                        for (int i = 0; i < words.length; i++) {
+                            if (words[i].length() > 0) {
+                                if (likeQuery.length() > 0) {
+                                    likeQuery += " OR ";
+                                }
+                                likeQuery += " " + MessageStore.COL_MESSAGE + " LIKE '%" + words[i] + "%' ";
+                            }
+                        }
+                        if(likeQuery.length() > 0)
+                            sqlQuery += " AND ( " + likeQuery + " )";
                     }
 
                     MessageStore.getInstance(getActivity()).checkAllQueriedMessages(!selectAll, sqlQuery);
                     selectAll = !selectAll;
                     swapCursor();
-
-                    int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
-                    ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(checkedCount <= 99 ? String.valueOf(checkedCount) : "+99");
+                    setActionbar();
                 }
             } : null);
         }
@@ -769,4 +748,19 @@ public class StarredFragment extends Fragment implements View.OnClickListener, T
         }
         return false;
     }
+
+    private void updateSelectAll() {
+        //TODO: Danielk Should this contain replies as well?
+        int checkedCount = MessageStore.getInstance(getActivity()).getCheckedMessages().getCount();
+        long totalCount = getCursor().getCount();
+        selectAll = checkedCount == totalCount;
+        if(leftText != null)
+        {
+            if (inSelectionMode)
+                leftText.setText(!selectAll ? R.string.select_all : R.string.deselect_all);
+            else
+                leftText.setText(R.string.empty_string);
+        }
+    }
+
 }

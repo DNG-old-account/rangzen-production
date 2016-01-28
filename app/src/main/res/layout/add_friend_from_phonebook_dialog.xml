@@ -24,6 +24,7 @@
     <EditText
         android:id="@+id/phone_number"
         android:inputType="phone"
-        style="@style/Configure_friend_field_input"/>
+        style="@style/Configure_friend_field_input"
+        android:maxLength="20"/>
 
 </LinearLayout>
