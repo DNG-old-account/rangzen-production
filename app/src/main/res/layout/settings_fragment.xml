@@ -123,7 +123,7 @@
 
         </LinearLayout>
 
-        <org.denovogroup.rangzen.ui.DisableableLinearLayout
+        <org.denovogroup.murmur.ui.DisableableLinearLayout
             android:id="@+id/general_block"
             style="@style/SettingsBlock"
             android:layout_width="match_parent"
@@ -295,9 +295,9 @@
 
             <View style="@style/SettingsDivider"/>
 
-        </org.denovogroup.rangzen.ui.DisableableLinearLayout>
+        </org.denovogroup.murmur.ui.DisableableLinearLayout>
 
-        <org.denovogroup.rangzen.ui.DisableableLinearLayout
+        <org.denovogroup.murmur.ui.DisableableLinearLayout
             android:id="@+id/feed_block"
             style="@style/SettingsBlock"
             android:layout_width="match_parent"
@@ -373,7 +373,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/settings_autodelete_trust_annotation"/>
 
-                    <org.denovogroup.rangzen.ui.CustomSeekbar
+                    <org.denovogroup.murmur.ui.CustomSeekbar
                         style="@style/Seekbar"
                         android:id="@+id/seekbar_autodelete_trust"
                         android:layout_width="match_parent"
@@ -425,7 +425,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/settings_autodelete_age_annotation"/>
 
-                    <org.denovogroup.rangzen.ui.CustomSeekbar
+                    <org.denovogroup.murmur.ui.CustomSeekbar
                         style="@style/Seekbar"
                         android:id="@+id/seekbar_autodelete_age"
                         android:layout_width="match_parent"
@@ -460,9 +460,9 @@
 
             <View style="@style/SettingsDivider"/>
 
-        </org.denovogroup.rangzen.ui.DisableableLinearLayout>
+        </org.denovogroup.murmur.ui.DisableableLinearLayout>
 
-        <org.denovogroup.rangzen.ui.DisableableLinearLayout
+        <org.denovogroup.murmur.ui.DisableableLinearLayout
             android:id="@+id/contacts_block"
             style="@style/SettingsBlock"
             android:layout_width="match_parent"
@@ -520,9 +520,9 @@
 
             <View style="@style/SettingsDivider"/>
 
-        </org.denovogroup.rangzen.ui.DisableableLinearLayout>
+        </org.denovogroup.murmur.ui.DisableableLinearLayout>
 
-        <org.denovogroup.rangzen.ui.DisableableLinearLayout
+        <org.denovogroup.murmur.ui.DisableableLinearLayout
             android:id="@+id/exchange_block"
             style="@style/SettingsBlock"
             android:layout_width="match_parent"
@@ -585,7 +585,7 @@
 
             <View style="@style/SettingsDivider"/>
 
-        </org.denovogroup.rangzen.ui.DisableableLinearLayout>
+        </org.denovogroup.murmur.ui.DisableableLinearLayout>
 
     </LinearLayout>
 

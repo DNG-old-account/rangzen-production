@@ -11,7 +11,7 @@
         android:layout_width="0dp"
         android:layout_weight="1">
 
-        <org.denovogroup.rangzen.ui.CustomSeekbar
+        <org.denovogroup.murmur.ui.CustomSeekbar
             style="@style/Seekbar"
             android:id="@+id/seeker"
             android:layout_width="match_parent"
