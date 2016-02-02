@@ -8,5 +8,6 @@
 .keystore
 /app/*.apk
 *.jks
+*.iml
 .idea/codeStyleSettings.xml
 app/app.iml
